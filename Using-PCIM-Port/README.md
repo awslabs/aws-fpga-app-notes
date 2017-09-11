@@ -237,8 +237,6 @@ The ocl_base variable holds the starting address of the OCL BAR and is found by 
 
 ### [Using the PCIM Interface Application Note](https://github.com/awslabs/aws-fpga-app-notes/tree/master/Using-PCIM-Port)
 
->*NOTE: This will point to a link in the aws-fpga Gist repo*
-
 ### [How To Write Linux PCI Drivers](https://www.kernel.org/doc/Documentation/PCI/pci.txt)
 
 ## Revision History
