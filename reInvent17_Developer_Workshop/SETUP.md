@@ -14,39 +14,20 @@
 ---------------------------------------
 ### Connecting to your F1 instance
 
-In this module you will start a pre-configured EC2 F1 instance and connect to it using a remote desktop client. Once connected, you will download the lab files and confirm you can execute a simple application on F1.
+In this module you will start a EC2 F1 instance using the FPGA develop AMI and connect to it using a remote desktop client. Once connected, you will download the lab files and confirm you can execute a simple application on F1.
 
-For this event, each registered participant has been attributed a preconfigured EC2 F1 instance and should have received an email with the following details:
-- Account ID
-- IAM username
-- Link to access a preconfigured EC2 F1 instance
+For this event, each registered participant will be required to start an EC2 F1 instance, therefore, participants need to have:
+- AWS account and experience launching instances
+- Setting up AWS CLI
+- IAM username and credentials
 
-If you have not received that email, please contact an Xilinx event staff member now.
+#### Start a EC2 F1 instance based FPGA developer AMI
 
-#### Start a preconfigured EC2 F1 instance
+1. Sign into your AWS account and go to EC2 
 
-1. Open the above mentionned email containing your connection credentials.
+1. Lanuch an F1 instance using the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ)
 
-1. Click on the link to your preconfigured instance. 
-    - You will be asked to sign-in before accessing your instance in the AWS EC2 Console.
-
-1. In the AWS sign-in page, enter the **Account ID** which was emailed to you
-
-1. Click **Next**.
-
-1. Enter the **IAM user name** which was emailed to you.
-
-1. Enter the **Password** provided at the event.
-
-1. Click **Sign In**.
-    - You should now be logged in the AWS EC2 Console and you should see an **f1.2xlarge** instance in the **stopped** state.
-
-1. Start the instance by choosing the **Actions** button, then select **Instance State** and then **Start**.
-
-    ![Start](./images/setup_lab/start1.png?raw=true)
-
-    - Allow about 10 seconds for the instance to start. 
-    - If needed, click the **Refresh** icon (![Refresh](./images/setup_lab/refresh2.png?raw=true)) in the top-right corner of the EC2 Console to update the instance status information.
+1. Configure the root volume to be 50GB
 
 1. Once the instance is running, find and note the **IPv4 Public IP** address of your instance.
     - You will be using this IP address to connect to your instance.
@@ -74,7 +55,7 @@ The instance you just started is preconfigured with remote desktop protocol (RDP
 
 1. Login with the following credentials:
     - User: **centos**
-    - Password: ******** _(provided at the event)_
+    - Password: ******** _(Generated as part of the setup script)_
    
     ![Remote](./images/setup_lab/remote1.png?raw=true)
    
