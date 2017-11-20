@@ -14,24 +14,37 @@
 ---------------------------------------
 ### Connecting to your F1 instance
 
-In this module you will start a EC2 F1 instance using the FPGA develop AMI and connect to it using a remote desktop client. Once connected, you will download the lab files and confirm you can execute a simple application on F1.
+In this module you will start an EC2 F1 instance using the FPGA developer AMI and connect to it using a remote desktop client. Once connected, you will download the lab files and confirm you can execute a simple application on F1.
 
-For this event, each registered participant will be required to start an EC2 F1 instance, therefore, participants need to have:
-- AWS account and experience launching instances
-- Setting up AWS CLI
+For this event, each registered participant will be required to start an EC2 F1 instance, therefore, participants need to have experience with:
+- AWS account and launching EC2 instances
+- EC2 Key Pair (.pem)
 - IAM username and credentials
+- Setting up AWS CLI
+- Connnecting to a running instance using SSH
 
 #### Start a EC2 F1 instance based FPGA developer AMI
 
 1. Sign into your AWS account and go to EC2 
 
-1. Lanuch an F1 instance using the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ)
+1. Lanuch an F1 instance using the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ).  
 
 1. Configure the root volume to be 50GB
 
 1. Once the instance is running, find and note the **IPv4 Public IP** address of your instance.
     - You will be using this IP address to connect to your instance.
     - The **IPv4 Public IP** address is displayed in EC2 Console next to the instance status.
+
+#### Connect to your instance using SSH
+
+1. In the SSH client, use the **IPv4 Public IP** of your instance: 
+
+   ```bash  
+    ssh -i <.pem file> centos@<IPv4 Public IP>
+    git clone https://github.com/awslabs/aws-fpga-app-notes.git
+    ```
+1. Run a setup script to configure GUI and download workshop files.  DEEP ADD INSTRUCTIONS HERE
+
 
 #### Connect to your instance using a remote desktop client
 
