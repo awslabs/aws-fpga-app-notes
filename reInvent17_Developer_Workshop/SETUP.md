@@ -96,7 +96,7 @@ You should now be connected to the remote F1 instance running Centos 7.
 
 #### Open the lab instructions on the remote F1 instance
 
-1. In the remote instance, double click on the **Chromium** icon.
+1. In the remote instance, double click on the **chromium-browser.desktop** icon.
     - It opens the browser and loads the lab instructions.
     
     _Note: if a "keyring" popup comes up, click Cancel._
