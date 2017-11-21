@@ -14,23 +14,27 @@
 ---------------------------------------
 ### Connecting to your F1 instance
 
-In this module you will start an EC2 F1 instance using the FPGA developer AMI and connect to it using a remote desktop client. Once connected, you will download the lab files and confirm you can execute a simple application on F1.
+In this module you will start an EC2 F1 instance using the FPGA Developer AMI and connect to it using a remote desktop client. Once connected, you will download the lab files and confirm you can execute a simple application on F1.
 
 For this event, each registered participant will be required to start an EC2 F1 instance, therefore, participants need to have experience with:
 - AWS account and launching EC2 instances
 - EC2 Key Pair (.pem)
+- EC2 Security Groups
 - IAM username and credentials
 - Setting up AWS CLI
-- Connnecting to a running instance using SSH
+- Connecting to a running instance using SSH
 
 #### Start a EC2 F1 instance based FPGA developer AMI
 
 1. Sign into your AWS account and go to EC2 
 
-1. Lanuch an F1 instance using the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ).  
+1. Lanuch an F1 Instance using the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.  
 
-1. Configure the root volume to be 50GB
-
+    - Configure the root volume(/dev/sda1) to be 100GB
+    ![Remote](./images/setup_lab/root_volume_storage.png?raw=true)
+    - Setup your security groups to allow RDP and SSH ingress from your IP or from anywhere depending on your security preferences.
+    ![Remote](./images/setup_lab/create_security_group.png?raw=true)
+    
 1. Once the instance is running, find and note the **IPv4 Public IP** address of your instance.
     - You will be using this IP address to connect to your instance.
     - The **IPv4 Public IP** address is displayed in EC2 Console next to the instance status.
@@ -42,9 +46,17 @@ For this event, each registered participant will be required to start an EC2 F1 
    ```bash  
     ssh -i <.pem file> centos@<IPv4 Public IP>
     ```
-1. Run a setup script to configure GUI and download workshop files.  DEEP ADD INSTRUCTIONS HERE
+1. Run a setup script to configure GUI and download workshop files.
 
-
+    ```bash
+    source <(curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/setup_script/setup_reinvent.sh)
+    ```
+    This setup script performs the following tasks:
+    - Download and setup the aws-fpga repository in (/home/centos).
+    - Download and setup the aws-fpga-app-notes repository in (/home/centos).
+    - Install packages to setup a GUI Desktop on the FPGA Developer AMI.
+    - Set a user password for the 'centos' user.
+    
 #### Connect to your instance using a remote desktop client
 
 The instance you just started is preconfigured with remote desktop protocol (RDP) services.
@@ -68,6 +80,13 @@ The instance you just started is preconfigured with remote desktop protocol (RDP
 1. Login with the following credentials:
     - User: **centos**
     - Password: ******** _(Generated as part of the setup script)_
+    - Look for output like below:
+        ```bash
+        INFO: Setting password for user 'centos'
+        INFO: **************************************
+        INFO: *** PASSWORD : reinvent2017_123   ****
+        INFO: **************************************
+        ```
    
     ![Remote](./images/setup_lab/remote1.png?raw=true)
    
@@ -77,7 +96,7 @@ You should now be connected to the remote F1 instance running Centos 7.
 
 #### Open the lab instructions on the remote F1 instance
 
-1. In the remote instance, double click on the **Chromium** icon.
+1. In the remote instance, double click on the **chromium-browser.desktop** icon.
     - It opens the browser and loads the lab instructions.
     
     _Note: if a "keyring" popup comes up, click Cancel._
@@ -89,17 +108,16 @@ You should now be connected to the remote F1 instance running Centos 7.
 
 1. Open a new terminal by right-clicking anywhere in the Desktop area and selecting **Open Terminal**.
 
-1. In the terminal, `git clone` the reInvent17 Develop workshop within the aws-fpga-apps-notes repository to download the files for the reInvent17 Developer Workshop.
+1. In the terminal, verify that the reInvent17 Developer workshop within the aws-fpga-apps-notes repository exists and that the aws-fpga repository exists.
 
-    ```bash  
-    cd /home/centos
-    git clone https://github.com/awslabs/aws-fpga-app-notes.git
+    ```bash
+    ls -lrtha ~/aws-fpga-app-notes
+    ls -lrtha ~/aws-fpga
     ```
 
-1. Source the SDAccel environment. 
+1. Source the SDAccel environment from the aws-fpga repository.
 
-    ```bash  
-    git clone https://github.com/aws/aws-fpga.git
+    ```bash
     cd ~/aws-fpga
     source sdaccel_setup.sh
     source $XILINX_SDX/settings64.sh 

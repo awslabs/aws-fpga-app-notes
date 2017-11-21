@@ -14,7 +14,7 @@
 ---------------------------------------
 ### Introduction
 
-Welcome to the reInvent17 Developer Workshop. During this session you will gain hands-on experience with AWS F1 and learn how to develop accelerated applications using the AWS F1 OpenCL flow and the Xilinx SDAccel development environment.
+Welcome to the re:Invent 2017 Developer Workshop. During this session you will gain hands-on experience with AWS F1 and learn how to develop accelerated applications using the AWS F1 OpenCL flow and the Xilinx SDAccel development environment.
 
 #### Overview of the AWS F1 platform and SDAccel flow
 
