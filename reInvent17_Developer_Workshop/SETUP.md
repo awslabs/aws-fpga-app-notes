@@ -51,15 +51,17 @@ For this event, each registered participant will be required to start an EC2 F1 
     ```bash
     source <(curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/setup_script/setup_reinvent.sh)
     ```
+    
     This setup script performs the following tasks:
     - Download and setup the aws-fpga repository in (/home/centos).
     - Download and setup the aws-fpga-app-notes repository in (/home/centos).
     - Install packages to setup a GUI Desktop on the FPGA Developer AMI.
     - Set a user password for the 'centos' user.
+    - **IMPORTANT: Please take a note of the password it generates at the end. You will need to use it to connect using RDP.** 
     
 #### Connect to your instance using a remote desktop client
 
-The instance you just started is preconfigured with remote desktop protocol (RDP) services.
+The instance you just started should now be configured with remote desktop protocol (RDP) services.
 
 1. From your local machine, start a remote desktop protocol client
     - On Windows: press the Windows key and type "remote desktop".
@@ -70,7 +72,7 @@ The instance you just started is preconfigured with remote desktop protocol (RDP
 
 1. In the RDP client, enter the **IPv4 Public IP** of your instance.
 
-1. **IMPORTANT**: Before connecting, set your remote desktop client to use **24-bit for color depth**
+1. **IMPORTANT**: Before connecting, set your remote desktop client to use **24-bit or less for color depth**
     - On Windows: In the bottom-left corner of connection prompt, click Options, then select the Display tab and set Colors to True Colors (24 bit)
 
 1. Click **Connect**. This should bring up a message about connection certificates. 
@@ -96,10 +98,11 @@ You should now be connected to the remote F1 instance running Centos 7.
 
 #### Open the lab instructions on the remote F1 instance
 
-1. In the remote instance, double click on the **chromium-browser.desktop** icon.
+1. In the remote instance, double click on the **Chromium Web Browser** icon.
     - It opens the browser and loads the lab instructions.
     
     _Note: if a "keyring" popup comes up, click Cancel._
+    
 
 1. Continue following the lab instructions from within the remote instance and the Chromium browser.
     - We suggest you perform all your copy-paste from the instructions to the shell within the RDP session to avoid issues.
