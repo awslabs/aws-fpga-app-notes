@@ -37,7 +37,14 @@ function setup_aws_fpga_repo {
         rm -rf ${CENTOS_HOME}/aws-fpga
         info_msg "Fetching the aws-fpga repository"
     fi
-    git clone --recursive https://github.com/aws/aws-fpga.git
+
+    pushd ${CENTOS_HOME}
+
+    curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/github_repo/aws-fpga.tar.gz -o aws-fpga.tar.gz
+    tar -xzf aws-fpga.tar.gz
+    rm aws-fpga.tar.gz
+
+    popd
 }
 
 function setup_gui {
@@ -66,11 +73,18 @@ function setup_chromium {
 
     pushd ${CENTOS_HOME}/Desktop
     curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/setup_script/chromium-browser.desktop -o chromium-browser.desktop
+    chmod +x chromium-browser.desktop
     popd
 
     pushd /etc/chromium
+
+    if [ ! -e master_preferences ]; then
+        rm master_preferences
+    fi
+
     sudo curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/setup_script/developer_workshop_setup.json -o master_preferences
     sudo chown root:root master_preferences
+
     popd
 }
 
@@ -87,10 +101,27 @@ function fetch_vectors {
     popd
 }
 
+function check_available_space {
+    info_msg "Checking available free space"
+
+    FREE=`df -k --output=avail "${CENTOS_HOME}" | tail -n1`
+    if [[ ${FREE} -lt 5242880 ]]; then
+        err_msg "Less than 5GB space available on root volume. Please start another instance with > 75GB as root volume and re-run"
+        return 1
+    else
+        info_msg "More than 5GB space available. Processing next steps"
+    fi
+}
+
 function info_msg {
   echo -e "INFO: $1"
 }
 
+function err_msg {
+  echo -e >&2 "ERROR: $1"
+}
+
+check_available_space
 setup_gui
 setup_chromium
 setup_aws_fpga_repo
