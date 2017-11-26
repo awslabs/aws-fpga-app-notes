@@ -28,7 +28,7 @@ For this event, each registered participant will be required to start an EC2 F1 
 
 1. Sign into your AWS account and go to EC2 
 
-1. Select Region US-East (N. Virgina).  The pull down is located in the upper right corner of the console.
+1. Select Region **US-East (N. Virginia)**.  The pull down is located in the upper right corner of the console.
 
 1. Lanuch an F1 Instance using the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.  
 
