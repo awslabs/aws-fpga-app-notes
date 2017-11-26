@@ -36,9 +36,6 @@ You have successfully completed all the modules of reInvent17 Developer Workshop
 1. You closed your RDP session and properly stopped your F1 instance.
 
 ### Next steps
-
-The preconfigured instance and account provided by Xilinx will deactivated shortly after the Developer Lab. If you do not already have an AWS account, you can create one [here](https://aws.amazon.com/) to continue on AWS F1.
-
 To take your AWS F1 and SDAccel experience further, we recommend the following resources:
 
 | Resource | Title                       | Description  |
