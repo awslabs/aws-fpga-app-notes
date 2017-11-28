@@ -47,6 +47,7 @@ int initialize_log(char* log_name);
 int check_afi_ready(int slot);
 
 int num_of_uints = 16;
+int num_of_passes = 100;
 int write_combine = 0;
 int use_custom = 0;
 int verbose = 0;
@@ -74,6 +75,7 @@ void print_usage() {
   printf("DESCRIPTION\n\tWrites bytes to AppPF BAR4 and reports the bandwidth in GB/s\n");
   printf("OPTIONS\n");
   printf("\t-i num - Maximum number of integers to move.\n");
+  printf("\t-p num - Maximum number of passes for measurement.\n");
   printf("\t-w     - Use WriteCombine region.\n");
   printf("\t-c     - Use custom memory move.\n");
   printf("\t-v     - Enable verbose mode.\n");
@@ -95,10 +97,13 @@ int main(int argc, char **argv) {
   rc = check_afi_ready(slot_id);
   fail_on(rc, out, "AFI not ready");
   
-  while ((c = getopt(argc, argv, "hvcwi:")) != -1)
+  while ((c = getopt(argc, argv, "hvcwi:p:")) != -1)
     switch (c) {
     case 'i':
       num_of_uints = atoi(optarg);
+      break;
+    case 'p':
+      num_of_passes = atoi(optarg);
       break;
     case 'w':
       write_combine = BURST_CAPABLE;
@@ -182,17 +187,20 @@ int wc_perf(int slot_id, int pf_id, int bar_id) {
       /* grab start time */
       rc = clock_gettime(CLOCK_MONOTONIC, &ts_start);
 
-      if (use_custom)
-	custom_move(pci_bar_handle, 0, buffer, j);
-      else
-	fpga_pci_write_burst(pci_bar_handle, 0, buffer, j);
-    
+      // perform multiple passes to minimize the affects introduced by clock_gettime
+      for(int pass=0; pass < num_of_passes; pass++) {
+	if (use_custom)
+	  custom_move(pci_bar_handle, 0, buffer, j);
+	else
+	  fpga_pci_write_burst(pci_bar_handle, 0, buffer, j);
+      }
+
       /* grab end time */
       rc = clock_gettime(CLOCK_MONOTONIC, &ts_end);
     
       compute_delta(&ts_end, &ts_start);
       
-      num_of_bytes = sizeof(uint32_t) * j;
+      num_of_bytes = sizeof(uint32_t) * j * num_of_passes;
     
       if (verbose)
 	printf("time %ld.%09ld seconds for transfer of %u bytes\n",
@@ -203,7 +211,7 @@ int wc_perf(int slot_id, int pf_id, int bar_id) {
       if (verbose)
 	printf("bandwidth %f GB/s\n", GB_per_s);
       else
-	printf("%u\t%f\n", num_of_bytes, GB_per_s);
+	printf("%u\t%f\n", num_of_bytes/num_of_passes, GB_per_s);
     }
     
     
