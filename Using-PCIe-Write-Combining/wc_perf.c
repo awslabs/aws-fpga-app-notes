@@ -75,6 +75,7 @@ void print_usage() {
   printf("DESCRIPTION\n\tWrites bytes to AppPF BAR4 and reports the bandwidth in GB/s\n");
   printf("OPTIONS\n");
   printf("\t-i num - Maximum number of integers to move.\n");
+  printf("\t-p num - Maximum number of passes for measurement.\n");
   printf("\t-w     - Use WriteCombine region.\n");
   printf("\t-c     - Use custom memory move.\n");
   printf("\t-v     - Enable verbose mode.\n");
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
     case 'i':
       num_of_uints = atoi(optarg);
       break;
-    case 'i':
+    case 'p':
       num_of_passes = atoi(optarg);
       break;
     case 'w':
