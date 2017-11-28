@@ -15,18 +15,16 @@
 
 ## Wrap-Up and Next Steps
 
-It is now time to wrap-up this lab. Please follow these steps to close your RDP session and stop your instance. It is important to always stop or terminate AWS EC2 instances when you are done using them. This is a recommended best practice to avoid unwanted charges.
+It is now time to wrap-up this lab. Please follow these steps to close your RDP session and terminate your instance. It is important to always stop or terminate AWS EC2 instances when you are done using them. This is a recommended best practice to avoid unwanted charges.
 
 
-### Stopping your instance
+### Terminating your instance
 
 * Click the 'X' icon to close your RDP client.
 * On your local machine, return to your browser and to the tab showing the **EC2 Console** and the details of your running instance.
    * If necessary, use the link which was emailed to you to return to the proper web page.
 * In the **EC2 Console**, make sure you instance is selected
-* Click the **Actions** button, select **Instance State** and then click **Stop**.
-
-Note: permission to **Terminate** instances was disabled for all user accounts of this Developer Lab to prevent accidental terminations.
+* Click the **Actions** button, select **Instance State** and then click **Terminate**.
 
 ### Congratulations!
 You have successfully completed all the modules of reInvent17 Developer Workshop. 
