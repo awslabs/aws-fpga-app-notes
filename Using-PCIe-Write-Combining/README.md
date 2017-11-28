@@ -60,8 +60,18 @@ The FPGA library call used to write a buffer of UINT32_t data is ```fpga_pci_wri
 The write bandwidth is calculated by dividing the total number of bytes transferred by the time it takes for ```fpga_pci_write_burst``` to complete.
 
 ```
+      /* grab start time */
       rc = clock_gettime(CLOCK_MONOTONIC, &ts_start);
-      fpga_pci_write_burst(pci_bar_handle, 0, buffer, num_of_ints);
+
+      // perform multiple passes to minimize the affects introduced by clock_gettime
+      for(int pass=0; pass < num_of_passes; pass++) {
+	if (use_custom)
+	  custom_move(pci_bar_handle, 0, buffer, j);
+	else
+	  fpga_pci_write_burst(pci_bar_handle, 0, buffer, j);
+      }
+
+      /* grab end time */
       rc = clock_gettime(CLOCK_MONOTONIC, &ts_end);
 ```    
 
