@@ -207,7 +207,7 @@ int wc_perf(int slot_id, int pf_id, int bar_id) {
 	       ts_end.tv_sec, ts_end.tv_nsec, num_of_bytes);
     
     
-      GB_per_s = (float)num_of_bytes / (float)ts_end.tv_nsec / (float)num_of_passes;
+      GB_per_s = (float)num_of_bytes / (float)ts_end.tv_nsec;
       if (verbose)
 	printf("bandwidth %f GB/s\n", GB_per_s);
       else
