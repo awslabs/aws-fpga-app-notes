@@ -204,6 +204,7 @@ Intel Write Combining Info
 
 ## Revision History
 
-|     Date      | Version |     Revision    |   Shell    |   Developer   |
-| ------------- |  :---:  | --------------- |   :---:    |     :---:     |
-| Oct. 5, 2017  |   1.0   | Initial Release | 0x071417d3 | W. Washington |
+|      Date      | Version |     Revision    |   Shell    |   Developer   |
+| -------------- |  :---:  | --------------- |   :---:    |     :---:     |
+| Oct.  5, 2017  |   1.0   | Initial Release | 0x071417d3 | W. Washington |
+| Nov. 28, 2017  |   1.1   | new '-p' option and performance data | 0x071417d3 | W. Washington |
