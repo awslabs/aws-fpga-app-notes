@@ -211,7 +211,7 @@ int wc_perf(int slot_id, int pf_id, int bar_id) {
       if (verbose)
 	printf("bandwidth %f GB/s\n", GB_per_s);
       else
-	printf("%u\t%f\n", num_of_bytes, GB_per_s);
+	printf("%u\t%f\n", num_of_bytes/num_of_passes, GB_per_s);
     }
     
     
