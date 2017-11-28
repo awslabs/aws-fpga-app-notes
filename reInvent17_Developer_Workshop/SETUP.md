@@ -30,7 +30,13 @@ For this event, each registered participant will be required to start an EC2 F1 
 
 1. Select Region **US-East (N. Virginia)**.  The pull down is located in the upper right corner of the console.
 
-1. Launch an F1 Instance using the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.  
+1. Launch an F1 Instance (f1.2xlarge) using the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.  **Use manual launch  
+
+    - Use Manual launch 
+    ![Remote](./images/setup_lab/manual_launch.png?raw=true)
+    
+    - Select launch with EC2 console 
+    ![Remote](./images/setup_lab/launch_with_console.png?raw=true)
 
     - Configure the root volume(/dev/sda1) to be 100GB
     ![Remote](./images/setup_lab/root_volume_storage.png?raw=true)
