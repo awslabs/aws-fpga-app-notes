@@ -15,7 +15,7 @@
 
 ## Wrap-Up and Next Steps
 
-It is now time to wrap-up this lab. Please follow these steps to close your RDP session and terminate your instance. It is important to always stop or terminate AWS EC2 instances when you are done using them. This is a recommended best practice to avoid unwanted charges.
+It is now time to wrap-up this workshop. Please follow these steps to close your RDP session and terminate your instance. It is important to always stop or terminate AWS EC2 instances when you are done using them. This is a recommended best practice to avoid unwanted charges.
 
 
 ### Terminating your instance
@@ -27,7 +27,7 @@ It is now time to wrap-up this lab. Please follow these steps to close your RDP 
 * Click the **Actions** button, select **Instance State** and then click **Terminate**.
 
 ### Congratulations!
-You have successfully completed all the modules of reInvent17 Developer Workshop. 
+You have successfully completed all the modules of re:Invent 2017 Developer Workshop. 
 1. You started a pre-configured EC2 F1 instance and connected to it using a remote desktop client. 
 1. You experienced the acceleration potential of F1 by using ffmpeg and an F1-optimized HEVC encoder. 
 1. You used SDAccel to create, profile and optimize an F1 accelerator. 
