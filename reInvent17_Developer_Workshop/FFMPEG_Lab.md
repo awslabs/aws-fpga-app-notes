@@ -1,7 +1,7 @@
 
 <table style="width:100%">
   <tr>
-    <th width="100%" colspan="5"><h2>reInvent17 Developer Workshop</h2></th>
+    <th width="100%" colspan="5"><h2>re:Invent 2017 Developer Workshop</h2></th>
   </tr>
   <tr>
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
