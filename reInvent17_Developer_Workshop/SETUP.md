@@ -52,13 +52,13 @@ For this event, each registered participant will be required to start an EC2 F1 
     
 #### Connect to your instance using SSH
 
+**[Windows Users - Connecting to Your Linux Instance from Windows Using PuTTY](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/putty.html)**
+
 1. In the SSH client, use the **IPv4 Public IP** of your instance: 
 
    ```bash  
     ssh -i <.pem file> centos@<IPv4 Public IP>
     ```
-    
-**[Windows Users - Connecting to Your Linux Instance from Windows Using PuTTY](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/putty.html)**
     
 1. Run a setup script to configure GUI and download workshop files.
 
