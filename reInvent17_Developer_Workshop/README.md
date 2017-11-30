@@ -1,6 +1,6 @@
 <table style="width:100%">
   <tr>
-    <th width="100%" colspan="5"><h2>reInvent17 Developer Workshop</h2></th>
+    <th width="100%" colspan="5"><h2>re:Invent 2017 Developer Workshop</h2></th>
   </tr>
   <tr>
     <td width="20%" align="center"><b>Introduction</b></td>
@@ -28,18 +28,18 @@ The architecture of the AWS F1 platform and the SDAccel development flow are pic
 4. The host application is written in C or C++ and uses the OpenCL API to interact with the accelerated functions. The accelerated functions (also referred to as kernels) can be written in C, C++, OpenCL or even RTL.
 
 
-#### Overview of the reInvent17 Developer Workshop modules
+#### Overview of the re:Invent 2017 Developer Workshop modules
 
-This developer lab is divided in 4 modules. It is recommended to complete each module before proceeding to the next.
+This developer workshop is divided in 4 modules. It is recommended to complete each module before proceeding to the next.
 
 1. **Connecting to your F1 instance** \
 You will start an EC2 F1 instance based on the FPGA developer AMI and connect to it using a remote desktop client. Once connected, you will confirm you can execute a simple application on F1.
 1. **Experiencing F1 acceleration** \
 AWS F1 instances are ideal to accelerate complex workloads. In this module you will experience the potential of F1 by using FFmpeg to run both a software implementation and an F1-optimized implementation of an H.265/HEVC encoder. 
 1. **Developing and optimizing F1 applications with SDAccel** \
-You will use the SDAccel development environment to create, profile and optimize an F1 accelerator. The lab focuses on the Inverse Discrete Cosine Transform (IDCT), a compute intensive function used at the heart of all video codecs.
+You will use the SDAccel development environment to create, profile and optimize an F1 accelerator. The workshop focuses on the Inverse Discrete Cosine Transform (IDCT), a compute intensive function used at the heart of all video codecs.
 1. **Wrap-up and next steps** \
-Explore next steps to continue your F1 experience after the reInvent17 Developer Workshop.
+Explore next steps to continue your F1 experience after the re:Invent 2017 Developer Workshop.
 
 Since building FPGA binaries is not instantaneous, all the modules of this Developer Workshop will use precompiled FPGA binaries.
 
