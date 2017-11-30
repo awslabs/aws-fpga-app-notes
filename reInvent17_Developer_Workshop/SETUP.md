@@ -30,7 +30,7 @@ For this event, each registered participant will be required to start an EC2 F1 
 
 1. Select Region **US-East (N. Virginia)**.  The pull down is located in the upper right corner of the console.
 
-1. Launch an F1 Instance (f1.2xlarge) using the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.  **Use manual launch  
+1. Launch an F1 Instance (f1.2xlarge) using the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.   
 
     - Use Manual launch 
     ![Remote](./images/setup_lab/manual_launch.png?raw=true)
@@ -40,6 +40,7 @@ For this event, each registered participant will be required to start an EC2 F1 
 
     - Configure the root volume(/dev/sda1) to be 100GB
     ![Remote](./images/setup_lab/root_volume_storage.png?raw=true)
+    
     - Setup your security groups to allow RDP and SSH ingress from your IP or from anywhere depending on your security preferences.
     ![Remote](./images/setup_lab/create_security_group.png?raw=true)
     
@@ -122,7 +123,7 @@ You should now be connected to the remote F1 instance running Centos 7.
 
 1. Open a new terminal by right-clicking anywhere in the Desktop area and selecting **Open Terminal**.
 
-1. In the terminal, verify that the reInvent17 Developer workshop within the aws-fpga-apps-notes repository exists and that the aws-fpga repository exists.
+1. In the terminal, verify that the reInvent17_Developer_Workshop within the aws-fpga-apps-notes repository exists and that the aws-fpga repository exists.
 
     ```bash
     ls -lrtha ~/aws-fpga-app-notes
