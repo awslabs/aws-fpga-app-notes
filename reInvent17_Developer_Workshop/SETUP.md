@@ -72,6 +72,7 @@ For this event, each registered participant will be required to start an EC2 F1 
     - Install packages to setup a GUI Desktop on the FPGA Developer AMI.
     - Set a user password for the 'centos' user.
     - **IMPORTANT: Please take a note of the password it generates at the end. You will need to use it to connect using RDP.** 
+    - The setup script is a one time setup and completes in 8-15 mins.  Feel free to use this time to read the workshop.
     
 #### Connect to your instance using a remote desktop client
 
