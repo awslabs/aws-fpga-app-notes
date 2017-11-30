@@ -19,9 +19,9 @@ This tutorial is designed to teach the fundamentals of the SDAccel development e
 
 The kernel used in this tutorial is an Inverse Discrete Cosine Transform (IDCT), a function widely used in audio/image codecs such as HEVC. 
 
-To simplify this tutorial, a workspace preloaded with the initial project configuration is provided in the lab repository.
+To simplify this tutorial, a workspace preloaded with the initial project configuration is provided in the workshop repository.
 
-Please also note that although the entire tutorial is performed on an F1 instance, only the final step of this tutorial really needs to be run on F1. All the interactive development, profiling and optimization steps would normally be performed on-premise or on a cost-effective AWS EC2 instance such as C4. However, to avoid switching from C4 to F1 instances during this tutorial, all the steps are performed on the F1 instance.
+Please also note that although the entire tutorial is performed on an F1 instance, only the final step of this tutorial really needs to be run on F1. All the interactive development, profiling and optimization steps would normally be performed on-premise or on a cost-effective AWS EC2 instance such as C4. However, to avoid switching from C4 to F1 instances during this workshop, all the steps are performed on the F1 instance.
 
 ### Starting SDAccel
 
@@ -356,7 +356,7 @@ The **create_sdaccel_afi.sh** script does the following:
 * Generates a \<timestamp\>_afi_id.txt which contains the FPGA Image Identifier (or AFI ID) and Global FPGA Image Identifier (or AGFI ID) of the generated AFI
 * Creates the *.awsxclbin AWS FPGA binary file which is read by the host application to determine which AFI should be loaded in the FPGA.
 
-These steps would take too long to complete during this tutorial, therefore a precompiled FPGA binary is used to continue this lab and execute on F1.
+These steps would take too long to complete during this tutorial, therefore a precompiled FPGA binary is used to continue this workshop and execute on F1.
 
 ### Executing on F1 
 
@@ -365,7 +365,7 @@ These steps would take too long to complete during this tutorial, therefore a pr
 1. Confirm that FPGA binary (.awsxclbin file) is indeed present.
 
 	```bash
-	# Go the lab folder
+	# Go the workshop folder
 	cd /home/centos/aws-fpga-app-notes/reInvent17_Developer_Workshop/idct
 	
 	# List contents of the ./xclbin directory to look for the .awsxclbin FPGA binary
@@ -412,7 +412,7 @@ These steps would take too long to complete during this tutorial, therefore a pr
 
 ### Summary  
 
-In this lab, you learned:
+In this workshop, you learned:
 * Key features of the SDAccel development environment
 * Important OpenCL API calls to communicate between the host and the FPGA
 * The differences between the software and hardware emulation flows and how to run them
