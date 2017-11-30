@@ -20,16 +20,16 @@ In this module you will experience the acceleration potential of AWS F1 instance
 
 ![](images/ffmpeg_lab/ffmpeg_lab.png)
 
-```ffmpeg``` is a very popular framework providing very fast video and audio converters. The ```ffmpeg``` code is open-source and allows for the addition of custom plugins. For this lab, a custom plugin has been created to transparently use the NGCodec HEVC encoder running on AWS F1.  
+```ffmpeg``` is a very popular framework providing very fast video and audio converters. The ```ffmpeg``` code is open-source and allows for the addition of custom plugins. For this workshop, a custom plugin has been created to transparently use the NGCodec HEVC encoder running on AWS F1.  
 
 Users can switch between the libx265 software codec and the F1-accelerated implementation by simply changing a parameter on the ```ffmpeg``` command line. The plugin uses OpenCL API calls to write video frames to the FPGA, execute the encoder and read back the compressed video.
 
 The HEVC encoder is provided courtesy of **NGCodec** [(www.ngcodec.com)](www.ngcodec.com).
 
-#### Setting-up the lab
+#### Setting-up the workshop
 
 1. Open a new terminal by right-clicking anywhere in the Desktop area and selecting **Open Terminal**. 
-1. Navigate to the FFmpeg lab directory.
+1. Navigate to the FFmpeg workshop directory.
     ```bash
     cd ~/aws-fpga-app-notes/reInvent17_Developer_Workshop/ffmpeg
     ```
