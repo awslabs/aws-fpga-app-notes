@@ -1,6 +1,6 @@
 <table style="width:100%">
   <tr>
-    <th width="100%" colspan="5"><h2>reInvent17 Developer Workshop</h2></th>
+    <th width="100%" colspan="5"><h2>re:Invent 2017 Developer Workshop</h2></th>
   </tr>
   <tr>
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
@@ -14,7 +14,7 @@
 ---------------------------------------
 ### Connecting to your F1 instance
 
-In this module you will start an EC2 F1 instance using the FPGA Developer AMI and connect to it using a remote desktop client. Once connected, you will download the lab files and confirm you can execute a simple application on F1.
+In this module you will start an EC2 F1 instance using the FPGA Developer AMI and connect to it using a remote desktop client. Once connected, you will download the workshop files and confirm you can execute a simple application on F1.
 
 For this event, each registered participant will be required to start an EC2 F1 instance, therefore, participants need to have experience with:
 - AWS account and launching EC2 instances
@@ -22,7 +22,7 @@ For this event, each registered participant will be required to start an EC2 F1 
 - EC2 Security Groups
 - IAM username and credentials
 - Setting up AWS CLI
-- Connecting to a running instance using SSH
+- Connecting to a running instance using SSH or PuTTy
 
 #### Start a EC2 F1 instance based FPGA developer AMI
 
@@ -47,7 +47,9 @@ For this event, each registered participant will be required to start an EC2 F1 
 1. Once the instance is running, find and note the **IPv4 Public IP** address of your instance.
     - You will be using this IP address to connect to your instance.
     - The **IPv4 Public IP** address is displayed in EC2 Console next to the instance status.
-
+    
+**Some AWS accounts may have a F1 instance limit equal to 0.  If your F1 instance fails to launch due to your account has an instance limit equal to 0:  During the workshop, raise your hand for assistance so we can manaully raise the limit on your account.  After the workshop, use [AWS support to submit for a F1 instance limit increase](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html).**    
+    
 #### Connect to your instance using SSH
 
 1. In the SSH client, use the **IPv4 Public IP** of your instance: 
@@ -108,15 +110,15 @@ The instance you just started should now be configured with remote desktop proto
 
 You should now be connected to the remote F1 instance running Centos 7.
 
-#### Open the lab instructions on the remote F1 instance
+#### Open the workshop instructions on the remote F1 instance
 
 1. In the remote instance, double click on the **Chromium Web Browser** icon.
-    - It opens the browser and loads the lab instructions.
+    - It opens the browser and loads the workshop instructions.
     
     _Note: if a "keyring" popup comes up, click Cancel._
     
 
-1. Continue following the lab instructions from within the remote instance and the Chromium browser.
+1. Continue following the workshop instructions from within the remote instance and the Chromium browser.
     - We suggest you perform all your copy-paste from the instructions to the shell within the RDP session to avoid issues.
 
 #### Configure the Xilinx SDAccel environment and load the workshop files
@@ -143,7 +145,7 @@ You should now be connected to the remote F1 instance running Centos 7.
 
 #### Run the hello_world example to validate the setup of your F1 instance
 
-The hello world example is an OpenCL application with a simple vector-addition accelerator. This example uses a precompiled FPGA binary to reduce compilation time and streamline the lab.
+The hello world example is an OpenCL application with a simple vector-addition accelerator. This example uses a precompiled FPGA binary to reduce compilation time and streamline the workshop.
 
 1.  Compile the host application
 
@@ -211,7 +213,7 @@ The hello world example is an OpenCL application with a simple vector-addition a
     exit
     ```
 
-This concludes this first lab.
+This concludes this first module.
 
 ---------------------------------------
 
