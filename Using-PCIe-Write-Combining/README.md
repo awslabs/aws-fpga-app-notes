@@ -139,7 +139,7 @@ The graph and table show the write bandwidth with different sizes and function w
 - custom    = custom move function
 - custom-wc = custom move function to a WC region
 
-Based on the data, writing to a WC region achieves almost 5GB/s for 1KB. Above 32KB, performance levels out at just under 2GB/s.
+Based on the data, writing to a WC region achieves almost 3GB/s for 512B. Above 2KB, performance levels out at just under 2GB/s.
 
 ## A Few Words about Side Effects
 
