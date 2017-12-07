@@ -19,10 +19,6 @@ This application note describes the basic kernel calls needed for a developer to
 This developer workshop is divided in 4 modules.
 
 1. **Connecting to your F1 instance** \
-You will start an EC2 F1 instance based on the FPGA developer AMI and connect to it using a remote desktop client. Once connected, you will confirm you can execute a simple application on F1.
 1. **Experiencing F1 acceleration** \
-AWS F1 instances are ideal to accelerate complex workloads. In this module you will experience the potential of F1 by using FFmpeg to run both a software implementation and an F1-optimized implementation of an H.265/HEVC encoder. 
 1. **Developing and optimizing F1 applications with SDAccel** \
-You will use the SDAccel development environment to create, profile and optimize an F1 accelerator. The workshop focuses on the Inverse Discrete Cosine Transform (IDCT), a compute intensive function used at the heart of all video codecs.
 1. **Wrap-up and next steps** \
-Explore next steps to continue your F1 experience after the re:Invent 2017 Developer Workshop.
