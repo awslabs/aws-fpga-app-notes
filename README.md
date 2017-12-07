@@ -18,7 +18,7 @@ This application note describes the basic kernel calls needed for a developer to
 
 This developer workshop is divided in 4 modules.
 
-1. **Connecting to your F1 instance** \
-1. **Experiencing F1 acceleration** \
-1. **Developing and optimizing F1 applications with SDAccel** \
-1. **Wrap-up and next steps** \
+1. **Connecting to your F1 instance**
+1. **Experiencing F1 acceleration**
+1. **Developing and optimizing F1 applications with SDAccel**
+1. **Wrap-up and next steps**
