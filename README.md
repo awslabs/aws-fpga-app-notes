@@ -14,7 +14,7 @@ This application note describes the basic kernel calls needed for a developer to
 
 ## Tutorials
 
-[re:Invent 2017 Developer Workshop](/reInvent17_Developer_Workshop)
+### [re:Invent 2017 Developer Workshop](/reInvent17_Developer_Workshop)
 
 This developer workshop is divided in 4 modules.
 
