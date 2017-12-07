@@ -3,7 +3,8 @@ This repository holds application notes and tutorials for the F1 EC2 Instance. P
 
 ## Application Notes
 
-[How to Use the PCIM AXI Port](/Using-PCIM-Port)
+### [How to Use the PCIM AXI Port](/Using-PCIM-Port)
+The purpose of this application note is to provide the F1 developer with additional information when implementing a Custom Logic (CL) that uses the PCIM AXI port to transfer data between the card and host memory. A small device driver is presented that illustrates the basic requirements to control a hardware module connected to the PCIM port.
 
 [How to Use Write Combining to Improve PCIe Bus Performance](/Using-PCIe-Write-Combining)
 
