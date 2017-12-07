@@ -1,6 +1,6 @@
 
 ## F1 FPGA Application Note
-# How to Use PCIe Interrupts
+# How to Use PCIe User Interrupts
 ## Version 1.0
 
 ## Introduction
