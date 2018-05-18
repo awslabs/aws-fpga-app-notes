@@ -9,7 +9,9 @@ Log into an AWS EC2 instance loaded with the [FPGA Developer AMI](https://aws.am
 Configure the EC2 instance
 --------------------------------------------------------------
 ```sh
-git clone https://github.com/aws/aws-fpga -b RC_v1_3_3
+curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/github_repo/aws-fpga.tar.gz -o aws-fpga.tar.gz
+tar -xzf aws-fpga.tar.gz
+rm aws-fpga.tar.gz
 git clone https://github.com/awslabs/aws-fpga-app-notes.git
 cd aws-fpga
 source sdaccel_setup.sh
