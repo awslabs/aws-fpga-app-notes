@@ -3,7 +3,7 @@ Instruction for building the FFmpeg executable included in this repository.
 --------------------------------------------------------------
 Prerequisite
 --------------------------------------------------------------
-Log into an AWS EC2 instance loaded with the [FPGA Developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ)
+Log into an AWS EC2 instance loaded with the [FPGA Developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) v1.3.5
 
 --------------------------------------------------------------
 Configure the EC2 instance
@@ -16,7 +16,7 @@ git clone https://github.com/awslabs/aws-fpga-app-notes.git
 cd aws-fpga
 source sdaccel_setup.sh
 source $XILINX_SDX/settings64.sh
-cd ~/aws-fpga-app-notes/reInvent17_Developer_Workshop/ffmpeg/plugin
+cd ~/aws-fpga-app-notes/reInvent17_Developer_Workshop/ffmpeg/build
 sudo sh
 source /opt/Xilinx/SDx/2017.1.rte/setup.sh
 ```
