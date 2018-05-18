@@ -16,9 +16,9 @@ git clone https://github.com/awslabs/aws-fpga-app-notes.git
 cd aws-fpga
 source sdaccel_setup.sh
 source $XILINX_SDX/settings64.sh
-yum install cmake freetype-devel mercurial
 cd ~/aws-fpga-app-notes/reInvent17_Developer_Workshop/ffmpeg/build
 sudo sh
+yum install cmake freetype-devel mercurial
 source /opt/Xilinx/SDx/2017.1.rte/setup.sh
 ```
 --------------------------------------------------------------
