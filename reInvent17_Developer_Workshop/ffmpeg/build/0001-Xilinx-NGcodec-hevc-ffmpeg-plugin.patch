@@ -1,0 +1,3529 @@
+From 92d6c8dce97c4f5f2ec174e42008039fee185846 Mon Sep 17 00:00:00 2001
+From: root <root@ip-172-31-26-165.ec2.internal>
+Date: Thu, 17 May 2018 21:25:54 +0000
+Subject: [PATCH] Xilinx NGcodec hevc ffmpeg plugin
+
+---
+ ffmpeg.c                                           |  32 +-
+ libavcodec/Makefile                                |   7 +
+ libavcodec/allcodecs.c                             |   1 +
+ libavcodec/xlnx_hevc/Makefile                      |   1 +
+ libavcodec/xlnx_hevc/hw_hevc.c                     | 363 ++++++++++
+ libavcodec/xlnx_hevc/xlnx_hevc_config.h            |  50 ++
+ libavcodec/xlnx_hevc_enc.c                         | 271 +++++++
+ libavcodec/xlnx_hw/Makefile                        |   3 +
+ libavcodec/xlnx_hw/common/inc/xcl.h                |  28 +
+ libavcodec/xlnx_hw/common/inc/xlnx_hrm.h           |  12 +
+ libavcodec/xlnx_hw/common/inc/xlnx_hw_defines.h    |  34 +
+ libavcodec/xlnx_hw/common/inc/xlnx_queue.h         |  17 +
+ libavcodec/xlnx_hw/common/inc/xlnx_ts_queue.h      |  18 +
+ .../xlnx_hw/common/inc/xlnx_types_internal.h       |  49 ++
+ libavcodec/xlnx_hw/common/src/xcl.c                | 478 +++++++++++++
+ libavcodec/xlnx_hw/common/src/xlnx_hrm.c           | 444 ++++++++++++
+ libavcodec/xlnx_hw/common/src/xlnx_queue.c         |  86 +++
+ libavcodec/xlnx_hw/common/src/xlnx_ts_queue.c      | 107 +++
+ libavcodec/xlnx_hw/hevc/Makefile                   |   1 +
+ libavcodec/xlnx_hw/hevc/enc_vu9p.c                 | 266 +++++++
+ libavcodec/xlnx_hw/hevc/enc_vu9p.h                 |   9 +
+ libavcodec/xlnx_hw/hevc/enc_vu9p_2c.c              | 793 +++++++++++++++++++++
+ libavcodec/xlnx_hw/hevc/enc_vu9p_2c.h              |  16 +
+ libavcodec/xlnx_hw/hevc/ku115_hevc_enc_config.h    |  13 +
+ libavcodec/xlnx_hw/hevc/vu9p_hevc_enc_config.h     |  24 +
+ libavcodec/xlnx_hw/xlnx_hw.c                       |  49 ++
+ libavcodec/xlnx_hw/xlnx_hw.h                       |  14 +
+ libavcodec/xlnx_hw/xlnx_hw_types.h                 |  55 ++
+ libavutil/opencl.c                                 |   2 +-
+ 29 files changed, 3236 insertions(+), 7 deletions(-)
+ create mode 100644 libavcodec/xlnx_hevc/Makefile
+ create mode 100644 libavcodec/xlnx_hevc/hw_hevc.c
+ create mode 100644 libavcodec/xlnx_hevc/xlnx_hevc_config.h
+ create mode 100644 libavcodec/xlnx_hevc_enc.c
+ create mode 100644 libavcodec/xlnx_hw/Makefile
+ create mode 100755 libavcodec/xlnx_hw/common/inc/xcl.h
+ create mode 100644 libavcodec/xlnx_hw/common/inc/xlnx_hrm.h
+ create mode 100644 libavcodec/xlnx_hw/common/inc/xlnx_hw_defines.h
+ create mode 100644 libavcodec/xlnx_hw/common/inc/xlnx_queue.h
+ create mode 100644 libavcodec/xlnx_hw/common/inc/xlnx_ts_queue.h
+ create mode 100644 libavcodec/xlnx_hw/common/inc/xlnx_types_internal.h
+ create mode 100755 libavcodec/xlnx_hw/common/src/xcl.c
+ create mode 100644 libavcodec/xlnx_hw/common/src/xlnx_hrm.c
+ create mode 100644 libavcodec/xlnx_hw/common/src/xlnx_queue.c
+ create mode 100644 libavcodec/xlnx_hw/common/src/xlnx_ts_queue.c
+ create mode 100644 libavcodec/xlnx_hw/hevc/Makefile
+ create mode 100644 libavcodec/xlnx_hw/hevc/enc_vu9p.c
+ create mode 100644 libavcodec/xlnx_hw/hevc/enc_vu9p.h
+ create mode 100644 libavcodec/xlnx_hw/hevc/enc_vu9p_2c.c
+ create mode 100644 libavcodec/xlnx_hw/hevc/enc_vu9p_2c.h
+ create mode 100644 libavcodec/xlnx_hw/hevc/ku115_hevc_enc_config.h
+ create mode 100644 libavcodec/xlnx_hw/hevc/vu9p_hevc_enc_config.h
+ create mode 100644 libavcodec/xlnx_hw/xlnx_hw.c
+ create mode 100755 libavcodec/xlnx_hw/xlnx_hw.h
+ create mode 100644 libavcodec/xlnx_hw/xlnx_hw_types.h
+
+diff --git a/ffmpeg.c b/ffmpeg.c
+index 4b4dae4..9564826 100644
+--- a/ffmpeg.c
++++ b/ffmpeg.c
+@@ -1177,6 +1177,11 @@ static void do_video_out(OutputFile *of,
+     ost->last_dropped = nb_frames == nb0_frames && next_picture;
+ 
+   /* duplicates frame if needed */
++  if (ost->enc_ctx->codec->name) {
++      if (0 == strcmp(ost->enc_ctx->codec->name, "xlnx_hevc_enc")) {
++          nb_frames = 1;
++      }
++  }
+   for (i = 0; i < nb_frames; i++) {
+     AVFrame *in_picture;
+     av_init_packet(&pkt);
+@@ -3810,7 +3815,9 @@ static OutputStream *choose_output(void)
+     int i;
+     int64_t opts_min = INT64_MAX;
+     OutputStream *ost_min = NULL;
+-
++    uint64_t frames_min = UINT64_MAX;
++    static int frame_based = 1;
++    int all_valid_ts = 1;
+     for (i = 0; i < nb_output_streams; i++) {
+         OutputStream *ost = output_streams[i];
+         int64_t opts = ost->st->cur_dts == AV_NOPTS_VALUE ? INT64_MIN :
+@@ -3819,13 +3826,26 @@ static OutputStream *choose_output(void)
+         if (ost->st->cur_dts == AV_NOPTS_VALUE)
+             av_log(NULL, AV_LOG_DEBUG, "cur_dts is invalid (this is harmless if it occurs once at the start per stream)\n");
+ 
+-        if (!ost->initialized && !ost->inputs_done)
++        if (!ost->initialized && !ost->inputs_done) {
+             return ost;
+-
+-        if (!ost->finished && opts < opts_min) {
+-            opts_min = opts;
+-            ost_min  = ost->unavailable ? NULL : ost;
+         }
++        if (frame_based && (!strcmp(ost->enc_ctx->codec->name, "xlnx_hevc_enc"))) {
++            if (!ost->finished && ost->frames_encoded < frames_min) {
++                frames_min = ost->frames_encoded;
++                ost_min  = ost->unavailable ? NULL : ost;
++            }
++            if (opts == INT64_MIN) {
++                all_valid_ts = 0;
++            }
++        } else {
++            if (!ost->finished && opts < opts_min) {
++                opts_min = opts;
++                ost_min  = ost->unavailable ? NULL : ost;
++            }
++        }
++    }
++    if (frame_based && all_valid_ts) {
++        frame_based = 0;
+     }
+     return ost_min;
+ }
+diff --git a/libavcodec/Makefile b/libavcodec/Makefile
+index 0dd0c7b..937c929 100644
+--- a/libavcodec/Makefile
++++ b/libavcodec/Makefile
+@@ -916,6 +916,13 @@ OBJS-$(CONFIG_LIBX265_ENCODER)            += libx265.o
+ OBJS-$(CONFIG_LIBXAVS_ENCODER)            += libxavs.o
+ OBJS-$(CONFIG_LIBXVID_ENCODER)            += libxvid.o
+ OBJS-$(CONFIG_LIBZVBI_TELETEXT_DECODER)   += libzvbi-teletextdec.o ass.o
++OBJS-$(CONFIG_XLNX_HEVC_ENCODER)          += xlnx_hevc_enc.o xlnx_hw/xlnx_hw.o \
++                                             xlnx_hw/common/src/xlnx_hrm.o \
++                                             xlnx_hw/common/src/xcl.o \
++                                             xlnx_hw/common/src/xlnx_queue.o \
++                                             xlnx_hw/common/src/xlnx_ts_queue.o \
++                                             xlnx_hw/hevc/enc_vu9p.o \
++                                             xlnx_hw/hevc/enc_vu9p_2c.o
+ 
+ # parsers
+ OBJS-$(CONFIG_AAC_LATM_PARSER)         += latm_parser.o
+diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
+index 4df4772..cf592b6 100644
+--- a/libavcodec/allcodecs.c
++++ b/libavcodec/allcodecs.c
+@@ -673,6 +673,7 @@ static void register_all(void)
+     REGISTER_ENCODER(VP8_VAAPI,         vp8_vaapi);
+     REGISTER_DECODER(VP9_CUVID,         vp9_cuvid);
+     REGISTER_DECODER(VP9_MEDIACODEC,    vp9_mediacodec);
++    REGISTER_ENCODER(XLNX_HEVC,         xlnx_hevc);
+ 
+     /* parsers */
+     REGISTER_PARSER(AAC,                aac);
+diff --git a/libavcodec/xlnx_hevc/Makefile b/libavcodec/xlnx_hevc/Makefile
+new file mode 100644
+index 0000000..b32df98
+--- /dev/null
++++ b/libavcodec/xlnx_hevc/Makefile
+@@ -0,0 +1 @@
++OBJS                            += xlnx_hevc/hw_hevc.o
+diff --git a/libavcodec/xlnx_hevc/hw_hevc.c b/libavcodec/xlnx_hevc/hw_hevc.c
+new file mode 100644
+index 0000000..a35da42
+--- /dev/null
++++ b/libavcodec/xlnx_hevc/hw_hevc.c
+@@ -0,0 +1,363 @@
++//
++// NOTE: currently using ICD for DSA 2.0 50Mhz ...
++// TODO: update this when new DSA is available
++//
++
++#include <inttypes.h>
++#include <stdlib.h>
++#include <linux/limits.h>
++#include <unistd.h>
++#include "libavutil/opencl.h"
++#include "libavutil/log.h"
++#include "xlnx_hevc_config.h"
++
++// Header based loading
++//#include "opencl_image.h"
++
++//Globals - for opencl
++static AVOpenCLExternalEnv *cl_env;
++static cl_kernel kernel = NULL;
++static cl_program program = NULL;
++
++// OpenCL Buffers
++static cl_mem CSR3_INPUT_FP_Y_V; 
++static cl_mem CSR4_INPUT_FP_U_V; 
++static cl_mem CSR5_INPUT_FP_V_V; 
++static cl_mem CSR6_NEXT_FP_Y_V; 
++static cl_mem CSR7_NEXT_FP_U_V; 
++static cl_mem CSR8_NEXT_FP_V_V;
++static cl_mem CSR12_RECON_BASE_V; 
++static cl_mem CSR13_BITSTREAM_BASE_V; 
++static cl_mem CSR14_BITSTREAM_LEN_V;
++
++static cl_int status;
++static unsigned int CurSourceImageSize[3] = { 0, 0, 0 };
++static unsigned int EncodedFrameSize = 0;
++static unsigned int EncodedFrameLengthSize = 0;
++static int frameNumber = 0;
++
++int load_file_to_memory_hevc(const char *filename, unsigned char **result);
++
++//
++// HEVC init function
++//
++void ff_init_hevc_xlnx_hw(AVCodecContext *avctx)
++{
++    unsigned char *kernelbinary = 0;
++    size_t kernel_len = 0;
++    AVOpenCLDeviceList *device_list;
++    AVOpenCLDeviceNode *device_node = NULL;
++    cl_context_properties cps[3];
++    int i;
++    int nb_devices;
++    int arg = 0;
++    // Header based loading (opencl_image.h)
++    //kernelbinary = hevc_xclbin;
++    //kernel_len = hevc_xclbin_len;
++
++    //
++    // Setup NGCodec HEVC core defaults
++    //
++    unsigned int CSR1_FRAME_WIDTH_V = avctx->width;
++    unsigned int CSR2_FRAME_HEIGHT_V = avctx->height;
++    unsigned int CSR9_BITRATE_V = 0;
++    unsigned int CSR10_FIXED_QP_V = 0;
++    unsigned int CSR11_INTRA_PERIOD_V = avctx->gop_size; 
++    unsigned int CSR15_RESET_ENCODER_V = 0;
++
++    av_log(NULL, AV_LOG_INFO, " * Xilinx HEVC HW accelerator init ***\n");
++    if (avctx->bit_rate > 0)
++    {
++         // Constant bitrate mode
++         CSR9_BITRATE_V = avctx->bit_rate;
++         av_log(NULL, AV_LOG_INFO, " * Encoding in constant bitrate mode***\n");
++    }
++    else 
++    {
++         // Fixed QP mode
++         CSR10_FIXED_QP_V = avctx->global_quality;
++         av_log(NULL, AV_LOG_INFO, " * Encoding in fixed QP mode***\n");
++    }
++
++    //
++    // Setup OpenCL context
++    //
++    cl_env = av_opencl_alloc_external_env();
++    cl_platform_id platforms[16] = { 0 };
++	cl_device_id devices[16];
++	char platformName[256];
++	char deviceName[256];
++	cl_uint platformCount = 0;
++	cl_int err = clGetPlatformIDs(0, 0, &platformCount);
++	err = clGetPlatformIDs(16, platforms, &platformCount);
++	if (err != CL_SUCCESS) {
++		//printf("%s\n", oclErrorCode(err));
++		return;// hardware;
++    }
++	cl_env->device_type = CL_DEVICE_TYPE_ACCELERATOR;
++    for (cl_uint i = 0; i < platformCount; i++) {
++		err = clGetPlatformInfo(platforms[i], CL_PLATFORM_NAME, 256, platformName, 0);
++		if (err != CL_SUCCESS) {
++			//printf("%s\n", oclErrorCode(err));
++			return;// hardware;
++		}
++		cl_uint deviceCount = 0;
++		err = clGetDeviceIDs(platforms[i], cl_env->device_type, 16, devices, &deviceCount);
++		if ((err != CL_SUCCESS) || (deviceCount == 0)) {
++			continue;
++		}
++
++		err = clGetDeviceInfo(devices[0], CL_DEVICE_NAME, 256, deviceName, 0);
++		if (err != CL_SUCCESS) {
++			//printf("%s\n", oclErrorCode(err));
++			return;// hardware;
++		}
++
++		cl_context_properties contextData[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platforms[i], 0};
++		cl_context context = clCreateContextFromType(contextData, cl_env->device_type, 0, 0, &err);
++		if (err != CL_SUCCESS) {
++			continue;
++		}
++		cl_command_queue queue = clCreateCommandQueue(context, devices[0], 0, &err);
++		if (err != CL_SUCCESS) {
++			//printf("%s\n", oclErrorCode(err));
++			return; //hardware;
++		}
++		cl_env->platform_id = platforms[i];
++		cl_env->context = context;
++		cl_env->command_queue = queue;
++		cl_env->device_type = CL_DEVICE_TYPE_ACCELERATOR;
++        cl_env->device_id = devices[0];
++        break;
++	}
++
++    //
++    // Create the program
++    //
++	unsigned char* xcl_path = getenv("XLNX_XCLBIN_PATH");
++	if (NULL == xcl_path)
++	{
++       av_log(NULL, AV_LOG_INFO, " * XLNX_XCLBIN_PATH not found\n");
++       return;
++	}
++    
++	char xcl_fullpath[PATH_MAX];
++	snprintf(xcl_fullpath, sizeof(xcl_fullpath), "%s/hevc_1k1c.xclbin", xcl_path); 
++    av_log(NULL, AV_LOG_INFO, " * loading kernel from file %s\n", xcl_fullpath);
++	load_file_to_memory_hevc(xcl_fullpath, &kernelbinary);
++    program = clCreateProgramWithBinary(cl_env->context, 1, &(cl_env->device_id), 
++                   &kernel_len, (const unsigned char**)&kernelbinary, &status, NULL);
++    if( status != CL_SUCCESS || !program )
++    {
++        av_log(NULL, AV_LOG_ERROR, "OpenCL unable to create fpga accelerator program\n");
++        return;
++    }
++
++    //
++    // Build the program
++    //
++    av_log(NULL, AV_LOG_INFO," * Building the program\n");
++    status = clBuildProgram(program, 1, &(cl_env->device_id), NULL, NULL, NULL);
++    if( status != CL_SUCCESS )
++    {
++        av_log(NULL, AV_LOG_ERROR, "OpenCL unable to build program\n");
++        return;
++    }
++
++    //
++    // Create the kernel
++    //
++    av_log(NULL, AV_LOG_INFO," * Creating the HEVC kernel\n");
++    kernel = clCreateKernel(program, "krnl_ngcodec_hevc_0", &status);	//"HEVC_kernel"
++    if( status != CL_SUCCESS )
++    {
++        av_log(NULL, AV_LOG_ERROR, "OpenCL unable to create kernel\n");
++        return;
++    }
++
++    //
++    // Setup Source and EncodedFrame Buffers
++    //
++    CurSourceImageSize[Y] = (avctx->width * avctx->height);
++    CurSourceImageSize[U] = (avctx->width * avctx->height) >> 2;
++    CurSourceImageSize[V] = (avctx->width * avctx->height) >> 2;
++	
++    // Encoded Frame data size - hard code to allocate host memory as this varies!
++    EncodedFrameSize = (avctx->width * avctx->height * 3) >> 1;
++    EncodedFrameLengthSize = 1;
++    // av_log(NULL, AV_LOG_INFO," * Image Sizes: Source[YUV]=[%d,%d,%d] EncodedFrame=%d\n", 
++    //		CurSourceImageSize[Y], CurSourceImageSize[U], CurSourceImageSize[V], EncodedFrameSize);
++
++    //
++    // Setup OpenCL Buffers and Kernel Parameters
++    //
++    // av_log(NULL, AV_LOG_INFO," * Creating the kernel buffers\n");
++    CREATEBUF(CSR3_INPUT_FP_Y_V, CL_MEM_READ_ONLY,  CurSourceImageSize[Y] * sizeof(unsigned char));
++    CREATEBUF(CSR4_INPUT_FP_U_V, CL_MEM_READ_ONLY,  CurSourceImageSize[U] * sizeof(unsigned char));
++    CREATEBUF(CSR5_INPUT_FP_V_V, CL_MEM_READ_ONLY,  CurSourceImageSize[V] * sizeof(unsigned char));
++    CREATEBUF(CSR6_NEXT_FP_Y_V, CL_MEM_READ_ONLY,  CurSourceImageSize[Y] * sizeof(unsigned char));
++    CREATEBUF(CSR7_NEXT_FP_U_V, CL_MEM_READ_ONLY,  CurSourceImageSize[U] * sizeof(unsigned char));
++    // Padding to make reference base pointer of reconstructed picture 128KB aligned
++    CREATEBUF(CSR8_NEXT_FP_V_V, CL_MEM_READ_ONLY,  (CurSourceImageSize[V]+ 48*128*1024-1920*1080*3) * sizeof(unsigned char));
++    // Reference frame requires at least 16MB space in DDR
++    CREATEBUF(CSR12_RECON_BASE_V, CL_MEM_READ_WRITE,  16*1024*1024);
++    CREATEBUF(CSR13_BITSTREAM_BASE_V, CL_MEM_WRITE_ONLY, EncodedFrameSize * sizeof(unsigned char));
++    CREATEBUF(CSR14_BITSTREAM_LEN_V, CL_MEM_WRITE_ONLY, EncodedFrameLengthSize * sizeof(unsigned long long));
++    
++    //
++    // Send Kernel Parameters
++    //
++    // av_log(NULL, AV_LOG_INFO," * Sending parameters to HEVC kernel\n"); 
++    // av_log(NULL, AV_LOG_INFO," * CSR1_FRAME_WIDTH_V:  0x%08x\n", CSR1_FRAME_WIDTH_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR2_FRAME_HEIGHT_V: 0x%08x\n", CSR2_FRAME_HEIGHT_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR3_INPUT_FP_Y_V addr %p\n", &CSR3_INPUT_FP_Y_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR4_INPUT_FP_U_V addr %p\n", &CSR4_INPUT_FP_U_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR5_INPUT_FP_V_V addr %p\n", &CSR5_INPUT_FP_V_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR6_NEXT_FP_Y_V addr %p\n", &CSR6_NEXT_FP_Y_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR7_NEXT_FP_U_V addr %p\n", &CSR7_NEXT_FP_U_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR8_NEXT_FP_V_V addr %p\n", &CSR8_NEXT_FP_V_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR9_BITRATE_V:  0x%08x\n", CSR9_BITRATE_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR10_FIXED_QP_V:  0x%08x\n", CSR10_FIXED_QP_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR11_INTRA_PERIOD_V:  0x%08x\n", CSR11_INTRA_PERIOD_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR12_RECON_BASE_V addr %p\n", &CSR12_RECON_BASE_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR13_BITSTREAM_BASE_V addr %p\n", &CSR13_BITSTREAM_BASE_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR14_BITSTREAM_LEN_V addr %p\n", &CSR14_BITSTREAM_LEN_V);
++    // av_log(NULL, AV_LOG_INFO," * CSR15_RESET_ENCODER_V:  0x%08x\n", CSR15_RESET_ENCODER_V);
++	
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(unsigned int), &CSR1_FRAME_WIDTH_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(unsigned int), &CSR2_FRAME_HEIGHT_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &CSR3_INPUT_FP_Y_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &CSR4_INPUT_FP_U_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &CSR5_INPUT_FP_V_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &CSR6_NEXT_FP_Y_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &CSR7_NEXT_FP_U_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &CSR8_NEXT_FP_V_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(unsigned int), &CSR9_BITRATE_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(unsigned int), &CSR10_FIXED_QP_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(unsigned int), &CSR11_INTRA_PERIOD_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &CSR12_RECON_BASE_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &CSR13_BITSTREAM_BASE_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &CSR14_BITSTREAM_LEN_V);
++    OCLCHECK(clSetKernelArg, kernel, arg++, sizeof(unsigned int), &CSR15_RESET_ENCODER_V);
++    return;
++}
++
++//
++// HEVC opencl run function
++//
++int ff_hevc_xlnx_hw(AVCodecContext *avctx, AVFrame *pic, uint8_t *dst, uint32_t *dstSize)
++{
++    size_t global_work_size_1d[1] = {1};
++    size_t local_work_size_1d[1] = {1};	
++	 
++    if (frameNumber == 0)
++    {
++        OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR3_INPUT_FP_Y_V, CL_TRUE, 0, CurSourceImageSize[Y] * sizeof(unsigned char), pic->data[Y], 0, NULL, NULL);
++        OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR4_INPUT_FP_U_V, CL_TRUE, 0, CurSourceImageSize[U] * sizeof(unsigned char), pic->data[U], 0, NULL, NULL);
++        OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR5_INPUT_FP_V_V, CL_TRUE, 0, CurSourceImageSize[V] * sizeof(unsigned char), pic->data[V], 0, NULL, NULL);  
++        // av_log(NULL, AV_LOG_INFO," * Loading frame %d\n", frameNumber);        
++        frameNumber++;
++        return 0;
++    }
++    else if (frameNumber == 1)
++    {
++        OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR6_NEXT_FP_Y_V, CL_TRUE, 0, CurSourceImageSize[Y] * sizeof(unsigned char), pic->data[Y], 0, NULL, NULL);
++        OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR7_NEXT_FP_U_V, CL_TRUE, 0, CurSourceImageSize[U] * sizeof(unsigned char), pic->data[U], 0, NULL, NULL);
++        OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR8_NEXT_FP_V_V, CL_TRUE, 0, CurSourceImageSize[V] * sizeof(unsigned char), pic->data[V], 0, NULL, NULL);
++        // av_log(NULL, AV_LOG_INFO," * Loading frame %d\n", frameNumber);        
++        frameNumber++;
++    }
++    else 
++    {
++        // Ping-pong buffers used; switch cur and nxt buffer pointer for kernel
++        if (frameNumber%2 == 0)
++		{
++                        OCLCHECK1(clSetKernelArg, kernel, 2, sizeof(cl_mem), &CSR6_NEXT_FP_Y_V);
++			OCLCHECK1(clSetKernelArg, kernel, 3, sizeof(cl_mem), &CSR7_NEXT_FP_U_V);
++			OCLCHECK1(clSetKernelArg, kernel, 4, sizeof(cl_mem), &CSR8_NEXT_FP_V_V);
++			OCLCHECK1(clSetKernelArg, kernel, 5, sizeof(cl_mem), &CSR3_INPUT_FP_Y_V);
++			OCLCHECK1(clSetKernelArg, kernel, 6, sizeof(cl_mem), &CSR4_INPUT_FP_U_V);
++			OCLCHECK1(clSetKernelArg, kernel, 7, sizeof(cl_mem), &CSR5_INPUT_FP_V_V);
++			OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR3_INPUT_FP_Y_V, CL_TRUE, 0, CurSourceImageSize[Y] * sizeof(unsigned char), pic->data[Y], 0, NULL, NULL);
++			OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR4_INPUT_FP_U_V, CL_TRUE, 0, CurSourceImageSize[U] * sizeof(unsigned char), pic->data[U], 0, NULL, NULL);
++			OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR5_INPUT_FP_V_V, CL_TRUE, 0, CurSourceImageSize[V] * sizeof(unsigned char), pic->data[V], 0, NULL, NULL);
++                        // av_log(NULL, AV_LOG_INFO," * Loading frame %d\n", frameNumber); 
++		}
++		else 
++		{
++			OCLCHECK1(clSetKernelArg, kernel, 2, sizeof(cl_mem), &CSR3_INPUT_FP_Y_V);
++			OCLCHECK1(clSetKernelArg, kernel, 3, sizeof(cl_mem), &CSR4_INPUT_FP_U_V);
++			OCLCHECK1(clSetKernelArg, kernel, 4, sizeof(cl_mem), &CSR5_INPUT_FP_V_V);
++			OCLCHECK1(clSetKernelArg, kernel, 5, sizeof(cl_mem), &CSR6_NEXT_FP_Y_V);
++			OCLCHECK1(clSetKernelArg, kernel, 6, sizeof(cl_mem), &CSR7_NEXT_FP_U_V);
++			OCLCHECK1(clSetKernelArg, kernel, 7, sizeof(cl_mem), &CSR8_NEXT_FP_V_V);
++			OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR6_NEXT_FP_Y_V, CL_TRUE, 0, CurSourceImageSize[Y] * sizeof(unsigned char), pic->data[Y], 0, NULL, NULL); 
++			OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR7_NEXT_FP_U_V, CL_TRUE, 0, CurSourceImageSize[U] * sizeof(unsigned char), pic->data[U], 0, NULL, NULL); 
++			OCLCHECK1(clEnqueueWriteBuffer, cl_env->command_queue, CSR8_NEXT_FP_V_V, CL_TRUE, 0, CurSourceImageSize[V] * sizeof(unsigned char), pic->data[V], 0, NULL, NULL);
++                        // av_log(NULL, AV_LOG_INFO," * Loading frame %d\n", frameNumber);  
++		}
++                frameNumber++;
++    }
++    OCLCHECK1(clEnqueueNDRangeKernel, cl_env->command_queue, kernel, 1, NULL, global_work_size_1d, local_work_size_1d, 0, NULL, NULL);
++
++    //
++    // Wait for the hw accelerator to complete
++    //
++    clFinish(cl_env->command_queue);
++    //av_log(NULL, AV_LOG_INFO," * Finished the xlnx hw accelerator kernel\n");
++
++    //
++    // Read the result
++    // Get the length of the Encoded Frame first as this varies!
++    //
++    // av_log(NULL, AV_LOG_INFO," * Enqueuing Read Buffer - CSR14_BITSTREAM_LEN_V\n");
++    OCLCHECK1(clEnqueueReadBuffer, cl_env->command_queue, CSR14_BITSTREAM_LEN_V, CL_TRUE, 0, EncodedFrameLengthSize * sizeof(unsigned int), dstSize, 0, NULL, NULL);
++    // av_log(NULL, AV_LOG_INFO," * Encoded Frame Length = %d\n", *dstSize);
++    //*dstSize = *dstSize * 4;
++
++    // av_log(NULL, AV_LOG_INFO," * Enqueuing Read Buffer - CSR13_BITSTREAM_BASE_V\n");
++    OCLCHECK1(clEnqueueReadBuffer, cl_env->command_queue, CSR13_BITSTREAM_BASE_V, CL_TRUE, 0, (*dstSize) * sizeof(unsigned char), dst, 0, NULL, NULL);
++
++    return 0;
++}
++
++//
++// HEVC exit function
++//
++void ff_uninit_hevc_xlnx_hw(AVCodecContext *avctx)
++{
++    // av_log(NULL, AV_LOG_INFO," * Tidying up ... releasing OpenCL Objects\n");
++    clReleaseKernel(kernel);
++    clReleaseProgram(program);
++    clReleaseMemObject(CSR3_INPUT_FP_Y_V);
++    clReleaseMemObject(CSR4_INPUT_FP_U_V);
++    clReleaseMemObject(CSR5_INPUT_FP_V_V);
++    clReleaseMemObject(CSR6_NEXT_FP_Y_V);
++    clReleaseMemObject(CSR7_NEXT_FP_U_V);
++    clReleaseMemObject(CSR8_NEXT_FP_V_V);
++    clReleaseMemObject(CSR13_BITSTREAM_BASE_V);
++    clReleaseMemObject(CSR14_BITSTREAM_LEN_V);	
++}
++
++int load_file_to_memory_hevc(const char *filename, unsigned char **result)
++{
++   int size = 0;
++   FILE *f = fopen(filename, "rb");
++   if(f == NULL)
++   {
++       *result = NULL;
++        return -1; // -1 means file opening fail
++   }
++   fseek(f, 0, SEEK_END);
++   size = ftell(f);
++   fseek(f, 0, SEEK_SET);
++   *result = malloc(size);
++   if(size != fread(*result, sizeof(char), size, f))
++   {
++      free(*result);
++      return -2; // -2 means file reading fail
++   }
++   fclose(f);
++   return size;
++ }
++
+diff --git a/libavcodec/xlnx_hevc/xlnx_hevc_config.h b/libavcodec/xlnx_hevc/xlnx_hevc_config.h
+new file mode 100644
+index 0000000..18dd33e
+--- /dev/null
++++ b/libavcodec/xlnx_hevc/xlnx_hevc_config.h
+@@ -0,0 +1,50 @@
++#ifndef _XLNX_HEVC_CONFIG_H_
++#define _XLNX_HEVC_CONFIG_H_
++
++#include "libavcodec/avcodec.h"
++
++//Macros
++#define OCLCHECK(method, ... )                                                 \
++do {                                                                           \
++    status = method(__VA_ARGS__);                                              \
++    if (status != CL_SUCCESS) {                                                \
++        av_log(NULL, AV_LOG_ERROR, # method " error '%s'\n",                   \
++               av_opencl_errstr(status));                                      \
++        return;                                                                \
++    }                                                                          \
++} while (0)
++
++#define OCLCHECK1(method, ... )                                                \
++do {                                                                           \
++    status = method(__VA_ARGS__);                                              \
++    if (status != CL_SUCCESS) {                                                \
++        av_log(NULL, AV_LOG_ERROR, # method " error '%s'\n",                   \
++               av_opencl_errstr(status));                                      \
++        return AVERROR_EXTERNAL;                                               \
++    }                                                                          \
++} while (0)
++
++#define CREATEBUF(out, flags, size)	                                       \
++do {                                                                           \
++    out = clCreateBuffer(cl_env->context, flags, size, NULL, &status);         \
++    if (status != CL_SUCCESS) {                                                \
++        av_log(NULL, AV_LOG_ERROR, "Could not create OpenCL buffer\n");        \
++        return;                                                                \
++    }                                                                          \
++} while (0)
++
++//Typedefs
++typedef enum
++{
++	Y = 0,
++	U = 1,
++	V = 2
++}col_fmt_t;
++
++//Function Prototypes
++void ff_init_hevc_xlnx_hw(AVCodecContext *c);
++void ff_uninit_hevc_xlnx_hw(AVCodecContext *c);
++int ff_hevc_xlnx_hw(AVCodecContext *avctx, AVFrame *pic, uint8_t *dst, uint32_t *dstSize);
++
++#endif //_XLNX_HEVC_CONFIG_H_
++
+diff --git a/libavcodec/xlnx_hevc_enc.c b/libavcodec/xlnx_hevc_enc.c
+new file mode 100644
+index 0000000..93c5d5b
+--- /dev/null
++++ b/libavcodec/xlnx_hevc_enc.c
+@@ -0,0 +1,271 @@
++/*
++ * Xilinx HEVC NGCodec encoder
++ *
++ * Copyright (C) 2015 Xilinx Inc.
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++#include <stdio.h>
++#include "avcodec.h"
++#include "internal.h"
++#include "xlnx_hw/xlnx_hw.h"
++#include "pthread.h"
++#include <sys/types.h>
++#include <sys/syscall.h>
++#include "xlnx_hw/common/inc/xlnx_queue.h"
++#include "xlnx_hw/common/inc/xlnx_hw_defines.h"
++
++typedef struct EncodeRequest {
++    xlnx_cmp_buf iBuf;
++    xlnx_hw_buf iBufHdr;
++    xlnx_data_buf out;
++    xlnx_hw_buf oBufHdr;
++    AVFrame* pic;
++}
++EncodeRequest;
++
++typedef struct XlnxHevcContext {
++    xlnx_hw hw;
++    HevcEncParam params;
++    xlnx_queue* rQ;
++    int frame;
++}
++XlnxHevcContext;
++
++static EncodeRequest* createEncReq(const AVFrame* pic, size_t aEncodeSize) {
++    EncodeRequest* req;
++    xlnx_data_buf* tmp;
++    req = av_mallocz(sizeof(EncodeRequest));
++    if (NULL == req) {
++        av_log(NULL, AV_LOG_ERROR,"Error: Cannot allocate memory %s at %d\n", __FILE__, __LINE__);
++        return NULL;
++    }
++    //input
++    req->iBufHdr.type = ERAW;
++    req->oBufHdr.type = EDATA;
++    if (pic != NULL) {
++        req->pic = av_frame_clone(pic);
++        if (NULL == req->pic) {
++            av_log(NULL, AV_LOG_ERROR,"Error: Cannot allocate memory %s at %d\n", __FILE__, __LINE__);
++            av_free(req);
++            return NULL;
++        }
++        tmp = (xlnx_data_buf*)&req->iBuf;
++        for (int i = 0; i < 3; i++) {
++            tmp[i].pDATA = req->pic->data[i];
++            tmp[i].offset = 0;
++            tmp[i].size = req->pic->linesize[i] * req->pic->height;
++        }
++        req->iBufHdr.ptr = &req->iBuf;
++        // output
++        req->out.pDATA = av_malloc(aEncodeSize);
++        if (NULL == req->out.pDATA) {
++            av_log(NULL, AV_LOG_ERROR,"Error: Cannot allocate memory %s at %d\n", __FILE__, __LINE__);
++            av_frame_unref(req->pic);
++            return NULL;
++        }
++        req->out.size = aEncodeSize;
++        req->oBufHdr.ptr = &req->out;
++    } else {
++        req->iBufHdr.ptr = NULL;
++        req->oBufHdr.ptr = NULL;
++    }
++
++    return req;
++}
++
++static void destroyEncInput(EncodeRequest* aReq) {
++    if (aReq->pic) {
++        av_frame_unref(aReq->pic);
++        av_frame_free(&aReq->pic);
++    }
++}
++
++static void destroyEncOut(EncodeRequest* aReq) {
++    if(aReq->out.pDATA) av_free(aReq->out.pDATA);
++}
++
++static int destroyEncReq(EncodeRequest* aReq) {
++    destroyEncInput(aReq);
++    destroyEncOut(aReq);
++    av_free(aReq);
++    return 0;
++}
++
++static void hevc_init_params(AVCodecContext *avctx, HevcEncParam* params) {
++    params->width = avctx->width;
++    params->height = avctx->height;
++    params->ip = avctx->gop_size;
++    params->bitrate = avctx->bit_rate;
++    params->qp = avctx->global_quality;
++    if (params->qp > 51) {
++        // Constant bitrate mode
++        av_log(NULL, AV_LOG_INFO, " * Encoding in constant bitrate mode***\n");
++    } else {
++        // Fixed QP mode
++        av_log(NULL, AV_LOG_INFO, " * Encoding in fixed QP mode***\n");
++    }
++    params->reset = 0;
++    return;
++}
++static int isSupported(AVCodecContext *avctx) {
++    //Supported 1080p60, 8bits
++    // height and width should be a multiple of 4
++    // minimum resolution is 352x288
++    int width, height;
++    width = avctx->width;
++    height = avctx->height;
++    if (((width & 3) != 0) || ((height & 3) != 0)) {
++        av_log(NULL, AV_LOG_ERROR,"ERROR:height and width should be a multiple of 4\n");
++        return -1;
++    }
++    if ((width < 352 || height < 288) &&
++        (width < 288 || height < 352)) {
++        av_log(NULL, AV_LOG_ERROR,"ERROR: min resolution supported is 352x288\n");
++        return -1;
++    }
++    switch(avctx->pix_fmt) {
++    case AV_PIX_FMT_YUV420P:
++        avctx->bits_per_raw_sample = 8;
++        break;
++    default:
++        av_log(NULL, AV_LOG_ERROR,"ERROR: Pixel format not supported...\n");
++        return -1;
++        break;
++    }
++    return 0;
++}
++
++static int xlnx_hevc_encode_init(AVCodecContext *avctx) {
++    XlnxHevcContext* hevc;
++    HevcEncParam* params;
++    if (isSupported(avctx) < 0) {
++        return AVERROR(ENOSYS);
++    }
++    hevc = (XlnxHevcContext*)avctx->priv_data;
++    params = &hevc->params;
++    hevc_init_params(avctx, params);
++    hevc->rQ = createQueue(HEVC_ENC_OUT_Q_CAPACITY);
++    if (NULL == hevc->rQ) return -1;
++    hevc->hw = xlnx_hw_get(EHevcEnc, params);
++    if (NULL == hevc->hw) {
++        av_log(NULL, AV_LOG_ERROR,"ERROR: Failed to get EHevcEnc handle\n");
++        return AVERROR(EINVAL);
++    }
++    return 0;
++}
++
++static int xlnx_hevc_encode_frame(AVCodecContext *avctx, AVPacket *pkt, const AVFrame *pic, int *got_packet) {
++    XlnxHevcContext* hevc = (XlnxHevcContext*)avctx->priv_data;
++    int EntrySize = avctx->bits_per_raw_sample == 8 ? 1 : 2;
++    int ret;
++    int EntryCount = 0;
++    uint64_t EncodeBuffSize = 0;
++    int width, height, format;
++    EncodeRequest* req;
++    xlnx_hw_buf* outBuf;
++    void* nullptr;
++    HevcEncParam* params = &hevc->params;
++    if (NULL == pic) {
++        av_log(NULL, AV_LOG_DEBUG, "xlnx_hevc_encode_frame EOS Received\n");
++        if (params->reset == 0) {
++            params->reset = 1;
++        } else if (params->reset == 2) {
++            *got_packet = 0;
++            return 0;
++        }
++        width = avctx->width;
++        height = avctx->height;
++        format = avctx->pix_fmt;
++    } else {
++        width = pic->width;
++        height = pic->height;
++        format = pic->format;
++    }
++
++    switch(format) {
++    case AV_PIX_FMT_YUV420P:
++        EntryCount = 2;
++        break;
++    default:
++        av_log(NULL, AV_LOG_ERROR,"Error. Encoding unknown pixel format.\n");
++        return AVERROR_INVALIDDATA;
++        break;
++    }
++
++    EncodeBuffSize = EntryCount * width * height * EntrySize;
++
++    req = createEncReq(pic, EncodeBuffSize);
++    if (req == NULL) {
++        return -1;
++    }
++    outBuf = &req->oBufHdr;
++    nullptr = NULL;
++    ret = xlnx_hw_process_async(hevc->hw, &hevc->params, &req->iBufHdr, &outBuf, &nullptr);
++    if (ret < 0) {
++        *got_packet = 0;
++        destroyEncReq(req);
++        return AVERROR(EINVAL);
++    } else if (ret == 0) {
++        *got_packet = 0;
++        enqueue(hevc->rQ, (XItem)req);
++        return 0;
++    } else if (ret == 1) {
++        EncodeRequest* tmpReq = (EncodeRequest*)dequeue(hevc->rQ);
++        xlnx_data_buf* ptr = outBuf->ptr;
++        assert(tmpReq->out.pDATA == ptr->pDATA);
++        av_packet_from_data(pkt, ptr->pDATA, ptr->size);
++        pkt->pts = pkt->dts = (int64_t)tmpReq->pic->pts;
++        destroyEncInput(tmpReq);
++        av_free(tmpReq);
++        enqueue(hevc->rQ, (XItem)req);
++        *got_packet = 1;
++    } else if (ret == 2) {
++        *got_packet = 0;
++        params->reset = 2;
++    }
++    return 0;
++}
++
++static int xlnx_hevc_encode_close(AVCodecContext *avctx) {
++    XlnxHevcContext* hevc = (XlnxHevcContext*)avctx->priv_data;
++    xlnx_hw_release(hevc->hw);
++    if (hevc->rQ) {
++        while(!isEmpty(hevc->rQ)) {
++            EncodeRequest* req = (EncodeRequest*)dequeue(hevc->rQ);
++            destroyEncReq(req);
++        }
++        destroyQueue(hevc->rQ);
++    }
++    return 0;
++}
++
++AVCodec ff_xlnx_hevc_encoder = {
++    .name           = "xlnx_hevc_enc",
++    .long_name      = NULL_IF_CONFIG_SMALL("Xilinx High Efficiency Video Codec (H.265) Encoder"),
++    .type           = AVMEDIA_TYPE_VIDEO,
++    .id             = AV_CODEC_ID_HEVC,
++    .priv_data_size = sizeof(XlnxHevcContext),
++    .init           = xlnx_hevc_encode_init,
++    .encode2        = xlnx_hevc_encode_frame,
++    .close          = xlnx_hevc_encode_close,
++    .capabilities   = CODEC_CAP_DR1 | AV_CODEC_CAP_DELAY,
++    .pix_fmts       = (const enum AVPixelFormat[]) {
++                          AV_PIX_FMT_YUV420P, AV_PIX_FMT_NONE
++                      },
++};
++
+diff --git a/libavcodec/xlnx_hw/Makefile b/libavcodec/xlnx_hw/Makefile
+new file mode 100644
+index 0000000..dddd044
+--- /dev/null
++++ b/libavcodec/xlnx_hw/Makefile
+@@ -0,0 +1,3 @@
++OBJS                            += xlnx_hw/xlnx_hw.o 
++OBJS                            += xlnx_hw/xlnx_hrm.o
++OBJS                            += xlnx_hw/xcl.o
+diff --git a/libavcodec/xlnx_hw/common/inc/xcl.h b/libavcodec/xlnx_hw/common/inc/xcl.h
+new file mode 100755
+index 0000000..327837c
+--- /dev/null
++++ b/libavcodec/xlnx_hw/common/inc/xcl.h
+@@ -0,0 +1,28 @@
++#ifndef XCL_H
++#define XCL_H
++
++#include <CL/opencl.h>
++#include "xlnx_types_internal.h"
++
++int xcl_GetPlatform(const char* platform, cl_platform_id* id);
++int xcl_CreateContextFromType(const cl_platform_id* id, cl_device_type aType,
++    cl_context* aContext);
++int xcl_ReleaseContext(cl_context* aContext);
++int xcl_GetDeviceList(const cl_platform_id* id, cl_device_type aType,
++    xlnx_device** aDeviceList, cl_uint* aNumDevices);
++int xcl_FreeDeviceList(xlnx_device* aDeviceList, cl_uint aNumDevices);
++int xcl_IsDeviceAvailable(cl_device_id aDevice);
++int xcl_ImportBinaryHeader(cl_context* aContext, cl_device_id* aDevice,
++    const char *xclbin, size_t aBinaryLength, cl_program* aProgram);
++int xcl_ImportBinary(cl_context* aContext, cl_device_id* aDevice,
++    const char *xclbin_file_name, cl_program* aProgram);
++int xcl_ReleaseProgram(cl_program* aProgram);
++int xcl_CreateKernels(cl_context* aContext, cl_device_id* aDevice,
++    cl_program* aProgram, const char** aKernelNames, uint32_t aNumKernels,
++        xlnx_kernel** aKernelList);
++int xcl_CreateKernels2(cl_context* aContext, cl_device_id* aDevice,
++    cl_program* aProgram, const KRNL_CONFIG* aKernelConfig, uint32_t aNumKernels,
++        xlnx_kernel** aKernelList);
++int xcl_FreeKernels(xlnx_kernel* aKernelList, uint32_t aNumKernels);
++
++#endif //XCL_H
+\ No newline at end of file
+diff --git a/libavcodec/xlnx_hw/common/inc/xlnx_hrm.h b/libavcodec/xlnx_hw/common/inc/xlnx_hrm.h
+new file mode 100644
+index 0000000..1f38d58
+--- /dev/null
++++ b/libavcodec/xlnx_hw/common/inc/xlnx_hrm.h
+@@ -0,0 +1,12 @@
++#ifndef XLNX_HRM_H
++#define XLNX_HRM_H
++
++#include "../../xlnx_hw_types.h"
++#include "../inc/xlnx_types_internal.h"
++
++int xlnx_hrm_init(const char* aCfgFileName, xlnx_hw_id aHWID);
++int xlnx_hrm_deinit(void);
++xlnx_host* xlnx_hrm_get_host(xlnx_hw_id aHWID, xlnx_hw_params aParams);
++int xlnx_hrm_release_host(xlnx_host* aHost);
++
++#endif //XLNX_HRM_H
+diff --git a/libavcodec/xlnx_hw/common/inc/xlnx_hw_defines.h b/libavcodec/xlnx_hw/common/inc/xlnx_hw_defines.h
+new file mode 100644
+index 0000000..deb7913
+--- /dev/null
++++ b/libavcodec/xlnx_hw/common/inc/xlnx_hw_defines.h
+@@ -0,0 +1,34 @@
++#ifndef XLNX_HW_DEFINES_H
++#define XLNX_HW_DEFINES_H
++
++#define RESET_UPPER_16 0x0000FFFF
++#define RESET_LOWER_16 0xFFFF0000
++
++#define FILE_PATH_LENGTH 1024
++#define LOAD_BINARY_FROM_HEADER 0
++#define VU9P_HEVC_ENC_2_K 1
++#define VU9P_HEVC_ENC_NUM_CH 2
++
++#define HEVC_KRNL_CH_Q_CAPACITY 3
++#define HEVC_ENC_IN_Q_CAPACITY 2
++#define HEVC_ENC_OUT_Q_CAPACITY (HEVC_ENC_IN_Q_CAPACITY + HEVC_KRNL_CH_Q_CAPACITY + 1)
++
++#define OCLCHECK(method, ... )                                                 \
++do {                                                                           \
++    status = method(__VA_ARGS__);                                              \
++    if (status != CL_SUCCESS) {                                                \
++        printf( # method " error '%d'\n", status);                             \
++        return -1;                                                             \
++    }                                                                          \
++} while (0)
++
++#define ENQUEUEBUF(method, dst)                                                \
++do {                                                                           \
++    status = method(cmdQ, dst, CL_TRUE, 0, size, iHBuf[i].pDATA, 0, NULL, NULL);\
++    if (CL_SUCCESS != status) {                                                \
++        printf(# method " failed, error %d\n", status);                        \
++        return -1;                                                             \
++    }                                                                          \
++} while (0)
++
++#endif //XLNX_HW_DEFINES_H
+\ No newline at end of file
+diff --git a/libavcodec/xlnx_hw/common/inc/xlnx_queue.h b/libavcodec/xlnx_hw/common/inc/xlnx_queue.h
+new file mode 100644
+index 0000000..a995c45
+--- /dev/null
++++ b/libavcodec/xlnx_hw/common/inc/xlnx_queue.h
+@@ -0,0 +1,17 @@
++#ifndef XLNX_QUEUE_H
++#define XLNX_QUEUE_H
++
++typedef void* XItem;
++typedef struct xlnx_queue xlnx_queue;
++
++xlnx_queue* createQueue(size_t capacity);
++void destroyQueue(xlnx_queue* queue);
++int isFull(xlnx_queue* queue);
++int isEmpty(xlnx_queue* queue);
++size_t getSize(xlnx_queue* queue);
++int enqueue(xlnx_queue* queue, XItem item);
++XItem dequeue(xlnx_queue* queue);
++XItem front(xlnx_queue* queue);
++XItem rear(xlnx_queue* queue);
++
++#endif // XLNX_QUEUE_H
+\ No newline at end of file
+diff --git a/libavcodec/xlnx_hw/common/inc/xlnx_ts_queue.h b/libavcodec/xlnx_hw/common/inc/xlnx_ts_queue.h
+new file mode 100644
+index 0000000..ff66fc7
+--- /dev/null
++++ b/libavcodec/xlnx_hw/common/inc/xlnx_ts_queue.h
+@@ -0,0 +1,18 @@
++#ifndef XLNX_TS_QUEUE_H
++#define XLNX_TS_QUEUE_H
++
++#include "xlnx_queue.h"
++
++typedef struct xlnx_ts_queue xlnx_ts_queue;
++
++xlnx_ts_queue* createTSQ(size_t capacity);
++void destroyTSQ(xlnx_ts_queue* queue);
++int isFullTSQ(xlnx_ts_queue* queue);
++int isEmptyTSQ(xlnx_ts_queue* queue);
++size_t getSizeTSQ(xlnx_ts_queue* queue);
++int enqueueTSQ(xlnx_ts_queue* queue, XItem item);
++XItem dequeueTSQ(xlnx_ts_queue* queue);
++XItem frontTSQ(xlnx_ts_queue* queue);
++XItem rearTSQ(xlnx_ts_queue* queue);
++
++#endif // XLNX_TS_QUEUE_H
+\ No newline at end of file
+diff --git a/libavcodec/xlnx_hw/common/inc/xlnx_types_internal.h b/libavcodec/xlnx_hw/common/inc/xlnx_types_internal.h
+new file mode 100644
+index 0000000..174a793
+--- /dev/null
++++ b/libavcodec/xlnx_hw/common/inc/xlnx_types_internal.h
+@@ -0,0 +1,49 @@
++#ifndef XLNX_TYPES_INTERNAL_H
++#define XLNX_TYPES_INTERNAL_H
++
++#include <CL/opencl.h>
++#include "../../xlnx_hw_types.h"
++
++typedef struct {
++    char* devName;
++    cl_device_id device;
++    uint32_t majorV;
++    uint32_t minorV;
++    void* privData;
++} xlnx_device;
++
++typedef struct xlnx_kernel {
++    cl_context* context;
++    cl_command_queue cmdQ;
++    cl_kernel kernel;
++    U32 prfBank;
++    void* appData;
++    void* privData;
++} xlnx_kernel;
++
++typedef struct xlnx_host xlnx_host;
++typedef int (*Run)(xlnx_host* aHost, xlnx_hw_params aParams, xlnx_hw_buf* aInput, xlnx_hw_buf* aOutput);
++typedef int (*RunAsync)(xlnx_host* aHost, xlnx_hw_params aParams, xlnx_hw_buf* aInput, xlnx_hw_buf** aOutput, XContext* aContext);
++
++struct xlnx_host {
++    int ch;
++    Run process;
++    RunAsync processAsync;
++    int eosRcv;
++    void* appData;
++    void* privData;
++};
++
++typedef enum {
++    Y = 0,
++    U = 1,
++    V = 2
++} xlnx_col_fmt;
++
++typedef struct {
++    const char* krnl_name;
++    U32 prfBank;
++} KRNL_CONFIG;
++
++
++#endif //XLNX_TYPES_INTERNAL_H
+\ No newline at end of file
+diff --git a/libavcodec/xlnx_hw/common/src/xcl.c b/libavcodec/xlnx_hw/common/src/xcl.c
+new file mode 100755
+index 0000000..9e2eaf1
+--- /dev/null
++++ b/libavcodec/xlnx_hw/common/src/xcl.c
+@@ -0,0 +1,478 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <limits.h>
++#include <string.h>
++
++#include "../inc/xcl.h"
++#include "CL/cl_ext.h"
++
++// Wrap any OpenCL API calls that return error code(cl_int)
++// with the below macro to quickly check for an error
++#define OCL_CHECK(call)                                              \
++    do {                                                             \
++        cl_int err = call;                                           \
++        if (err != CL_SUCCESS) {                                     \
++            printf("Error from " #call ", error code is %d\n", err); \
++            return err;                                              \
++        }                                                            \
++    } while (0);
++
++static void* smalloc(size_t size) {
++    void* ptr;
++    ptr = malloc(size);
++    if (ptr == NULL) {
++        printf("Error: Cannot allocate memory %s at %d\n", __FILE__, __LINE__);
++        return NULL;
++    }
++    return ptr;
++}
++
++static int load_file_to_memory(const char *filename, char **result) {
++    unsigned int size;
++    FILE* f;
++
++    f = fopen(filename, "rb");
++    if (f == NULL) {
++        *result = NULL;
++        printf("Error: Could not read file %s\n", filename);
++        return -1;
++    }
++
++    fseek(f, 0, SEEK_END);
++    size = ftell(f);
++    fseek(f, 0, SEEK_SET);
++
++    *result = (char *) smalloc(sizeof(char)*(size+1));
++
++    if (size != fread(*result, sizeof(char), size, f)) {
++        free(*result);
++        fclose(f);
++        printf("Error: read of kernel failed\n");
++        return -1;
++    }
++
++    fclose(f);
++    (*result)[size] = 0;
++
++    return size;
++}
++//
++// Get device version
++//
++static int getDeviceVersion(cl_device_id* aDevice, uint32_t* aMajor, uint32_t* aMinor)
++{
++    char versionString[512];
++    size_t size = 0;
++    uint32_t major = 0;
++    uint32_t minor = 0;
++    uint32_t state = 0;
++    cl_int err;
++    err = clGetDeviceInfo(*aDevice, CL_DEVICE_VERSION, 511, versionString, &size);
++    if ( err != CL_SUCCESS) {
++        printf("clGetDeviceInfo(CL_DEVICE_VERSION) Failed\n");
++        return -1;
++    }
++    size = strlen(versionString);
++    for (size_t i = 0; i < size; i++) {
++        if (versionString[i] == ' ') {
++            if (0 == state)
++                state++;
++            else
++                break;
++            continue;
++        }
++        if (versionString[i] == '.') {
++            state++;
++            continue;
++        }
++        if (state == 0) {
++            continue;
++        }
++        if (state == 1) {
++            major *= 10;
++            major += (versionString[i] - '0');
++            continue;
++        }
++        if (state == 2) {
++            minor *= 10;
++            minor += (versionString[i] - '0');
++            continue;
++        }
++        break;
++    }
++    *aMajor = major;
++    *aMinor = minor;
++    return -1;
++}
++
++int xcl_GetPlatform(const char* platform, cl_platform_id* id) {
++    int err = -1;
++    cl_uint num_platforms = 0;
++    cl_platform_id* platform_ids;
++    size_t i;
++    char* platform_name;
++
++    if ((platform == NULL) || (id == NULL)) return -1;
++
++    err = clGetPlatformIDs(0, NULL, &num_platforms);
++    if (err != CL_SUCCESS) {
++        printf("Error: no platforms available or OpenCL install broken\n");
++        return err;
++    }
++
++    platform_ids = (cl_platform_id *) malloc(num_platforms * sizeof(cl_platform_id));
++    if (platform_ids == NULL) {
++        printf("Error: Out of Memory %s at %d\n", __FILE__, __LINE__);
++        return -1;
++    }
++
++    err = clGetPlatformIDs(num_platforms, platform_ids, NULL);
++    if (err != CL_SUCCESS) {
++        printf("Error: Failed to find an OpenCL platform!\n");
++        free(platform_ids);
++        return err;
++    }
++
++    for(i = 0; i < num_platforms; i++) {
++        size_t platform_name_size;
++        err = clGetPlatformInfo(platform_ids[i], CL_PLATFORM_NAME,
++                                0, NULL, &platform_name_size);
++        if( err != CL_SUCCESS) {
++            printf("Error: Could not determine platform name!\n");
++            return err;
++        }
++
++        platform_name = (char*) malloc(sizeof(char)*platform_name_size);
++        if(platform_name == NULL) {
++            printf("Error: out of memory! %s at %d\n", __FILE__, __LINE__);
++            free(platform_ids);
++            return -1;
++        }
++
++        err = clGetPlatformInfo(platform_ids[i], CL_PLATFORM_NAME,
++                                platform_name_size, platform_name, NULL);
++        if(err != CL_SUCCESS) {
++            free(platform_ids);
++            free(platform_name);
++            printf("Error: could not determine platform name!\n");
++            return err;
++        }
++
++        if (!strcmp(platform_name, platform)) {
++            free(platform_name);
++            *id = platform_ids[i];
++            break;
++        }
++
++        free(platform_name);
++    }
++
++    free(platform_ids);
++
++    if (i == num_platforms) {
++        printf("Error: Failed to find Xilinx platform\n");
++        return -1;
++    }
++    return 0;
++}
++
++int xcl_CreateContextFromType(const cl_platform_id* id, cl_device_type aType, cl_context* aContext) {
++    int err;
++    cl_context_properties contextData[3];
++
++    if ((id == NULL) || (aContext == NULL)) return -1;
++    err = -1;
++    contextData[0] = CL_CONTEXT_PLATFORM;
++    contextData[1] = (cl_context_properties)*id;
++    contextData[2] = 0;
++    *aContext = clCreateContextFromType(contextData, aType, 0, 0, &err);
++    if (err != CL_SUCCESS) {
++        return -1;
++    }
++    return 0;
++}
++
++int xcl_ReleaseContext(cl_context* aContext) {
++    if (aContext == NULL) return -1;
++    OCL_CHECK(clReleaseContext(*aContext));
++    return 0;
++}
++
++int xcl_GetDeviceList(const cl_platform_id* id, cl_device_type aType, xlnx_device** aDeviceList, cl_uint* aNumDevices) {
++    int err;
++    int i;
++    cl_uint num_devices;
++    xlnx_device* devices;
++    cl_device_id* deviceIDs;
++    size_t device_name_size;
++
++    if ((id) == NULL || (aDeviceList == NULL) || (aNumDevices == NULL)) return -1;
++    err = -1;
++    num_devices = 0;
++
++    err = clGetDeviceIDs(*id, aType, 0, NULL, &num_devices);
++    if (err != CL_SUCCESS) {
++        printf("Error: no ACCELERATOR devices available\n");
++        return err;
++    }
++
++    deviceIDs = (cl_device_id *) malloc(sizeof(cl_device_id) * num_devices);
++    if (deviceIDs == NULL) {
++        printf("Error: Out of Memory %s at %d\n", __FILE__, __LINE__);
++        return -1;
++    }
++
++    err = clGetDeviceIDs(*id, aType, num_devices, deviceIDs, NULL);
++    if (err != CL_SUCCESS) {
++        free(deviceIDs);
++        printf("Error: could not get device ids\n");
++        return err;
++    }
++
++
++    devices = (xlnx_device *) calloc(num_devices, sizeof(xlnx_device));
++    if (devices == NULL) {
++        free(deviceIDs);
++        printf("Error: Out of Memory %s at %d\n", __FILE__, __LINE__);
++        return -1;
++    }
++
++    for (i = 0; i < num_devices; i++) {
++        err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_NAME,
++                              0, NULL, &device_name_size);
++        if(err != CL_SUCCESS) {
++            free(deviceIDs);
++            if (i>0) {
++                xcl_FreeDeviceList(devices, i);
++            }
++            printf("Error: could not determine device name\n");
++            return err;
++        }
++
++        devices[i].devName = (char*) malloc(sizeof(char)*device_name_size);
++        if(devices[i].devName == NULL) {
++            free(deviceIDs);
++            xcl_FreeDeviceList(devices, i+1);
++            printf("Error: Out of Memory! %s at %d\n", __FILE__, __LINE__);
++            return -1;
++        }
++
++        err = clGetDeviceInfo(deviceIDs[i], CL_DEVICE_NAME,
++                              device_name_size, devices[i].devName, NULL);
++        if(err != CL_SUCCESS) {
++            free(deviceIDs);
++            xcl_FreeDeviceList(devices, i+1);
++            printf("Error: could not determine device name\n");
++            return err;
++        }
++        getDeviceVersion(&deviceIDs[i], &devices[i].majorV, &devices[i].minorV);
++        printf("Found %s : version %d.%d\n", devices[i].devName, devices[i].majorV, devices[i].minorV);
++        devices[i].device = deviceIDs[i];
++    }
++    free(deviceIDs);
++    *aNumDevices = num_devices;
++    *aDeviceList = devices;
++    return 0;
++}
++
++int xcl_FreeDeviceList(xlnx_device* aDeviceList, cl_uint aNumDevices) {
++    if (aDeviceList == NULL) return -1;
++    for (int i=0; i<aNumDevices; i++) {
++        if (aDeviceList[i].devName)
++            free(aDeviceList[i].devName);
++    }
++    free(aDeviceList);
++    return 0;
++}
++
++int xcl_IsDeviceAvailable(cl_device_id aDevice) {
++    cl_bool avail = CL_TRUE;
++    OCL_CHECK(clGetDeviceInfo(aDevice, CL_DEVICE_AVAILABLE,
++                              sizeof(cl_bool), &avail, NULL));
++    if (avail == CL_FALSE) {
++        printf("Error: device busy!!\n");
++        return 0;
++    }
++    return 1;
++}
++
++int xcl_ImportBinaryHeader(cl_context* aContext, cl_device_id* aDevice,
++                        const char *xclbin, size_t aBinaryLength, cl_program* aProgram) {
++    int err;
++    cl_program program;
++    size_t len;
++    char buffer[2048];
++    if ((aContext == NULL) || (aDevice == NULL) || (xclbin == NULL ) ||
++        (aBinaryLength == 0) || (aProgram == NULL))
++        return -1;
++
++    err = -1;
++    program = clCreateProgramWithBinary(*aContext, 1,
++                                            aDevice, &aBinaryLength,
++                                            (const unsigned char **) &xclbin,
++                                            NULL, &err);
++    if ((!program) || (err!=CL_SUCCESS)) {
++        printf("Error: Failed to create compute program from binary %d!\n", err);
++        return -1;
++    }
++
++    err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
++    if (err != CL_SUCCESS) {
++        xcl_ReleaseProgram(&program);
++
++        clGetProgramBuildInfo(program, *aDevice, CL_PROGRAM_BUILD_LOG,
++                              sizeof(buffer), buffer, &len);
++        printf("%s\n", buffer);
++        printf("Error: Failed to build program executable!\n");
++        return -1;
++    }
++    *aProgram = program;
++    return 0;
++}
++
++int xcl_ImportBinary(cl_context* aContext, cl_device_id* aDevice,
++                            const char *xclbin_file_name, cl_program* aProgram) {
++    int err;
++    char* krnl_bin;
++    size_t krnl_size;
++    cl_program program;
++    size_t len;
++    char buffer[2048];
++
++    if ((aContext == NULL) || (aDevice == NULL) ||
++          (xclbin_file_name == NULL ) || (aProgram == NULL))
++        return -1;
++
++    if(access(xclbin_file_name, R_OK) != 0) {
++        printf("ERROR: %s xclbin not available please build\n", xclbin_file_name);
++        return -1;
++    }
++
++    krnl_size = load_file_to_memory(xclbin_file_name, &krnl_bin);
++    program = clCreateProgramWithBinary(*aContext, 1,
++                                        aDevice, &krnl_size,
++                                        (const unsigned char**) &krnl_bin,
++                                        NULL, &err);
++    if ((!program) || (err!=CL_SUCCESS)) {
++        free(krnl_bin);
++        printf("Error: Failed to create compute program from binary %d!\n",
++               err);
++        return -1;
++    }
++
++    err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
++    if (err != CL_SUCCESS) {
++        xcl_ReleaseProgram(&program);
++        free(krnl_bin);
++
++        clGetProgramBuildInfo(program, *aDevice, CL_PROGRAM_BUILD_LOG,
++                              sizeof(buffer), buffer, &len);
++        printf("%s\n", buffer);
++        printf("Error: Failed to build program executable!\n");
++        return -1;
++    }
++    *aProgram = program;
++    free(krnl_bin);
++
++    return 0;
++}
++
++int xcl_ReleaseProgram(cl_program* aProgram) {
++    if (aProgram == NULL) { return -1;}
++    OCL_CHECK(clReleaseProgram(*aProgram));
++    return 0;
++}
++
++int xcl_CreateKernels(cl_context* aContext, cl_device_id* aDevice,
++                      cl_program* aProgram, const char** aKernelNames, uint32_t aNumKernels,
++                      xlnx_kernel** aKernelList) {
++    int err = -1;
++    xlnx_kernel* kList;
++    int i;
++
++    if ((aContext == NULL) || (aDevice == NULL) ||
++          (aProgram == NULL ) || (aKernelNames == NULL) || (aNumKernels == 0)) {
++        return -1;
++    }
++    err = -1;
++    kList = (xlnx_kernel*)calloc(aNumKernels, sizeof(xlnx_kernel));
++    if (kList == NULL) {
++        printf("Error: Out of Memory! %s at %d\n", __FILE__, __LINE__);
++        return -1;
++    }
++    for (i = 0; i < aNumKernels; i++) {
++        kList[i].kernel = clCreateKernel(*aProgram, aKernelNames[i], &err);
++        if (err != CL_SUCCESS) {
++            xcl_FreeKernels(kList, i);
++            printf("Error: OpenCL unable to create kernel %s\n", aKernelNames[i]);
++            return -1;
++        }
++
++        if (!strcmp(aKernelNames[i], "krnl_ngcodec_hevc_0")) {
++            printf("%s bank %d\n", aKernelNames[i], XCL_MEM_DDR_BANK0);
++            kList[i].prfBank = XCL_MEM_DDR_BANK0;
++        } else if (!strcmp(aKernelNames[i], "krnl_ngcodec_hevc_1")) {
++            printf("%s bank %d\n", aKernelNames[i], XCL_MEM_DDR_BANK3);
++            kList[i].prfBank = XCL_MEM_DDR_BANK3;
++        }
++
++        kList[i].cmdQ = clCreateCommandQueue(*aContext, *aDevice, 0, &err);
++        if (err != CL_SUCCESS) {
++            xcl_FreeKernels(kList, i+1);
++            printf("Error: OpenCL unable to create CommandQueue\n");
++            return -1;
++        }
++        kList[i].context = aContext;
++    }
++    *aKernelList = kList;
++    return 0;
++}
++
++int xcl_CreateKernels2(cl_context* aContext, cl_device_id* aDevice,
++                      cl_program* aProgram, const KRNL_CONFIG* aKernelConfig, uint32_t aNumKernels,
++                      xlnx_kernel** aKernelList) {
++    int err;
++    xlnx_kernel* kList;
++    if ((aContext == NULL) || (aDevice == NULL) ||
++          (aProgram == NULL ) || (aKernelConfig == NULL) || (aNumKernels == 0)) {
++        return -1;
++    }
++    err = -1;
++    kList = (xlnx_kernel*)calloc(aNumKernels, sizeof(xlnx_kernel));
++    if (kList == NULL) {
++        printf("Error: Out of Memory! %s at %d\n", __FILE__, __LINE__);
++        return -1;
++    }
++    for (int i = 0; i < aNumKernels; i++) {
++        kList[i].kernel = clCreateKernel(*aProgram, aKernelConfig[i].krnl_name, &err);
++        if (err != CL_SUCCESS) {
++            xcl_FreeKernels(kList, i);
++            printf("Error: OpenCL unable to create kernel %s\n", aKernelConfig[i].krnl_name);
++            return -1;
++        }
++        kList[i].prfBank = aKernelConfig[i].prfBank;
++        kList[i].cmdQ = clCreateCommandQueue(*aContext, *aDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &err);
++        //kList[i].cmdQ = clCreateCommandQueue(*aContext, *aDevice, 0, &err);
++        if (err != CL_SUCCESS) {
++            xcl_FreeKernels(kList, i+1);
++            printf("Error: OpenCL unable to create CommandQueue\n");
++            return -1;
++        }
++        kList[i].context = aContext;
++    }
++    *aKernelList = kList;
++    return 0;
++}
++
++int xcl_FreeKernels(xlnx_kernel* aKernelList, uint32_t aNumKernels) {
++    if (aKernelList == NULL) return -1;
++    for (int i = 0; i < aNumKernels; i++) {
++        if (aKernelList[i].kernel)
++            clReleaseKernel(aKernelList[i].kernel);
++        if (aKernelList[i].cmdQ)
++            clReleaseCommandQueue(aKernelList[i].cmdQ);
++    }
++    free(aKernelList);
++    return 0;
++}
+diff --git a/libavcodec/xlnx_hw/common/src/xlnx_hrm.c b/libavcodec/xlnx_hw/common/src/xlnx_hrm.c
+new file mode 100644
+index 0000000..90671f6
+--- /dev/null
++++ b/libavcodec/xlnx_hw/common/src/xlnx_hrm.c
+@@ -0,0 +1,444 @@
++#include <string.h>
++#include <stdio.h>
++#include <pthread.h>
++#include <assert.h>
++#include "../inc/xcl.h"
++#include "../inc/xlnx_hrm.h"
++#include "../inc/xlnx_hw_defines.h"
++#include "../../xlnx_hw_types.h"
++#include "../..//hevc/ku115_hevc_enc_config.h"
++#include "../../hevc/vu9p_hevc_enc_config.h"
++
++#include "../../hevc/enc_vu9p.h"
++#include "../../hevc/enc_vu9p_2c.h"
++
++// Wrap any OpenCL API calls that return error code(cl_int)
++// with the below macro to quickly check for an error
++#define XCL_CHECK(call)                                              \
++do {                                                                 \
++    int err = call;                                                  \
++    if (err != 0) {                                                  \
++        printf("Error from " #call ", error code is %d\n", err);     \
++        destroy_hrm();                                               \
++        return err;                                                  \
++    }                                                                \
++} while (0);
++
++static pthread_mutex_t * volatile atomic_hrm_lock = NULL;
++#define LOCK_HRM pthread_mutex_lock(atomic_hrm_lock)
++#define UNLOCK_HRM pthread_mutex_unlock(atomic_hrm_lock)
++
++static uint32_t xlnx_init_count = 0;
++
++typedef struct xlnx_krnl_info {
++    const char* kName;
++    xlnx_hw_id hwID;
++    uint32_t numCh;
++    // Can hold status for Max 32 channels
++    uint32_t chStatus;
++    uint32_t refCount;
++} xlnx_krnl_info;
++
++typedef struct xlnx_dev_info {
++    cl_program program;
++    uint32_t nKernels;
++    xlnx_kernel* kernelList;
++    xlnx_krnl_info* krnlInfo;
++} xlnx_dev_info;
++
++typedef enum xlnx_dev_type {
++    ENONE,
++    EKU115,
++    EVU9P
++} xlnx_dev_type;
++
++typedef struct xlnx_hrm {
++    cl_platform_id platform_id;
++    cl_context context;
++    cl_uint nDevices;
++    xlnx_device* deviceList;
++} xlnx_hrm;
++
++static xlnx_hrm* gHRM = NULL;
++
++static int clear_device_info(xlnx_dev_info* aDevInfo) {
++    if (aDevInfo == NULL) return -1;
++    if (aDevInfo->krnlInfo) free(aDevInfo->krnlInfo);
++    if (aDevInfo->kernelList) xcl_FreeKernels(aDevInfo->kernelList, aDevInfo->nKernels);
++    if (aDevInfo->program) xcl_ReleaseProgram(&aDevInfo->program);
++    free(aDevInfo);
++    return 0;
++}
++
++static int clear_device_list(void) {
++    int i;
++    xlnx_dev_info* temp;
++    if (gHRM->deviceList == NULL) return 0;
++    for (i = 0; i < gHRM->nDevices; i++) {
++        if (gHRM->deviceList[i].privData != NULL) {
++            temp = (xlnx_dev_info*)gHRM->deviceList[i].privData;
++            clear_device_info(temp);
++            gHRM->deviceList[i].privData = NULL;
++        }
++    }
++    xcl_FreeDeviceList(gHRM->deviceList, gHRM->nDevices);
++    return 0;
++}
++
++static int setup_KU115(xlnx_device* aDevice, xlnx_hw_id aHWID) {
++    //@ToDo parsing of config and loading of appropriate binary
++    //Assume the profile 1K1C/KU115 = kernel binary
++    int ret = -1;
++    xlnx_dev_info* devInfo;
++    int nK;
++    xlnx_krnl_info* info;
++    printf("setup_KU115\n");
++    devInfo = (xlnx_dev_info*) calloc(1, sizeof(xlnx_dev_info));
++    if (devInfo == NULL) {
++        printf("Error: OOM %s at %d\n", __FILE__, __LINE__);
++        return -1;
++    }
++    if (aHWID == EHevcEnc) {
++    // Header based loading
++#if LOAD_BINARY_FROM_HEADER
++        ret = xcl_ImportBinaryHeader(&gHRM->context, &aDevice->device, hevc_xclbin, hevc_xclbin_len, &devInfo->program);
++#else
++        ret = xcl_ImportBinary(&gHRM->context, &aDevice->device, KU115_HEVC_ENC_BINARY, &devInfo->program);
++#endif //LOAD_BINARY_FROM_HEADER
++        if (ret < 0) {
++            free(devInfo);
++            return -1;
++        }
++        nK =  sizeof(KU115_HEVC_KRNL_NAME)/sizeof(char*);
++        ret = xcl_CreateKernels(&gHRM->context, &aDevice->device, &devInfo->program, KU115_HEVC_KRNL_NAME, nK,
++                          &devInfo->kernelList);
++        if (ret < 0) {
++            clear_device_info(devInfo);
++            return -1;
++        }
++        devInfo->nKernels = nK;
++        devInfo->krnlInfo = (xlnx_krnl_info*) calloc(nK, sizeof(xlnx_krnl_info));
++        if (NULL == devInfo->krnlInfo) {
++            clear_device_info(devInfo);
++            return -1;
++        }
++        info = devInfo->krnlInfo;
++        for (int i = 0; i < nK; i++) {
++            info[i].kName = KU115_HEVC_KRNL_NAME[i];
++            info[i].hwID = EHevcEnc;
++            info[i].refCount = 0;
++        }
++    }
++    aDevice->privData = (void*)devInfo;
++    return 0;
++}
++
++static int setup_VU9P(xlnx_device* aDevice, xlnx_hw_id aHWID) {
++    int ret = -1;
++    xlnx_dev_info* devInfo;
++    char* xcl_fullpath;
++    unsigned char* xcl_path;
++    int nK;
++    int i;
++    xlnx_krnl_info* info;
++    uint32_t numCh = VU9P_HEVC_ENC_NUM_CH;
++    unsigned char* numch;
++
++    printf("Setup VU9P\n");
++    devInfo = (xlnx_dev_info*) calloc(1, sizeof(xlnx_dev_info));
++    if (devInfo == NULL) {
++        printf("Error: OOM %s at %d\n", __FILE__, __LINE__);
++        return -1;
++    }
++    if (aHWID == EHevcEnc) {
++    // Header based loading
++#if LOAD_BINARY_FROM_HEADER
++        ret = xcl_ImportBinaryHeader(&gHRM->context, &aDevice->device, hevc_enc_vu9p_2k2c_xclbin, hevc_enc_vu9p_2k2c_xclbin_len, &devInfo->program);
++#else
++        xcl_fullpath = malloc(FILE_PATH_LENGTH);
++        xcl_path = getenv("XLNX_XCLBIN_PATH");
++        if (NULL != xcl_path) {
++            snprintf(xcl_fullpath, FILE_PATH_LENGTH, "%s/%s", xcl_path, VU9P_HEVC_ENC_BINARY);
++        } else {
++            printf(" * XLNX_XCLBIN_PATH not found\n");
++            snprintf(xcl_fullpath, FILE_PATH_LENGTH, "%s", VU9P_HEVC_ENC_BINARY);
++        }
++        ret = xcl_ImportBinary(&gHRM->context, &aDevice->device, xcl_fullpath, &devInfo->program);
++        free(xcl_fullpath);
++#endif //LOAD_BINARY_FROM_HEADER
++        if (ret < 0) {
++            free(devInfo);
++            return -1;
++        }
++        nK =  sizeof(VU9P_HEVC_CONFIG)/sizeof(KRNL_CONFIG);
++        ret = xcl_CreateKernels2(&gHRM->context, &aDevice->device, &devInfo->program, VU9P_HEVC_CONFIG, nK,
++                          &devInfo->kernelList);
++        if (ret < 0) {
++            clear_device_info(devInfo);
++            return -1;
++        }
++        devInfo->nKernels = nK;
++        devInfo->krnlInfo = (xlnx_krnl_info*) calloc(nK, sizeof(xlnx_krnl_info));
++        if (NULL == devInfo->krnlInfo) {
++            clear_device_info(devInfo);
++            return -1;
++        }
++        info = devInfo->krnlInfo;
++        for (i = 0; i < nK; i++) {
++            // @Todo load info from some source
++            // for now, hardcore infor for hevc 2k2c
++            info[i].kName = VU9P_HEVC_CONFIG[i].krnl_name;
++            info[i].hwID = EHevcEnc;
++            numCh = VU9P_HEVC_ENC_NUM_CH;
++            numch = getenv("VU9P_HEVC_ENC_NUM_CH");
++            if (NULL != numch) {
++                numCh = atoi(numch);
++                printf(" * VU9P_HEVC_ENC_NUM_CH set to = %d\n", VU9P_HEVC_ENC_NUM_CH);
++            } else {
++                printf(" * VU9P_HEVC_ENC_NUM_CH not set. Default = %d\n", VU9P_HEVC_ENC_NUM_CH);
++            }
++            info[i].numCh = numCh;
++            info[i].chStatus = 0;
++            info[i].refCount = 0;
++            devInfo->kernelList[i].privData = (void*)&info[i];
++        }
++    }
++    aDevice->privData = (void*)devInfo;
++    return 0;
++}
++
++static xlnx_dev_type get_device_type(const xlnx_device* device) {
++    assert(device != NULL);
++    if (!strncmp(device->devName, KU115_BOARD, strlen(KU115_BOARD))) {
++        return EKU115;
++    } else if (!strncmp(device->devName, VU9P_BOARD, strlen(VU9P_BOARD))) {
++        return EVU9P;
++    }
++    return ENONE;
++}
++
++static int setup_devices(const char* aCfgFileName, xlnx_hw_id aHWID) {
++    //@Todo depending upon the config file or environment variable settings,
++    //create context and load binaries here or at a later stage
++    // for now just assume HEVC encoder config only.
++    int ret = -1;
++    xlnx_device* device = NULL;
++    /* seems CL_DEVICE_AVAILABLE not implemented in runtime
++    for (int i = 0; i < gHRM->nDevices; i++) {
++        if (xcl_IsDeviceAvailable(gHRM->deviceList[i].device)) {
++            device = &gHRM->deviceList[i];
++            break;
++        }
++    }*/
++    //So choose the first available device
++    // @TODO setup for all the available devices
++
++    device = &gHRM->deviceList[0];
++    if (NULL == device) {
++        return -1;
++    }
++    switch (get_device_type(device)) {
++      case EKU115:
++          ret = setup_KU115(device, aHWID);
++          break;
++      case EVU9P:
++          ret = setup_VU9P(device, aHWID);
++          break;
++      case ENONE:
++      default:
++          return -1;
++    }
++    return ret;
++}
++
++static void destroy_hrm(void) {
++    printf("destroy_hrm\n");
++    assert(gHRM != NULL);
++    if (gHRM->deviceList)
++        clear_device_list();
++    gHRM->deviceList = NULL;
++    if (gHRM->context)
++        xcl_ReleaseContext(&gHRM->context);
++    gHRM->context = 0;
++    free(gHRM);
++    gHRM = NULL;
++    printf("destroyed hrm\n");
++}
++
++static int create_hrm(const char* aCfgFileName, xlnx_hw_id aHWID) {
++    //@Todo parse aCfgFileName
++    // For now aCfgFileName is the URI of the Kernal binary file
++    printf("create_hrm\n");
++    assert(gHRM == NULL);
++    gHRM = calloc(1, sizeof(xlnx_hrm));
++    if (!gHRM) {
++        printf("Error: OOM %s at %d\n", __FILE__, __LINE__);
++        return -1;
++    }
++    XCL_CHECK(xcl_GetPlatform("Xilinx", &gHRM->platform_id));
++    XCL_CHECK(xcl_CreateContextFromType(&gHRM->platform_id, CL_DEVICE_TYPE_ACCELERATOR, &gHRM->context));
++    XCL_CHECK(xcl_GetDeviceList(&gHRM->platform_id, CL_DEVICE_TYPE_ACCELERATOR, &gHRM->deviceList, &gHRM->nDevices));
++    //If aHWID is known, then setup the devices here
++    if (ENone != aHWID) {
++        XCL_CHECK(setup_devices(aCfgFileName, aHWID));
++    }
++    printf("created hrm\n");
++    return 0;
++}
++
++static inline int init_hrm_mtx(void) {
++    if (!atomic_hrm_lock) {
++        int err;
++        pthread_mutex_t *tmp = malloc(sizeof(pthread_mutex_t));
++        if (!tmp)
++            return -1;
++        if ((err = pthread_mutex_init(tmp, NULL))) {
++            free(tmp);
++            return err;
++        }
++        if (__sync_val_compare_and_swap((void * volatile *)&atomic_hrm_lock, NULL, tmp)) {
++            pthread_mutex_destroy(tmp);
++            free(tmp);
++        }
++    }
++    return 0;
++}
++
++static inline int deinit_hrm_mtx(void) {
++    if (atomic_hrm_lock) {
++        pthread_mutex_t *tmp = atomic_hrm_lock;
++        UNLOCK_HRM;
++        pthread_mutex_destroy(atomic_hrm_lock);
++        atomic_hrm_lock = NULL;
++        free(tmp);
++    }
++    return 0;
++}
++
++int xlnx_hrm_init(const char* aCfgFileName, xlnx_hw_id aHWID) {
++    int ret = init_hrm_mtx();
++    if (ret < 0)
++        return ret;
++
++    LOCK_HRM;
++
++    if (xlnx_init_count == 0) {
++        ret = create_hrm(aCfgFileName, aHWID);
++        if (ret < 0) {
++            deinit_hrm_mtx();
++            return -1;
++        }
++    }
++    xlnx_init_count++;
++
++    UNLOCK_HRM;
++    return xlnx_init_count;
++}
++
++int xlnx_hrm_deinit() {
++    LOCK_HRM;
++    xlnx_init_count--;
++    if (xlnx_init_count == 0) {
++        destroy_hrm();
++    } else {
++      uint32_t count = xlnx_init_count;
++        UNLOCK_HRM;
++        return count;
++    }
++    deinit_hrm_mtx();
++    return 0;
++}
++
++static int allocChannel(int aNumCh, int* aChStatus) {
++    for(int i = 0; i < aNumCh; i++) {
++        if ((*aChStatus & (1 << i)) == 0) {
++            *aChStatus = *aChStatus | (1<<i);
++            return i;
++        }
++    }
++    return -1;
++}
++
++static int alloc_xKernel(xlnx_dev_info* devInfo, xlnx_hw_id aHWID, int* aIndex, int* aChannel) {
++    for (int i = 0; i < devInfo->nKernels; i++) {
++        xlnx_krnl_info* kInfo = &devInfo->krnlInfo[i];
++        if ((kInfo->hwID == aHWID) && (kInfo->refCount < kInfo->numCh)) {
++            int ch = allocChannel(kInfo->numCh, &kInfo->chStatus);
++            if (ch < 0) return ch;
++            kInfo->refCount++;
++            *aChannel = ch;
++            *aIndex = i;
++            return 0;
++        }
++    }
++    return -1;
++}
++
++static int free_xKernel(xlnx_krnl_info* aKrnlInfo, int aChannel) {
++    if (aKrnlInfo) {
++        aKrnlInfo->refCount--;
++        assert(aKrnlInfo->chStatus & (1 << aChannel));
++        aKrnlInfo->chStatus &= ~(1 << aChannel);
++    }
++    else
++        return -1;
++    return 0;
++}
++
++xlnx_host* xlnx_hrm_get_host(xlnx_hw_id aHWID, xlnx_hw_params aParams) {
++    // @TODO
++    // Device setup can be delayed to this point as well
++    // It will either be done as part of hrm init(if aHWID is known) or delayed till this point.
++    // hrm is being initialized from here in the current case, so it does not make a difference
++    xlnx_host* host = NULL;
++    xlnx_dev_info* devInfo;
++    int kIndex, ch, ret;
++
++    if (aHWID == ENONE) return host;
++    if (xlnx_hrm_init(NULL, aHWID) < 0) {
++        return host;
++    }
++    LOCK_HRM;
++    //@TODO check the whole devicelist
++    devInfo = (xlnx_dev_info*)gHRM->deviceList[0].privData;
++    if (devInfo == NULL) {
++        // Should not happen as hrm init i sdone with xlnx_hw_id
++        // Other wise setup_devices() should be done here
++        UNLOCK_HRM;
++        return host; 
++    }
++
++    ret = alloc_xKernel(devInfo, aHWID, &kIndex, &ch);
++    if (ret < 0) {
++        UNLOCK_HRM;
++        return host;
++    }
++    // ONLY HEVC ENc host available right now!!
++    //@Todo update when other hosts are available
++    if (aHWID == EHevcEnc) {
++        host = createHevcEnc2C(&devInfo->kernelList[kIndex], ch, aParams);
++        if (host == NULL) {
++            free_xKernel(&devInfo->krnlInfo[kIndex], ch);
++            UNLOCK_HRM;
++            printf("Error: Cannot allocate memory for xlnx_host %s at %d\n", __FILE__, __LINE__);
++            return host;
++        }
++    } else {
++        UNLOCK_HRM;
++        return host;
++    }
++
++    host->appData = (void*) &devInfo->krnlInfo[kIndex];
++    UNLOCK_HRM;
++    return host;
++}
++
++int xlnx_hrm_release_host(xlnx_host* aHost) {
++    xlnx_krnl_info* krnlInfo;
++    if (NULL == aHost) return -1;
++    krnlInfo = (xlnx_krnl_info*)aHost->appData;
++    if (free_xKernel(krnlInfo, aHost->ch) < 0) return -1;
++    destroyHevcEnc2C(aHost);
++    xlnx_hrm_deinit();
++    return 0;
++}
+diff --git a/libavcodec/xlnx_hw/common/src/xlnx_queue.c b/libavcodec/xlnx_hw/common/src/xlnx_queue.c
+new file mode 100644
+index 0000000..3233cf3
+--- /dev/null
++++ b/libavcodec/xlnx_hw/common/src/xlnx_queue.c
+@@ -0,0 +1,86 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <assert.h>
++#include "../inc/xlnx_queue.h"
++
++struct xlnx_queue {
++    int front, rear;
++    size_t size, capacity;
++    XItem* pItem;
++};
++
++xlnx_queue* createQueue(size_t capacity) {
++    xlnx_queue* queue = (xlnx_queue*) malloc(sizeof(xlnx_queue));
++    if (NULL == queue) {
++        printf("Error: Out of Memory! %s at %d\n", __FILE__, __LINE__);
++        return queue;
++    }
++    queue->capacity = capacity;
++    queue->front = queue->size = 0;
++    queue->rear = -1;
++    queue->pItem = (XItem*)malloc(queue->capacity * sizeof(XItem));
++    if (NULL == queue->pItem) {
++        printf("Error: Out of Memory! %s at %d\n", __FILE__, __LINE__);
++        free(queue);
++        return NULL;
++    }
++    return queue;
++}
++
++void destroyQueue(xlnx_queue* queue) {
++    if (NULL == queue) return;
++    free(queue->pItem);
++    free(queue);
++    return;
++}
++
++int isFull(xlnx_queue* queue) {
++    assert(queue != NULL);
++    return (queue->size == queue->capacity);
++}
++
++int isEmpty(xlnx_queue* queue) {
++    assert(queue != NULL);
++    return (queue->size == 0);
++}
++
++size_t getSize(xlnx_queue* queue) {
++    assert(queue != NULL);
++    return queue->size;
++}
++
++int enqueue(xlnx_queue* queue, XItem item) {
++    assert(queue != NULL);
++    if (isFull(queue))
++        return -1;
++    queue->rear = (queue->rear + 1)%queue->capacity;
++    queue->pItem[queue->rear] = item;
++    queue->size++;
++    return 0;
++}
++
++XItem dequeue(xlnx_queue* queue) {
++    XItem item;
++    assert(queue != NULL);
++    if (isEmpty(queue))
++        return NULL;
++    item = queue->pItem[queue->front];
++    queue->pItem[queue->front] = 0;
++    queue->front = (queue->front + 1)%queue->capacity;
++    queue->size = queue->size - 1;
++    return item;
++}
++
++XItem front(xlnx_queue* queue) {
++    assert(queue != NULL);
++    if (isEmpty(queue))
++        return NULL;
++    return queue->pItem[queue->front];
++}
++
++XItem rear(xlnx_queue* queue) {
++    assert(queue != NULL);
++    if (isEmpty(queue))
++        return NULL;
++    return queue->pItem[queue->rear];
++}
+\ No newline at end of file
+diff --git a/libavcodec/xlnx_hw/common/src/xlnx_ts_queue.c b/libavcodec/xlnx_hw/common/src/xlnx_ts_queue.c
+new file mode 100644
+index 0000000..507040a
+--- /dev/null
++++ b/libavcodec/xlnx_hw/common/src/xlnx_ts_queue.c
+@@ -0,0 +1,107 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <assert.h>
++#include <pthread.h>
++
++#include "../inc/xlnx_ts_queue.h"
++
++#define LOCK_Q pthread_mutex_lock(&queue->lock)
++#define UNLOCK_Q pthread_mutex_unlock(&queue->lock)
++
++struct xlnx_ts_queue {
++    pthread_mutex_t lock;
++    xlnx_queue* q;
++};
++
++xlnx_ts_queue* createTSQ(size_t capacity) {
++    xlnx_queue* queue;
++    xlnx_ts_queue* q = calloc(1, sizeof(xlnx_ts_queue));
++    if (NULL == q) {
++        printf("Error: Out of Memory! %s at %d\n", __FILE__, __LINE__);
++        return q;
++    }
++    queue = createQueue(capacity);
++    if (NULL == queue) {
++        printf("Error: Out of Memory! %s at %d\n", __FILE__, __LINE__);
++        free(q);
++        return NULL;
++    }
++    q->q = queue;
++    if (pthread_mutex_init(&q->lock, NULL) < 0) {
++        destroyQueue(queue);
++        free(q);
++        return NULL;
++    }
++    return q;
++}
++
++void destroyTSQ(xlnx_ts_queue* queue) {
++    if (NULL == queue) return;
++    pthread_mutex_destroy(&queue->lock);
++    destroyQueue(queue->q);
++    free(queue);
++    return;
++}
++
++int isFullTSQ(xlnx_ts_queue* queue) {
++    int ret;
++    assert(queue != NULL);
++    LOCK_Q;
++    ret = isFull(queue->q);
++    UNLOCK_Q;
++    return ret;
++}
++
++int isEmptyTSQ(xlnx_ts_queue* queue) {
++    int ret;
++    assert(queue != NULL);
++    LOCK_Q;
++    ret = isEmpty(queue->q);
++    UNLOCK_Q;
++    return ret;
++}
++
++size_t getSizeTSQ(xlnx_ts_queue* queue) {
++    size_t size;
++    assert(queue != NULL);
++    LOCK_Q;
++    size = getSize(queue->q);
++    UNLOCK_Q;
++    return size;
++}
++
++int enqueueTSQ(xlnx_ts_queue* queue, XItem item) {
++    int ret;
++    assert(queue != NULL);
++    LOCK_Q;
++    ret = enqueue(queue->q, item);
++    UNLOCK_Q;
++    return ret;
++}
++
++XItem dequeueTSQ(xlnx_ts_queue* queue) {
++    XItem item;
++    assert(queue != NULL);
++    LOCK_Q;
++    item = dequeue(queue->q);
++    UNLOCK_Q;
++    return item;
++}
++
++XItem frontTSQ(xlnx_ts_queue* queue) {
++    XItem item;
++    assert(queue != NULL);
++    LOCK_Q;
++    item = front(queue->q);
++    UNLOCK_Q;
++    return item;
++}
++
++XItem rearTSQ(xlnx_ts_queue* queue) {
++    XItem item;
++    assert(queue != NULL);
++    LOCK_Q;
++    item = rear(queue->q);
++    UNLOCK_Q;
++    return item;
++}
+\ No newline at end of file
+diff --git a/libavcodec/xlnx_hw/hevc/Makefile b/libavcodec/xlnx_hw/hevc/Makefile
+new file mode 100644
+index 0000000..2c49c2b
+--- /dev/null
++++ b/libavcodec/xlnx_hw/hevc/Makefile
+@@ -0,0 +1 @@
++OBJS                            += xlnx_hw/hevc/enc_vu9p.o
+diff --git a/libavcodec/xlnx_hw/hevc/enc_vu9p.c b/libavcodec/xlnx_hw/hevc/enc_vu9p.c
+new file mode 100644
+index 0000000..19c41d1
+--- /dev/null
++++ b/libavcodec/xlnx_hw/hevc/enc_vu9p.c
+@@ -0,0 +1,266 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <limits.h>
++#include <string.h>
++#include <assert.h>
++#include <CL/opencl.h>
++#include "enc_vu9p.h"
++#include "../common/inc/xlnx_hw_defines.h"
++
++//Macros
++
++#define OCLCHECKI(method, ... )                                                \
++do {                                                                           \
++    status = method(__VA_ARGS__);                                              \
++    if (status != CL_SUCCESS) {                                                \
++        printf( # method " error '%d'\n", status);                             \
++        KDD_deinit(aKDD);                                                      \
++        return -1;                                                             \
++    }                                                                          \
++} while (0)
++
++#define CREATEBUF(out, flags, size)                                            \
++do {                                                                           \
++    out = clCreateBuffer(*context, flags, size, NULL, &status);                \
++    if (status != CL_SUCCESS) {                                                \
++        printf("Could not create OpenCL buffer\n");                            \
++        KDD_deinit(aKDD);                                                      \
++        return -1;                                                             \
++    }                                                                          \
++} while (0)
++
++typedef struct KernelDeviceData {
++    // CSR3/CSR4/CSR5
++    cl_mem  InCur[3];
++    // CSR6/CSR7/CSR8
++    cl_mem  inNxt[3];
++    cl_mem  CSR12_RECON_BASE_V;
++    cl_mem  CSR13_BITSTREAM_BASE_V;
++    cl_mem  CSR14_BITSTREAM_LEN_V;
++    U32 CurImgSize[3];
++    U32 EncodedFrameSize;
++    U32 EncodedFrameLengthSize;
++    HevcEncParam* params;
++} KernelDeviceData;
++typedef KernelDeviceData KDD;
++
++typedef struct HevcEnc {
++    //KHD khd;
++    KDD kdd;
++    HevcEncParam params;
++    xlnx_kernel* xKernel;
++    U32 frameNumber;
++} HevcEnc;
++
++static int KDD_deinit(KDD* aKDD) {
++    if (aKDD->InCur[Y]) clReleaseMemObject(aKDD->InCur[Y]);
++    if (aKDD->InCur[U]) clReleaseMemObject(aKDD->InCur[U]);
++    if (aKDD->InCur[V]) clReleaseMemObject(aKDD->InCur[V]);
++    if (aKDD->inNxt[Y]) clReleaseMemObject(aKDD->inNxt[Y]);
++    if (aKDD->inNxt[U]) clReleaseMemObject(aKDD->inNxt[U]);
++    if (aKDD->inNxt[V]) clReleaseMemObject(aKDD->inNxt[V]);
++    if (aKDD->CSR12_RECON_BASE_V) clReleaseMemObject(aKDD->CSR12_RECON_BASE_V);
++    if (aKDD->CSR13_BITSTREAM_BASE_V) clReleaseMemObject(aKDD->CSR13_BITSTREAM_BASE_V);
++    if (aKDD->CSR14_BITSTREAM_LEN_V) clReleaseMemObject(aKDD->CSR14_BITSTREAM_LEN_V);
++    memset(aKDD, 0, sizeof(KDD));
++    return 0;
++}
++
++static int KDD_init(KDD* aKDD, HevcEnc* aEnc) {
++    cl_int status;
++    U32 width, height;
++    cl_kernel kernel;
++    cl_context* context;
++    int arg = 0;
++    if ((aKDD == NULL) || (aEnc == NULL)) return -1;
++    status = -1;
++    aKDD->params = &aEnc->params;
++    width = aKDD->params->width;
++    height = aKDD->params->height;
++    aKDD->CurImgSize[Y] = width * height;
++    aKDD->CurImgSize[U] = (width * height) >> 2;
++    aKDD->CurImgSize[V] = (width * height) >> 2;
++
++    // Encoded Frame data size - hard code to allocate host memory as this varies!
++    aKDD->EncodedFrameSize = (width * height * 3) >> 1;
++    aKDD->EncodedFrameLengthSize = 1;
++
++    // Setup the CSR registers
++    kernel = aEnc->xKernel->kernel;
++    context = aEnc->xKernel->context;
++    CREATEBUF(aKDD->InCur[Y], CL_MEM_READ_ONLY,  aKDD->CurImgSize[Y] * sizeof(U8));
++    CREATEBUF(aKDD->InCur[U], CL_MEM_READ_ONLY,  aKDD->CurImgSize[U] * sizeof(U8));
++    CREATEBUF(aKDD->InCur[V], CL_MEM_READ_ONLY,  aKDD->CurImgSize[V] * sizeof(U8));
++    CREATEBUF(aKDD->inNxt[Y], CL_MEM_READ_ONLY,  aKDD->CurImgSize[Y] * sizeof(U8));
++    CREATEBUF(aKDD->inNxt[U], CL_MEM_READ_ONLY,  aKDD->CurImgSize[U] * sizeof(U8));
++    // Padding to make reference base pointer of reconstructed picture 128KB aligned
++    CREATEBUF(aKDD->inNxt[V], CL_MEM_READ_ONLY,  (aKDD->CurImgSize[V]+ 48*128*1024-1920*1080*3) * sizeof(U8));
++    // Reference frame requires at least 16MB space in DDR
++    CREATEBUF(aKDD->CSR12_RECON_BASE_V, CL_MEM_READ_WRITE,  16*1024*1024);
++    CREATEBUF(aKDD->CSR13_BITSTREAM_BASE_V, CL_MEM_WRITE_ONLY, aKDD->EncodedFrameSize * sizeof(U8));
++    CREATEBUF(aKDD->CSR14_BITSTREAM_LEN_V, CL_MEM_WRITE_ONLY, aKDD->EncodedFrameLengthSize * sizeof(U64));
++
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(U32), &aKDD->params->width);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(U32), &aKDD->params->height);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &aKDD->InCur[Y]);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &aKDD->InCur[U]);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &aKDD->InCur[V]);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &aKDD->inNxt[Y]);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &aKDD->inNxt[U]);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &aKDD->inNxt[V]);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(U32), &aKDD->params->bitrate);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(U32), &aKDD->params->qp);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(U32), &aKDD->params->ip);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &aKDD->CSR12_RECON_BASE_V);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &aKDD->CSR13_BITSTREAM_BASE_V);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(cl_mem),       &aKDD->CSR14_BITSTREAM_LEN_V);
++    OCLCHECKI(clSetKernelArg, kernel, arg++, sizeof(U32), &aKDD->params->reset);
++    return 0;
++}
++
++static int hevc_encode(xlnx_host* aHost, xlnx_hw_params aParams, xlnx_hw_buf* aInput, xlnx_hw_buf* aOutput) {
++    cl_command_queue cmdQ;
++    cl_kernel kernel;
++    xlnx_data_buf* iHBuf;
++    xlnx_data_buf* oBuf;
++    size_t global_work_size_1d[1];
++    size_t local_work_size_1d[1];
++    int size;
++    cl_int status = -1;
++    HevcEnc* enc = (HevcEnc*)aHost->privData;
++    KDD kdd = enc->kdd;
++    HevcEncParam* params = (HevcEncParam*) aParams;
++    xlnx_kernel* xKernel = enc->xKernel;
++    U32 frameNumber = enc->frameNumber;
++
++    if ((frameNumber == 0) && (aInput->ptr == NULL)) { return -1;}
++
++    cmdQ = xKernel->cmdQ;
++    kernel = xKernel->kernel;
++
++    assert(aInput->type == ERAW);
++    assert(aOutput->type == EDATA);
++    iHBuf = aInput->ptr;
++    oBuf = aOutput->ptr;
++
++    global_work_size_1d[0] = 1;
++    local_work_size_1d[0] = 1;
++    size = 0;
++
++    if (frameNumber == 0) {
++        for (int i = 0; i < 3; i++) {
++            size = kdd.CurImgSize[i] * sizeof(U8);
++            ENQUEUEBUF(clEnqueueWriteBuffer, kdd.InCur[i]);
++        }
++        enc->frameNumber++;
++        oBuf->size = 0;
++        return 0;
++    } else if (frameNumber == 1) {
++        if (aInput->ptr != NULL) {
++            for (int i = 0; i < 3; i++) {
++                size = kdd.CurImgSize[i] * sizeof(U8);
++                ENQUEUEBUF(clEnqueueWriteBuffer, kdd.inNxt[i]);
++            }
++        } else {
++            OCLCHECK(clSetKernelArg, kernel, 14, sizeof(U32), &params->reset);
++        }
++        // av_log(NULL, AV_LOG_INFO," * Loading frame %d\n", frameNumber);
++        enc->frameNumber++;
++    } else {
++        // Ping-pong buffers used; switch cur and nxt buffer pointer for kernel
++        if (frameNumber%2 == 0) {
++            OCLCHECK(clSetKernelArg, kernel, 2, sizeof(cl_mem), &kdd.inNxt[Y]);
++            OCLCHECK(clSetKernelArg, kernel, 3, sizeof(cl_mem), &kdd.inNxt[U]);
++            OCLCHECK(clSetKernelArg, kernel, 4, sizeof(cl_mem), &kdd.inNxt[V]);
++            OCLCHECK(clSetKernelArg, kernel, 5, sizeof(cl_mem), &kdd.InCur[Y]);
++            OCLCHECK(clSetKernelArg, kernel, 6, sizeof(cl_mem), &kdd.InCur[U]);
++            OCLCHECK(clSetKernelArg, kernel, 7, sizeof(cl_mem), &kdd.InCur[V]);
++            if (aInput->ptr != NULL) {
++                for (int i = 0; i < 3; i++) {
++                    size = kdd.CurImgSize[i] * sizeof(U8);
++                    ENQUEUEBUF(clEnqueueWriteBuffer, kdd.InCur[i]);
++                }
++            } else {
++                OCLCHECK(clSetKernelArg, kernel, 14, sizeof(U32), &params->reset);
++            }
++        } else {
++            OCLCHECK(clSetKernelArg, kernel, 2, sizeof(cl_mem), &kdd.InCur[Y]);
++            OCLCHECK(clSetKernelArg, kernel, 3, sizeof(cl_mem), &kdd.InCur[U]);
++            OCLCHECK(clSetKernelArg, kernel, 4, sizeof(cl_mem), &kdd.InCur[V]);
++            OCLCHECK(clSetKernelArg, kernel, 5, sizeof(cl_mem), &kdd.inNxt[Y]);
++            OCLCHECK(clSetKernelArg, kernel, 6, sizeof(cl_mem), &kdd.inNxt[U]);
++            OCLCHECK(clSetKernelArg, kernel, 7, sizeof(cl_mem), &kdd.inNxt[V]);
++            if (aInput->ptr != NULL) {
++                for (int i = 0; i < 3; i++) {
++                    size = kdd.CurImgSize[i] * sizeof(U8);
++                    ENQUEUEBUF(clEnqueueWriteBuffer, kdd.inNxt[i]);
++                }
++            } else {
++                OCLCHECK(clSetKernelArg, kernel, 14, sizeof(U32), &params->reset);
++            }
++        }
++        enc->frameNumber++;
++    }
++    OCLCHECK(clEnqueueNDRangeKernel, cmdQ, kernel, 1, NULL, global_work_size_1d, local_work_size_1d, 0, NULL, NULL);
++
++    //
++    // Wait for the hw accelerator to complete
++    //
++    clFinish(cmdQ);
++    //av_log(NULL, AV_LOG_INFO," * Finished the xlnx hw accelerator kernel\n");
++
++    //
++    // Read the result
++    // Get the length of the Encoded Frame first as this varies!
++    //
++    // av_log(NULL, AV_LOG_INFO," * Enqueuing Read Buffer - CSR14_BITSTREAM_LEN_V\n");
++    OCLCHECK(clEnqueueReadBuffer, cmdQ, kdd.CSR14_BITSTREAM_LEN_V, CL_TRUE, 0, kdd.EncodedFrameLengthSize * sizeof(U64), &oBuf->size, 0, NULL, NULL);
++    // av_log(NULL, AV_LOG_INFO," * Encoded Frame Length = %d\n", *dstSize);
++    //*dstSize = *dstSize * 4;
++    printf(" * Encoded Frame Length = %llu enc->frameNumber=%u\n", oBuf->size, enc->frameNumber);
++
++    // av_log(NULL, AV_LOG_INFO," * Enqueuing Read Buffer - CSR13_BITSTREAM_BASE_V\n");
++    OCLCHECK(clEnqueueReadBuffer, cmdQ, kdd.CSR13_BITSTREAM_BASE_V, CL_TRUE, 0, oBuf->size * sizeof(U8), oBuf->pDATA, 0, NULL, NULL);
++    return 0;
++}
++
++xlnx_host* createHevcEnc(xlnx_kernel* aKernel, xlnx_hw_params aParams) {
++    HevcEnc* enc;
++    xlnx_host* host;
++    int err;
++    if (aKernel == NULL) return NULL;
++    enc = (HevcEnc*)calloc(1, sizeof(HevcEnc));
++    if (enc == NULL) {
++        printf("Error: Cannot allocate memory %s at %d\n", __FILE__, __LINE__);
++        return NULL;
++    }
++    memcpy(&enc->params, aParams, sizeof(HevcEncParam));
++    enc->xKernel = aKernel;
++    err = KDD_init(&enc->kdd, enc);
++    if (err < 0) {
++        printf("Error: createHevcEnc Failed\n");
++        free(enc);
++        return NULL;
++    }
++    enc->frameNumber = 0;
++    host = (xlnx_host*) calloc(1, sizeof(xlnx_host));
++    if (host == NULL) {
++        printf("Error: Cannot allocate memory %s at %d\n", __FILE__, __LINE__);
++        return NULL;
++    }
++    host->privData = (void*) enc;
++    host->process = &hevc_encode;
++    return host;
++}
++
++int destroyHevcEnc(xlnx_host* aHost) {
++    HevcEnc* enc;
++    if (aHost == NULL) return -1;
++    enc = (HevcEnc*)aHost->privData;
++    if (enc == NULL) return -1;
++    KDD_deinit(&enc->kdd);
++    free(enc);
++    free(aHost);
++    return 0;
++}
+diff --git a/libavcodec/xlnx_hw/hevc/enc_vu9p.h b/libavcodec/xlnx_hw/hevc/enc_vu9p.h
+new file mode 100644
+index 0000000..4423f53
+--- /dev/null
++++ b/libavcodec/xlnx_hw/hevc/enc_vu9p.h
+@@ -0,0 +1,9 @@
++#ifndef HEVC_ENC_VU9P_H
++#define HEVC_ENC_VU9P_H
++
++#include "../common/inc/xlnx_types_internal.h"
++
++xlnx_host* createHevcEnc(xlnx_kernel* aKernel, xlnx_hw_params aParams);
++int destroyHevcEnc(xlnx_host* aHost);
++
++#endif //HEVC_ENC_VU9P_H
+\ No newline at end of file
+diff --git a/libavcodec/xlnx_hw/hevc/enc_vu9p_2c.c b/libavcodec/xlnx_hw/hevc/enc_vu9p_2c.c
+new file mode 100644
+index 0000000..e441aec
+--- /dev/null
++++ b/libavcodec/xlnx_hw/hevc/enc_vu9p_2c.c
+@@ -0,0 +1,793 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++#include <limits.h>
++#include <string.h>
++#include <assert.h>
++#include <CL/opencl.h>
++#include "pthread.h"
++
++//@TODO implement own msg queue and remove libavutil dependency
++#include "libavutil/atomic.h"
++#include "libavutil/threadmessage.h"
++#include "libavutil/error.h"
++
++#include "../common/inc/xlnx_hw_defines.h"
++#include "../common/inc/xlnx_ts_queue.h"
++#include "enc_vu9p_2c.h"
++
++#define OCLCHECKI(method, ... )                                                \
++do {                                                                           \
++    status = method(__VA_ARGS__);                                              \
++    if (status != CL_SUCCESS) {                                                \
++        printf( # method " error '%d'\n", status);                             \
++        return -1;                                                             \
++    }                                                                          \
++} while (0)
++
++#define OCLCHECKI2(method, ... )                                               \
++do {                                                                           \
++    status = method(__VA_ARGS__);                                              \
++    if (status != CL_SUCCESS) {                                                \
++        printf( # method " error '%d'\n", status);                             \
++        KDD2_deinit(kdd, ch, refcount);                                        \
++        return -1;                                                             \
++    }                                                                          \
++} while (0)
++
++#define CREATEBUF2(out, flags, size)                                               \
++do {                                                                               \
++    out = clCreateBuffer(*context, flags, size, &ext, &status);                    \
++    if (status != CL_SUCCESS) {                                                    \
++        printf("Could not create OpenCL buffer\n");                                \
++        KDD2_deinit(aKDD, ch, aRefcount);                                          \
++        return -1;                                                                 \
++    }                                                                              \
++    OCLCHECKI2(clEnqueueMigrateMemObjects, cmdQ, 1, &out, migflags, 0, NULL, NULL);\
++} while (0)
++
++#define OCLCHECKCB(method, ... )                                               \
++do {                                                                           \
++    status = method(__VA_ARGS__);                                              \
++    if (status != CL_SUCCESS) {                                                \
++        printf( # method " error '%d'\n", status);                             \
++        break;                                                                 \
++    }                                                                          \
++} while (0)
++
++#define WAIT_IF_EMPTY(Q) while (isEmptyTSQ(Q)) usleep(1000)
++
++
++typedef struct HevcEnc2 HevcEnc2;
++
++typedef enum HevcEncState {
++    EInit,
++    ESendIp,
++    EEncode,
++    EReadOpSize,
++    ECopyOp
++} HevcEncState;
++
++typedef struct HevcKDCtx {
++    cl_mem* inD;
++    cl_mem* outD;
++    xlnx_hw_buf* outH;
++    void* appCtx;
++} HevcKDCtx;
++
++typedef struct HevcEncCtx {
++    HevcEnc2* enc;
++    HevcKDCtx kdCtx[VU9P_HEVC_ENC_NUM_CH];
++    HevcEncState state;
++    cl_event lEncode;
++} HevcEncCtx;
++
++typedef struct HevcEncParam2 {
++    U32 wh[2];
++    U32 br;
++    U32 qp;
++    U32 ip;
++    U32 reset;
++} HevcEncParam2;
++
++typedef struct KernelDeviceData2 {
++    // CSR3/CSR4/CSR5
++    // CSR6/CSR7/CSR8
++    cl_mem  InCur[VU9P_HEVC_ENC_NUM_CH][3];
++    // CSR9/CSR10/CSR11
++    cl_mem  inNxt[3];
++    xlnx_ts_queue* inQ[VU9P_HEVC_ENC_NUM_CH];
++    cl_mem  CSR15_RECON_BASE_V;
++    // CSR 16 & 18 + CSR 17 & 19
++    xlnx_ts_queue* outQ[VU9P_HEVC_ENC_NUM_CH];
++    U32 CurImgSize[VU9P_HEVC_ENC_NUM_CH][3];
++    U32 EncodedFrameSize[VU9P_HEVC_ENC_NUM_CH];
++    //CSR20
++    U32 isDualCh;
++    HevcEncParam2* params;
++} KernelDeviceData2;
++
++typedef KernelDeviceData2 KDD2;
++
++struct HevcEnc2 {
++    KDD2 kdd;
++    HevcEncParam2 params;
++    xlnx_kernel* xKernel;
++    U32 frameNumber[VU9P_HEVC_ENC_NUM_CH];
++    int refCount;
++    pthread_t encThread;
++    AVThreadMessageQueue* reqQ[VU9P_HEVC_ENC_NUM_CH];
++    AVThreadMessageQueue* rspQ[VU9P_HEVC_ENC_NUM_CH];
++    xlnx_ts_queue* ctxQ;
++    HevcEncCtx* curCtx;
++};
++
++typedef enum {
++    EProcess,
++    EEOS
++} HevcMsgType;
++
++typedef struct HevcEncReq {
++    HevcMsgType type;
++    xlnx_host* host;
++    xlnx_hw_params params;
++    xlnx_hw_buf* in;
++    xlnx_hw_buf* out;
++    void* appCtx;
++} HevcEncReq;
++
++typedef struct HevcEncRsp {
++    HevcMsgType type;
++    xlnx_hw_buf* out;
++    void* appCtx;
++} HevcEncRsp;
++
++static int KDD2_deinit(KDD2* aKDD, uint32_t aChannel,  int aRefcount);
++
++static int hevc_prepare(HevcEnc2* aEnc, HevcEncReq* aReq) {
++    cl_int status = -1;
++    int ch;
++    HevcEnc2* enc = aEnc;
++    KDD2* kdd = &enc->kdd;
++    int refcount = enc->refCount;
++    xlnx_kernel* xKernel = enc->xKernel;
++    cl_command_queue cmdQ;
++    cl_kernel kernel;
++    int size;
++    xlnx_data_buf* iHBuf;
++    xlnx_host* host = aReq->host;
++    xlnx_hw_buf* inHost = aReq->in;
++    HevcEncCtx* ctx;
++    HevcKDCtx* kdCtx;
++    int arg;
++    U32 frameNumber;
++    cl_mem* inFBuf = NULL;
++
++    iHBuf = inHost->ptr;
++    ch = host->ch;
++    frameNumber = enc->frameNumber[ch];
++    if ((frameNumber == 0) && (iHBuf == NULL)) { return -1;}
++    assert(inHost->type == ERAW);
++
++    cmdQ = xKernel->cmdQ;
++    kernel = xKernel->kernel;
++
++    size = 0;
++    if (ch == 0) {
++        if (frameNumber == 0) {
++            arg = 2;
++            inFBuf = (cl_mem*)dequeueTSQ(kdd->inQ[ch]);
++            for (int i = 0; i < 3; i++) {
++                size = kdd->CurImgSize[ch][i] * sizeof(U8);
++                ENQUEUEBUF(clEnqueueWriteBuffer, inFBuf[i]);
++                OCLCHECKI2(clSetKernelArg, kernel, arg, sizeof(cl_mem),&inFBuf[i]);
++                arg++;
++            }
++            enc->frameNumber[ch]++;
++            ctx = enc->curCtx = dequeueTSQ(enc->ctxQ);
++            ctx->state = ESendIp;
++            kdCtx = &ctx->kdCtx[ch];
++            kdCtx->inD = inFBuf;
++            kdCtx->outH = aReq->out;
++            kdCtx->appCtx = aReq->appCtx;
++            return 0;
++        } else if (frameNumber == 1) {
++            if (iHBuf != NULL) {
++                inFBuf = (cl_mem*)dequeueTSQ(kdd->inQ[ch]);
++                arg = 8;
++                for (int i = 0; i < 3; i++) {
++                    size = kdd->CurImgSize[ch][i] * sizeof(U8);
++                    ENQUEUEBUF(clEnqueueWriteBuffer, inFBuf[i]);
++                    OCLCHECKI2(clSetKernelArg, kernel, arg, sizeof(cl_mem), &inFBuf[i]);
++                    arg++;
++                }
++            }
++            enc->frameNumber[ch]++;
++            ctx = frontTSQ(enc->ctxQ);
++            kdCtx = &ctx->kdCtx[ch];
++            kdCtx->inD = inFBuf;
++            kdCtx->outH = aReq->out;
++            kdCtx->appCtx = aReq->appCtx;
++        } else {
++            WAIT_IF_EMPTY(enc->ctxQ);
++            ctx = enc->curCtx = dequeueTSQ(enc->ctxQ);
++            ctx->state = ESendIp;
++            kdCtx = &ctx->kdCtx[ch];
++            inFBuf = kdCtx->inD;
++            arg = 2;
++            for (int i = 0; i < 3; i++) {
++                OCLCHECKI2(clSetKernelArg, kernel, arg, sizeof(cl_mem),&inFBuf[i]);
++                arg++;
++            }
++            if (iHBuf != NULL) {
++                WAIT_IF_EMPTY(kdd->inQ[ch]);
++                inFBuf = (cl_mem*)dequeueTSQ(kdd->inQ[ch]);
++                arg = 8;
++                for (int i = 0; i < 3; i++) {
++                    size = kdd->CurImgSize[ch][i] * sizeof(U8);
++                    ENQUEUEBUF(clEnqueueWriteBuffer, inFBuf[i]);
++                    OCLCHECKI2(clSetKernelArg, kernel, arg, sizeof(cl_mem), &inFBuf[i]);
++                    arg++;
++                }
++            }
++            enc->frameNumber[ch]++;
++            WAIT_IF_EMPTY(enc->ctxQ);
++            ctx = frontTSQ(enc->ctxQ);
++            kdCtx = &ctx->kdCtx[ch];
++            kdCtx->inD = inFBuf;
++            kdCtx->outH = aReq->out;
++            kdCtx->appCtx = aReq->appCtx;
++        }
++    } else if (ch == 1) {
++        if (iHBuf != NULL) {
++            ctx = enc->curCtx;
++            assert(ctx->state == ESendIp);
++            kdCtx = &ctx->kdCtx[ch];
++            WAIT_IF_EMPTY(kdd->inQ[ch]);
++            inFBuf = (cl_mem*)dequeueTSQ(kdd->inQ[ch]);
++            arg = 5;
++            for (int i = 0; i < 3; i++) {
++                size = kdd->CurImgSize[ch][i] * sizeof(U8);
++                ENQUEUEBUF(clEnqueueWriteBuffer, inFBuf[i]);
++                OCLCHECKI2(clSetKernelArg, kernel, arg, sizeof(cl_mem), &inFBuf[i]);
++                arg++;
++            }
++            kdCtx = &ctx->kdCtx[ch];
++            kdCtx->inD = inFBuf;
++            kdCtx->outH = aReq->out;
++            kdCtx->appCtx = aReq->appCtx;
++        } else {
++            U32 wh = 0;
++            OCLCHECKI2(clSetKernelArg, kernel, 1, sizeof(U32),          &wh);
++            OCLCHECKI2(clSetKernelArg, kernel, 5, sizeof(cl_mem),       NULL);
++            OCLCHECKI2(clSetKernelArg, kernel, 6, sizeof(cl_mem),       NULL);
++            OCLCHECKI2(clSetKernelArg, kernel, 7, sizeof(cl_mem),       NULL);
++            OCLCHECKI2(clSetKernelArg, kernel, 17, sizeof(cl_mem),      NULL);
++            OCLCHECKI2(clSetKernelArg, kernel, 18, sizeof(cl_mem),      NULL);
++        }
++        enc->frameNumber[ch]++;
++    }
++    return 0;
++}
++
++static void CL_CALLBACK notify_callback(cl_event event, cl_int event_command_exec_status, void* user_data) {
++    cl_int status = -1;
++    HevcEncCtx* ctx;
++    HevcKDCtx* kdCtx;
++    HevcEnc2* enc;
++    KDD2* kdd;
++    int isDualCh;
++    cl_command_queue cmdQ;
++    cl_event eventRead;
++    xlnx_hw_buf* outH;
++    xlnx_data_buf* oHBuf;
++    cl_mem* oFBuf;
++    HevcEncRsp rspMsg;
++
++    ctx = (HevcEncCtx*)user_data;
++    kdCtx = &ctx->kdCtx[0];
++    outH = kdCtx->outH;
++    oHBuf = outH->ptr;
++    oFBuf = kdCtx->outD;
++    enc = ctx->enc;
++    cmdQ = enc->xKernel->cmdQ;
++    kdd = &enc->kdd;
++    isDualCh = kdd->isDualCh;
++
++    switch (ctx->state) {
++        case EEncode:
++            oHBuf->size = 0;
++            OCLCHECKCB(clEnqueueReadBuffer, cmdQ, oFBuf[1], CL_FALSE, 0, sizeof(U64), &oHBuf->size, 0, NULL, &eventRead);
++            enqueueTSQ(kdd->inQ[0], kdCtx->inD);
++            kdCtx->inD = NULL;
++            ctx->state = EReadOpSize;
++            if (isDualCh) {
++                kdCtx = &ctx->kdCtx[1];
++                oFBuf = kdCtx->outD;
++                outH = kdCtx->outH;
++                oHBuf = outH->ptr;
++                OCLCHECKCB(clEnqueueReadBuffer, cmdQ, oFBuf[1], CL_FALSE, 0, sizeof(U64), &oHBuf->size, 1, &eventRead, &ctx->lEncode);
++                enqueueTSQ(kdd->inQ[1], kdCtx->inD);
++                kdCtx->inD = NULL;
++                OCLCHECKCB(clSetEventCallback, ctx->lEncode, CL_COMPLETE, &notify_callback, ctx);
++            } else {
++                OCLCHECKCB(clSetEventCallback, eventRead, CL_COMPLETE, &notify_callback, ctx);
++            }
++            break;
++        case EReadOpSize:
++            OCLCHECKCB(clEnqueueReadBuffer, cmdQ, oFBuf[0], CL_FALSE, 0, oHBuf->size * sizeof(U8), oHBuf->pDATA, 0, NULL, &eventRead);
++            ctx->state = ECopyOp;
++            if (isDualCh) {
++                kdCtx = &ctx->kdCtx[1];
++                oFBuf = kdCtx->outD;
++                outH = kdCtx->outH;
++                oHBuf = outH->ptr;
++                OCLCHECKCB(clEnqueueReadBuffer, cmdQ, oFBuf[0], CL_FALSE, 0, oHBuf->size * sizeof(U8), oHBuf->pDATA, 1, &eventRead, &ctx->lEncode);
++                OCLCHECKCB(clSetEventCallback, ctx->lEncode, CL_COMPLETE, &notify_callback, ctx);
++            } else {
++                OCLCHECKCB(clSetEventCallback, eventRead, CL_COMPLETE, &notify_callback, ctx);
++            }
++            break;
++        case ECopyOp:
++            rspMsg.type = EProcess;
++            rspMsg.out = kdCtx->outH;
++            rspMsg.appCtx = kdCtx->appCtx;
++            av_thread_message_queue_send(enc->rspQ[0], &rspMsg, 0);
++            kdd = &enc->kdd;
++            enqueueTSQ(kdd->outQ[0], oFBuf);
++            kdCtx->outD = NULL;
++            kdCtx->outH = NULL;
++            if (isDualCh) {
++                kdCtx = &ctx->kdCtx[1];
++                rspMsg.out = kdCtx->outH;
++                rspMsg.appCtx = kdCtx->appCtx;
++                oFBuf = kdCtx->outD;
++                av_thread_message_queue_send(enc->rspQ[1], &rspMsg, 0);
++                enqueueTSQ(kdd->outQ[1], oFBuf);
++                kdCtx->outD = NULL;
++                kdCtx->outH = NULL;
++            }
++            ctx->state = EInit;
++            enqueueTSQ(enc->ctxQ, ctx);
++            break;
++        default:
++            printf("Error: Unknown STATE!!\n");
++            break;
++    }
++}
++
++static int hevc_encode(HevcEnc2* aEnc) {
++    cl_int status = -1;
++    HevcEnc2* enc;
++    HevcEncCtx* ctx;
++    xlnx_hw_buf* outH0;
++    xlnx_data_buf* oHBuf0;
++    //xlnx_data_buf* oHBuf1;
++    KDD2* kdd;
++    int isDualCh;
++    xlnx_kernel* xKernel;
++    cl_command_queue cmdQ;
++    cl_kernel kernel;
++    size_t global_work_size_1d[1];
++    size_t local_work_size_1d[1];
++    cl_event event;
++    HevcKDCtx* kdCtx;
++    cl_mem* oFBuf;
++    enc = aEnc;
++    ctx = enc->curCtx;
++    assert(ctx != NULL);
++    kdCtx = &ctx->kdCtx[0];
++    outH0 = kdCtx->outH;
++    assert(outH0->type == EDATA);
++    oHBuf0 = outH0->ptr;
++    kdd = &enc->kdd;
++    xKernel = enc->xKernel;
++    cmdQ = xKernel->cmdQ;
++    kernel = xKernel->kernel;
++    isDualCh = kdd->isDualCh;
++
++    WAIT_IF_EMPTY(kdd->outQ[0]);
++    oFBuf = dequeueTSQ(kdd->outQ[0]);
++    OCLCHECKI(clSetKernelArg, kernel, 15, sizeof(cl_mem), &oFBuf[0]);
++    OCLCHECKI(clSetKernelArg, kernel, 16, sizeof(cl_mem), &oFBuf[1]);
++    kdCtx->outD = oFBuf;
++    if(isDualCh) {
++        kdCtx = &ctx->kdCtx[1];
++        WAIT_IF_EMPTY(kdd->outQ[1]);
++        oFBuf = dequeueTSQ(kdd->outQ[1]);
++        OCLCHECKI(clSetKernelArg, kernel, 17, sizeof(cl_mem), &oFBuf[0]);
++        OCLCHECKI(clSetKernelArg, kernel, 18, sizeof(cl_mem), &oFBuf[1]);
++        kdCtx->outD = oFBuf;
++    }
++    global_work_size_1d[0] = 1;
++    local_work_size_1d[0] = 1;
++    if (ctx->lEncode != 0) {
++        OCLCHECK(clEnqueueNDRangeKernel, cmdQ, kernel, 1, NULL, global_work_size_1d, local_work_size_1d, 1, &ctx->lEncode, &event);
++    } else {
++        OCLCHECK(clEnqueueNDRangeKernel, cmdQ, kernel, 1, NULL, global_work_size_1d, local_work_size_1d, 0, NULL, &event);
++    }
++    ctx->state = EEncode;
++    OCLCHECK(clSetEventCallback, event, CL_COMPLETE, &notify_callback, ctx);
++    enc->curCtx = NULL;
++    WAIT_IF_EMPTY(enc->ctxQ);
++    ctx = frontTSQ(enc->ctxQ);
++    ctx->lEncode = event;
++    if (kdd->params->reset == 1) {
++        kdd->params->reset = 0;
++        OCLCHECKI(clSetKernelArg, kernel, 20, sizeof(U32), &kdd->params->reset);
++    }
++    return 0;
++}
++
++
++static void* process(void* aEnc) {
++    HevcEnc2* enc;
++    AVThreadMessageQueue* reqQ;
++    AVThreadMessageQueue* rspQ;
++    AVThreadMessageQueue* reqQ1;
++    AVThreadMessageQueue* rspQ1;
++    HevcEncReq reqMsg;
++    HevcEncRsp rspMsg;
++    HevcEncReq reqMsg1;
++    HevcEncRsp rspMsg1;
++    int ret, isDualCh;
++
++    printf("Thread started\n");
++    enc = (HevcEnc2*)aEnc;
++    reqQ = enc->reqQ[0];
++    rspQ = enc->rspQ[0];
++    rspMsg.type = EProcess;
++
++    reqQ1 = NULL;
++    rspQ1 = NULL;
++    rspMsg1.out = NULL;
++    rspMsg1.appCtx = NULL;
++    isDualCh = 0;
++
++    av_thread_message_queue_recv(reqQ, &reqMsg, 0);
++    ret = hevc_prepare(enc, &reqMsg);
++    if (ret < 0) {
++        printf("Error: Prepare failed, Exit Thread aEnc=%p\n", aEnc);
++        pthread_exit(NULL);
++    }
++    while(1) {
++        av_thread_message_queue_recv(reqQ, &reqMsg, 0);
++        ret = hevc_prepare(enc, &reqMsg);
++        if (ret < 0) break;
++
++        isDualCh = enc->kdd.isDualCh;
++        if (isDualCh) {
++            reqQ1 = enc->reqQ[1];
++            rspQ1 = enc->rspQ[1];
++            av_thread_message_queue_recv(reqQ1, &reqMsg1, 0);
++            if (reqMsg1.type == EEOS) {
++                while (!isFullTSQ(enc->ctxQ)) usleep(1000);
++                break;
++            }
++            ret = hevc_prepare(enc, &reqMsg1);
++            if (ret < 0) break;
++        }
++        ret = hevc_encode(aEnc);
++        if (ret < 0) break;
++        if (reqMsg.type == EEOS) {
++            while (!isFullTSQ(enc->ctxQ)) usleep(1000);
++            break;
++        }
++    }
++    rspMsg.type = EEOS;
++    av_thread_message_queue_send(rspQ, &rspMsg, 0);
++    av_thread_message_queue_recv(reqQ, &reqMsg, AV_THREAD_MESSAGE_NONBLOCK);
++    if (isDualCh) {
++        av_thread_message_queue_recv(reqQ1, &reqMsg1, 0);
++        assert(reqMsg1.type == EEOS);
++        rspMsg1.type = EEOS;
++        av_thread_message_queue_send(rspQ1, &rspMsg1, 0);
++    }
++    printf("Exit Thread aEnc=%p\n", aEnc);
++    pthread_exit(NULL);
++}
++
++int KDD2_deinit(KDD2* aKDD, uint32_t aChannel,  int aRefcount) {
++    int ch = aChannel;
++    cl_mem* mem;
++    xlnx_ts_queue* inQ = aKDD->inQ[ch];
++    xlnx_ts_queue* outQ = aKDD->outQ[ch];
++    if (inQ) {
++        while(!isEmptyTSQ(inQ)) {
++            mem = (cl_mem*)dequeueTSQ(inQ);
++            if (mem) {
++                for (int i = 0; i < 3; i++) {
++                    clReleaseMemObject(mem[i]);
++                }
++                free(mem);
++            }
++        }
++        destroyTSQ(inQ);
++        aKDD->inQ[ch] = NULL;
++    }
++    if (outQ) {
++        while(!isEmptyTSQ(outQ)) {
++            mem = (cl_mem*)dequeueTSQ(outQ);
++            if (mem) {
++                for (int i = 0; i < 2; i++) {
++                    clReleaseMemObject(mem[i]);
++                }
++                free(mem);
++            }
++        }
++        destroyTSQ(outQ);
++        aKDD->outQ[ch] = NULL;
++    }
++    for (int i = 0; i < 3; i++) {
++        if (aKDD->InCur[ch][i]) clReleaseMemObject(aKDD->InCur[ch][i]);
++        if ((ch == 0) && (aKDD->inNxt[i])) clReleaseMemObject(aKDD->inNxt[i]);
++        aKDD->CurImgSize[ch][i] = 0;
++    }
++    if ((aRefcount == 0) && aKDD->CSR15_RECON_BASE_V) clReleaseMemObject(aKDD->CSR15_RECON_BASE_V);
++    aKDD->EncodedFrameSize[ch] = 0;
++    aKDD->isDualCh = 0;
++    return 0;
++}
++
++static int KDD2_init(KDD2* aKDD, HevcEnc2* aEnc, uint32_t aChannel, int aRefcount) {
++    cl_int status = -1;
++    KDD2* kdd = aKDD;
++    int refcount = aRefcount;
++    int ch = aChannel;
++    U32 width, height;
++    cl_kernel kernel;
++    cl_context* context;
++    U32 ddrBank;
++    cl_mem_ext_ptr_t ext;
++    cl_mem* mem;
++    xlnx_ts_queue* inQ;
++    xlnx_ts_queue* outQ;
++    cl_command_queue cmdQ;
++    cl_mem_migration_flags  migflags;
++
++    if ((aKDD == NULL) || (aEnc == NULL)) return -1;
++
++    aKDD->params = &aEnc->params;
++    width = aKDD->params->wh[ch] >> 16;
++    height = aKDD->params->wh[ch] & RESET_UPPER_16;
++    aKDD->CurImgSize[ch][Y] = width * height;
++    aKDD->CurImgSize[ch][U] = (width * height) >> 2;
++    aKDD->CurImgSize[ch][V] = (width * height) >> 2;
++
++    // Encoded Frame data size - hard code to allocate host memory as this varies!
++    aKDD->EncodedFrameSize[ch] = (width * height * 3) >> 1;
++
++    // Setup the CSR registers
++    kernel = aEnc->xKernel->kernel;
++    context = aEnc->xKernel->context;
++    ddrBank = aEnc->xKernel->prfBank;
++    cmdQ = aEnc->xKernel->cmdQ;
++    ext.obj = NULL;
++    ext.param = 0;
++    ext.flags = ddrBank;
++    migflags = 0;
++
++    if (aRefcount == 1) {
++        CREATEBUF2(aKDD->CSR15_RECON_BASE_V, CL_MEM_READ_WRITE  | CL_MEM_EXT_PTR_XILINX | CL_MEM_HOST_NO_ACCESS,  32*1024*1024 * sizeof(U8));
++    } else {
++        aKDD->isDualCh = 1;
++    }
++    inQ = createTSQ(HEVC_KRNL_CH_Q_CAPACITY);
++    outQ = createTSQ(HEVC_KRNL_CH_Q_CAPACITY);
++    if ((NULL == aKDD->outQ) || (NULL == aKDD->inQ)) {
++        if (aKDD->inQ) free(aKDD->inQ);
++        return -1;
++    }
++    aKDD->inQ[ch] = inQ;
++    aKDD->outQ[ch] = outQ;
++    for (int j = 0; j < HEVC_KRNL_CH_Q_CAPACITY; j++) {
++        mem = calloc(3, sizeof(cl_mem));
++        if (NULL == mem) return -1;
++        CREATEBUF2(mem[Y], CL_MEM_READ_ONLY | CL_MEM_EXT_PTR_XILINX,  aKDD->CurImgSize[ch][Y] * sizeof(U8));
++        CREATEBUF2(mem[U], CL_MEM_READ_ONLY | CL_MEM_EXT_PTR_XILINX,  aKDD->CurImgSize[ch][U] * sizeof(U8));
++        CREATEBUF2(mem[V], CL_MEM_READ_ONLY | CL_MEM_EXT_PTR_XILINX,  aKDD->CurImgSize[ch][V] * sizeof(U8));
++        enqueueTSQ(inQ, mem);
++        mem = calloc(2, sizeof(cl_mem));
++        if (NULL == mem) return -1;
++        CREATEBUF2(mem[0], CL_MEM_WRITE_ONLY  | CL_MEM_EXT_PTR_XILINX, aKDD->EncodedFrameSize[ch] * sizeof(U8));
++        CREATEBUF2(mem[1], CL_MEM_WRITE_ONLY  | CL_MEM_EXT_PTR_XILINX, sizeof(U64));
++        enqueueTSQ(outQ, mem);
++    }
++
++    if (ch == 0) {
++        OCLCHECKI2(clSetKernelArg, kernel, 0, sizeof(U32),          &aKDD->params->wh[0]);
++        OCLCHECKI2(clSetKernelArg, kernel, 14, sizeof(cl_mem),       &aKDD->CSR15_RECON_BASE_V);
++        if (aRefcount == 1) {
++            U32 wh = 0;
++            OCLCHECKI2(clSetKernelArg, kernel, 1, sizeof(U32),          &wh);
++            OCLCHECKI2(clSetKernelArg, kernel, 5, sizeof(cl_mem),       NULL);
++            OCLCHECKI2(clSetKernelArg, kernel, 6, sizeof(cl_mem),       NULL);
++            OCLCHECKI2(clSetKernelArg, kernel, 7, sizeof(cl_mem),       NULL);
++            OCLCHECKI2(clSetKernelArg, kernel, 17, sizeof(cl_mem),      NULL);
++            OCLCHECKI2(clSetKernelArg, kernel, 18, sizeof(cl_mem),      NULL);
++        }
++    } else if (ch == 1) {
++        OCLCHECKI2(clSetKernelArg, kernel, 1, sizeof(U32),          &aKDD->params->wh[1]);
++    }
++
++    OCLCHECKI2(clSetKernelArg, kernel, 11, sizeof(U32),          &aKDD->params->br);
++    OCLCHECKI2(clSetKernelArg, kernel, 12, sizeof(U32),          &aKDD->params->qp);
++    OCLCHECKI2(clSetKernelArg, kernel, 13, sizeof(U32),          &aKDD->params->ip);
++    OCLCHECKI2(clSetKernelArg, kernel, 19, sizeof(U32), &aKDD->isDualCh);
++    OCLCHECKI2(clSetKernelArg, kernel, 20, sizeof(U32), &aKDD->params->reset);
++    return 0;
++}
++
++static int hevc_process(xlnx_host* aHost, xlnx_hw_params aParams, xlnx_hw_buf* aInput, xlnx_hw_buf** aOutput, XContext* aContext) {
++    HevcEncReq reqMsg;
++    HevcEncRsp rspMsg;
++    int ret;
++    HevcEnc2* enc;
++    int ch = aHost->ch;
++
++    reqMsg.host = aHost;
++    reqMsg.params = aParams;
++    reqMsg.in = aInput;
++    reqMsg.out = *aOutput;
++    reqMsg.appCtx = *aContext;
++    reqMsg.type = EProcess;
++    if ((aInput->ptr == NULL) && (aHost->eosRcv == 0)) {
++        reqMsg.type = EEOS;
++    }
++
++    enc = (HevcEnc2*)aHost->privData;
++
++    // Send a request to encode the frame
++    if (aHost->eosRcv == 0) {
++        av_thread_message_queue_send(enc->reqQ[ch], &reqMsg, 0);
++    }
++
++    // Check if there is a response to return from a previous invocation
++    if (aInput->ptr == NULL) {
++        aHost->eosRcv = 1;
++        ret = av_thread_message_queue_recv(enc->rspQ[ch], &rspMsg, 0);
++    } else {
++        ret = av_thread_message_queue_recv(enc->rspQ[ch], &rspMsg, AV_THREAD_MESSAGE_NONBLOCK);
++    }
++    if (ret == AVERROR(EAGAIN)) {
++        *aOutput = NULL;
++        return 0;
++    }
++    if (rspMsg.type == EEOS) {
++        *aOutput = NULL;
++        return 2;
++    }
++    *aOutput = rspMsg.out;
++    *aContext = rspMsg.appCtx;
++    return 1;
++}
++
++static int setEnc2CParams(HevcEncParam2* dParames, uint32_t aChannel, HevcEncParam* sParams) {
++    int ch = aChannel;
++    dParames->wh[ch] = (sParams->width << 16) + sParams->height;
++    if (ch == 0) {
++        dParames->qp = (dParames->qp & RESET_LOWER_16) + sParams->qp;
++        dParames->ip = (dParames->ip & RESET_LOWER_16) + sParams->ip;
++        dParames->br = (dParames->br & RESET_LOWER_16) + sParams->bitrate;
++    } else {
++        dParames->qp = (dParames->qp & RESET_UPPER_16) + (sParams->qp << 16);
++        dParames->ip = (dParames->ip & RESET_UPPER_16) + (sParams->ip << 16);
++        dParames->br = (dParames->br & RESET_UPPER_16) + (sParams->bitrate << 16);
++    }
++    dParames->reset = 1;
++    return 0;
++}
++
++xlnx_host* createHevcEnc2C(xlnx_kernel* aKernel, uint32_t aChannel, xlnx_hw_params aParams) {
++    HevcEnc2* enc;
++    int err;
++    xlnx_host* host;
++    xlnx_ts_queue* ctxQ;
++    HevcEncCtx* ctx;
++
++    if (aKernel == NULL) return NULL;
++    assert((aChannel == 0) || ((aChannel == 1) && (aKernel->appData != NULL)));
++
++    if (aChannel == 0) {
++        enc = (HevcEnc2*)calloc(1, sizeof(HevcEnc2));
++        ctxQ = createTSQ(HEVC_KRNL_CH_Q_CAPACITY);
++        if ((enc == NULL) || (ctxQ == NULL)) {
++            if (enc) free(enc);
++            printf("Error: Cannot allocate memory %s at %d\n", __FILE__, __LINE__);
++            return NULL;
++        }
++        enc->refCount = 0;
++        for (int i = 0; i < HEVC_KRNL_CH_Q_CAPACITY; i++) {
++            ctx = calloc(1, sizeof(HevcEncCtx));
++            if (ctx == NULL) {
++                free(enc);
++                while(!isEmptyTSQ(enc->ctxQ)) {
++                    free(dequeueTSQ(enc->ctxQ));
++                }
++                destroyTSQ(ctxQ);
++                printf("Error: Cannot allocate memory %s at %d\n", __FILE__, __LINE__);
++                return NULL;
++            }
++            ctx->enc = enc;
++            ctx->state = EInit;
++            ctx->lEncode = 0;
++            enqueueTSQ(ctxQ, ctx);
++        }
++        enc->ctxQ = ctxQ;
++    } else if (aChannel == 1) {
++        enc = (HevcEnc2*)aKernel->appData;
++    }
++
++    setEnc2CParams(&enc->params, aChannel, aParams);
++    enc->xKernel = aKernel;
++    enc->refCount++;
++    err = KDD2_init(&enc->kdd, enc, aChannel, enc->refCount);
++    if (err < 0) {
++        printf("Error: createHevcEnc Failed\n");
++        free(enc);
++        return NULL;
++    }
++    enc->frameNumber[aChannel] = 0;
++    host = (xlnx_host*) calloc(1, sizeof(xlnx_host));
++    if (host == NULL) {
++        printf("Error: Cannot allocate memory %s at %d\n", __FILE__, __LINE__);
++        return NULL;
++    }
++    host->privData = (void*) enc;
++    host->ch = aChannel;
++    host->processAsync = &hevc_process;
++    host->eosRcv = 0;
++    // Create the message queues
++    printf("Creating request message queue ch[%d]\n", aChannel);
++    err = av_thread_message_queue_alloc(&enc->reqQ[aChannel],
++                                       HEVC_ENC_IN_Q_CAPACITY, sizeof(HevcEncReq));
++    printf("Creating response message queue ch[%d]\n", aChannel);
++    err |= av_thread_message_queue_alloc(&enc->rspQ[aChannel],
++                                       HEVC_ENC_OUT_Q_CAPACITY, sizeof(HevcEncRsp));
++
++    if (err < 0)
++    {
++        printf("Error: Cannot allocate memory %s at %d\n", __FILE__, __LINE__);
++        destroyHevcEnc2C(host);
++        return NULL;
++    }
++
++    if (aChannel == 0) {
++        printf("create Thread for enc=%p host=%p\n", enc, host);
++        aKernel->appData = (void*) enc;
++        if (pthread_create(&enc->encThread, NULL, process, enc) < 0) {
++            printf("Error: Thread Creation Failed!!\n");
++            destroyHevcEnc2C(host);
++            return NULL;
++        }
++    }
++    return host;
++}
++
++int destroyHevcEnc2C(xlnx_host* aHost) {
++    HevcEnc2* enc;
++    if (aHost == NULL) return -1;
++    enc = (HevcEnc2*)aHost->privData;
++    if (enc == NULL) return -1;
++    enc->refCount--;
++    KDD2_deinit(&enc->kdd, aHost->ch, enc->refCount);
++    if (enc->refCount == 0) {
++        // @Todo Terminate the thread for sure
++        pthread_join(enc->encThread, NULL);
++
++        // Free the message queues
++        for (int i = 0; i < VU9P_HEVC_ENC_NUM_CH; i++) {
++            av_thread_message_queue_free(&enc->reqQ[i]);
++            av_thread_message_queue_free(&enc->rspQ[i]);
++        }
++        if (enc->ctxQ) {
++            while(!isEmptyTSQ(enc->ctxQ)) {
++                free(dequeueTSQ(enc->ctxQ));
++            }
++            destroyTSQ(enc->ctxQ);
++        }
++        free(enc);
++    }
++    free(aHost);
++    return 0;
++}
+diff --git a/libavcodec/xlnx_hw/hevc/enc_vu9p_2c.h b/libavcodec/xlnx_hw/hevc/enc_vu9p_2c.h
+new file mode 100644
+index 0000000..2fabc5c
+--- /dev/null
++++ b/libavcodec/xlnx_hw/hevc/enc_vu9p_2c.h
+@@ -0,0 +1,16 @@
++#ifndef HEVC_ENC_VU9P_2C_H
++#define HEVC_ENC_VU9P_2C_H
++
++#include "../common/inc/xlnx_types_internal.h"
++
++/*
++Restrictions for dual channel mode:
++ 1. Both the channels must have same framerate
++ 2. Parameters like height/width do not change once encoder is initialized
++ 3. Both the channels need to be setup (createHevcEnc2C), before the second process
++    request arrives for the first channel(0)
++*/
++xlnx_host* createHevcEnc2C(xlnx_kernel* aKernel, uint32_t aChannel, xlnx_hw_params aParams);
++int destroyHevcEnc2C(xlnx_host* aHost);
++
++#endif //HEVC_ENC_VU9P_2C_H
+\ No newline at end of file
+diff --git a/libavcodec/xlnx_hw/hevc/ku115_hevc_enc_config.h b/libavcodec/xlnx_hw/hevc/ku115_hevc_enc_config.h
+new file mode 100644
+index 0000000..68897ee
+--- /dev/null
++++ b/libavcodec/xlnx_hw/hevc/ku115_hevc_enc_config.h
+@@ -0,0 +1,13 @@
++#ifndef KU115_HEVC_ENC_CONFIG
++#define KU115_HEVC_ENC_CONFIG
++
++#if LOAD_BINARY_FROM_HEADER
++#include "hevc_enc_ku115_bin.h"
++#else
++static const char* KU115_HEVC_ENC_BINARY = "sdxl_hevc.xclbin";
++#endif //LOAD_BINARY_FROM_HEADER
++// KU115
++static const char* KU115_BOARD = "xilinx:xil-accel-rd-ku115:4ddr-xpr";
++static const char* KU115_HEVC_KRNL_NAME[] = {"sdxl_hevc"};
++
++#endif //KU115_HEVC_ENC_CONFIG
+\ No newline at end of file
+diff --git a/libavcodec/xlnx_hw/hevc/vu9p_hevc_enc_config.h b/libavcodec/xlnx_hw/hevc/vu9p_hevc_enc_config.h
+new file mode 100644
+index 0000000..7ab4e5b
+--- /dev/null
++++ b/libavcodec/xlnx_hw/hevc/vu9p_hevc_enc_config.h
+@@ -0,0 +1,24 @@
++#ifndef VU9P_HEVC_ENC_CONFIG
++#define VU9P_HEVC_ENC_CONFIG
++
++#include "../common/inc/xlnx_types_internal.h"
++
++#if LOAD_BINARY_FROM_HEADER
++#include "hevc_enc_vu9p_bin.h"
++#include "hevc_enc_vu9p_2k2c_bin.h"
++#else
++static const char* VU9P_HEVC_ENC_BINARY = "hevc_enc_vu9p_2k2c.aws.awsxclbin";
++#endif //LOAD_BINARY_FROM_HEADER
++
++// VU9P
++static const char* VU9P_BOARD = "xilinx:aws-vu9p-f1:4ddr-xpr-2pr";
++
++static KRNL_CONFIG VU9P_HEVC_CONFIG[] = {
++                                            {"krnl_ngcodec_hevc_f1_0", XCL_MEM_DDR_BANK3},
++#if 0
++                                            {"krnl_ngcodec_hevc_1", XCL_MEM_DDR_BANK3}
++#endif //VU9P_HEVC_ENC_2_K
++};
++
++
++#endif //VU9P_HEVC_ENC_CONFIG
+diff --git a/libavcodec/xlnx_hw/xlnx_hw.c b/libavcodec/xlnx_hw/xlnx_hw.c
+new file mode 100644
+index 0000000..712400d
+--- /dev/null
++++ b/libavcodec/xlnx_hw/xlnx_hw.c
+@@ -0,0 +1,49 @@
++#include "stdio.h"
++#include "stddef.h"
++#include "xlnx_hw.h"
++#include "common/inc/xlnx_hrm.h"
++#include "common/inc/xlnx_types_internal.h"
++
++int xlnx_hw_init(const char* aConfigFile, xlnx_hw_id aHWID) {
++    return xlnx_hrm_init(aConfigFile, aHWID);
++}
++
++int xlnx_hw_deinit(void) {
++    return xlnx_hrm_deinit();
++}
++
++xlnx_hw xlnx_hw_get(xlnx_hw_id aHW, xlnx_hw_params aParams) {
++    return (xlnx_hw)xlnx_hrm_get_host(aHW, aParams);
++}
++
++int xlnx_hw_process(xlnx_hw aHW, xlnx_hw_params aParams, xlnx_hw_buf* aInput, xlnx_hw_buf* aOutput) {
++    int err;
++    xlnx_host* host;
++    err = -1;
++    host = (xlnx_host*)aHW;
++    if (host->process) {
++        err = host->process(host, aParams, aInput, aOutput);
++    } else {
++        printf("Error: Not Implemented");
++    }
++    return err;
++}
++
++int xlnx_hw_process_async(xlnx_hw aHW, xlnx_hw_params aParams, xlnx_hw_buf* aInput, xlnx_hw_buf** aOutput, XContext* aContext) {
++    int err;
++    xlnx_host* host;
++    err = -1;
++    host = (xlnx_host*)aHW;
++    if (host->processAsync) {
++        err = host->processAsync(host, aParams, aInput, aOutput, aContext);
++    } else {
++        printf("Error: Not Implemented");
++    }
++    return err;
++}
++
++int xlnx_hw_release(xlnx_hw aHW) {
++    return xlnx_hrm_release_host((xlnx_host*) aHW);
++}
++
++
+diff --git a/libavcodec/xlnx_hw/xlnx_hw.h b/libavcodec/xlnx_hw/xlnx_hw.h
+new file mode 100755
+index 0000000..ea5fc41
+--- /dev/null
++++ b/libavcodec/xlnx_hw/xlnx_hw.h
+@@ -0,0 +1,14 @@
++#ifndef XLNX_HW_H
++#define XLNX_HW_H
++#include "xlnx_hw_types.h"
++
++int xlnx_hw_init(const char* aConfigFile, xlnx_hw_id aHWID);
++int xlnx_hw_deinit(void);
++
++xlnx_hw xlnx_hw_get(xlnx_hw_id aHWID, xlnx_hw_params aParams);
++int xlnx_hw_process(xlnx_hw aHW, xlnx_hw_params aParams, xlnx_hw_buf* aInput, xlnx_hw_buf* aOutput);
++//@TODO Async API added for POC. Aync API with callback to be added later
++int xlnx_hw_process_async(xlnx_hw aHW, xlnx_hw_params aParams, xlnx_hw_buf* aInput, xlnx_hw_buf** aOutput, XContext* aContext);
++int xlnx_hw_release(xlnx_hw aHW);
++
++#endif // XLNX_HW_H
+diff --git a/libavcodec/xlnx_hw/xlnx_hw_types.h b/libavcodec/xlnx_hw/xlnx_hw_types.h
+new file mode 100644
+index 0000000..14da602
+--- /dev/null
++++ b/libavcodec/xlnx_hw/xlnx_hw_types.h
+@@ -0,0 +1,55 @@
++#ifndef XLNX_HW_TYPES_H
++#define XLNX_HW_TYPES_H
++
++//@TODO define informative error codes
++#define XLNX_MAX_COMPONENTS 3
++typedef unsigned char       U8;
++typedef unsigned int       U32;
++typedef unsigned long long U64;
++
++
++typedef void* xlnx_hw;
++typedef void* xlnx_hw_params;
++typedef void* XBUF;
++typedef void* XDATA;
++typedef void* XContext;
++
++typedef enum {
++    EDATA,
++    ERAW
++} xlnx_buf_type;
++
++typedef struct xlnx_hw_buf {
++    xlnx_buf_type type;
++    XBUF ptr;
++    void* user_priv;
++    void* priv;
++} xlnx_hw_buf;
++
++//EDATA
++typedef struct xlnx_data {
++    XDATA pDATA;
++    U64 offset;
++    U64 size;
++} xlnx_data_buf;
++
++//ERAW (YUV, RGB etc)
++typedef struct {
++    xlnx_data_buf data[XLNX_MAX_COMPONENTS];
++} xlnx_cmp_buf;
++
++typedef enum xlnx_hw_id {
++    ENone,
++    EHevcEnc
++} xlnx_hw_id;
++
++typedef struct HevcEncParam {
++    U32 width;
++    U32 height;
++    U32 bitrate;
++    U32 qp; // quantization parameter
++    U32 ip; // intra period
++    U32 reset;
++} HevcEncParam;
++
++#endif //XLNX_HW_TYPES_H
+\ No newline at end of file
+diff --git a/libavutil/opencl.c b/libavutil/opencl.c
+index af35770..00992b4 100644
+--- a/libavutil/opencl.c
++++ b/libavutil/opencl.c
+@@ -88,7 +88,7 @@ static const AVClass openclutils_class = {
+ 
+ static OpenclContext opencl_ctx = {&openclutils_class};
+ 
+-static const cl_device_type device_type[] = {CL_DEVICE_TYPE_GPU, CL_DEVICE_TYPE_CPU};
++static const cl_device_type device_type[] = {CL_DEVICE_TYPE_GPU, CL_DEVICE_TYPE_CPU, CL_DEVICE_TYPE_ACCELERATOR};
+ 
+ typedef struct {
+     int err_code;
+-- 
+1.8.3.1
+
