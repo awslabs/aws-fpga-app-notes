@@ -59,3 +59,7 @@ git apply ../../../0001-Xilinx-NGcodec-hevc-ffmpeg-plugin.patch
 cd ../../../
 ./build_ffmpeg.sh
 ```
+
+The newly compiled FFmpeg executable can be found here:
+/home/centos/aws-fpga-app-notes/reInvent17_Developer_Workshop/ffmpeg/build/ffmpeg_hevc/sources/ffmpeg/ffmpeg_build/ffmpeg
+
