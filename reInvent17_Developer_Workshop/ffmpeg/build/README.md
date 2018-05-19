@@ -1,12 +1,15 @@
 ## Instruction for building the FFmpeg executable included in this repository.
 
 ### Prerequisite
-Log into an AWS EC2 instance loaded with the [FPGA Developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) v1.3.5
+Log into an AWS EC2 instance launched based on [FPGA Developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) v1.3.5
 
 
 ### Build FFmpeg with custom FGPA-accelerated encoder
 
 ```sh
+ssh <EC2 Instance>
+cd /home/centos
+git clone https://github.com/awslabs/aws-fpga-app-notes.git
 sudo sh
 
 # Install necessary packages
