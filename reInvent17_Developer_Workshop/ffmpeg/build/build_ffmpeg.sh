@@ -14,7 +14,6 @@ PATH="$H/bin:$PATH" PKG_CONFIG_PATH="$H/build/lib/pkgconfig" ../configure \
   --enable-gpl \
   --enable-libfreetype \
   --enable-libx265 \
-  --enable-nonfree \
   --enable-opencl \
   --enable-debug 
 PATH="$H/bin:$PATH" make -j 4
