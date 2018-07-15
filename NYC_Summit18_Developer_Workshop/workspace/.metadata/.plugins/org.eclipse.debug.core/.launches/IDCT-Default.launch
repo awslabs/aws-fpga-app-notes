@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="com.xilinx.opencl.launch.openCLLaunch">
+<stringAttribute key="HW_EM_LAUNCH_WAVEFORM" value=""/>
+<booleanAttribute key="SDACCEL_DEVICE_PROFILE" value="true"/>
+<booleanAttribute key="SDACCEL_TIMELINE_REPORT" value="true"/>
+<booleanAttribute key="SDX_DO_BINARY_CONTAINERS_ARGS" value="true"/>
+<booleanAttribute key="SDX_USE_DEFAULT_WORKING_DIR" value="true"/>
+<booleanAttribute key="org.eclipse.cdt.debug.mi.core.AUTO_SOLIB" value="true"/>
+<listAttribute key="org.eclipse.cdt.debug.mi.core.AUTO_SOLIB_LIST"/>
+<stringAttribute key="org.eclipse.cdt.debug.mi.core.DEBUG_NAME" value="${env_var:XILINX_SDX}/${env_var:RDI_PLATFORM}/tools/gdb/gdb-7.9.1/bin/gdb"/>
+<stringAttribute key="org.eclipse.cdt.debug.mi.core.GDB_INIT" value=".gdbinit"/>
+<listAttribute key="org.eclipse.cdt.debug.mi.core.SOLIB_PATH"/>
+<booleanAttribute key="org.eclipse.cdt.debug.mi.core.STOP_ON_SOLIB_EVENTS" value="false"/>
+<booleanAttribute key="org.eclipse.cdt.debug.mi.core.breakpointsFullPath" value="false"/>
+<stringAttribute key="org.eclipse.cdt.debug.mi.core.commandFactory" value="org.eclipse.cdt.debug.mi.core.standardLinuxCommandFactory"/>
+<stringAttribute key="org.eclipse.cdt.debug.mi.core.protocol" value="mi"/>
+<booleanAttribute key="org.eclipse.cdt.debug.mi.core.verboseMode" value="false"/>
+<stringAttribute key="org.eclipse.cdt.launch.DEBUGGER_ID" value="org.eclipse.cdt.debug.mi.core.CDebuggerNew"/>
+<stringAttribute key="org.eclipse.cdt.launch.DEBUGGER_START_MODE" value="run"/>
+<booleanAttribute key="org.eclipse.cdt.launch.DEBUGGER_STOP_AT_MAIN" value="true"/>
+<stringAttribute key="org.eclipse.cdt.launch.DEBUGGER_STOP_AT_MAIN_SYMBOL" value="main"/>
+<booleanAttribute key="org.eclipse.cdt.launch.ENABLE_REGISTER_BOOKKEEPING" value="false"/>
+<booleanAttribute key="org.eclipse.cdt.launch.ENABLE_VARIABLE_BOOKKEEPING" value="false"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROGRAM_ARGUMENTS" value="../binary_container_1.xclbin"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROGRAM_NAME" value="Emulation-CPU/IDCT.exe"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="IDCT"/>
+<booleanAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_AUTO_ATTR" value="false"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_ID_ATTR" value=""/>
+<stringAttribute key="org.eclipse.cdt.launch.WORKING_DIRECTORY" value="${workspace_loc:IDCT}/Emulation-CPU/IDCT-Default"/>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/IDCT"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="4"/>
+</listAttribute>
+<mapAttribute key="org.eclipse.debug.core.environmentVariables">
+<mapEntry key="LD_LIBRARY_PATH" value="${env_var:XILINX_SDX}/runtime/lib/x86_64:${env_var:XILINX_SDX}/lib/lnx64.o:${env_var:XILINX_SDX}/lnx64/tools/gcc/lib64"/>
+<mapEntry key="XILINX_OPENCL" value="${env_var:XILINX_SDX}/"/>
+<mapEntry key="XILINX_SDACCEL" value="${env_var:XILINX_SDX}/"/>
+</mapAttribute>
+</launchConfiguration>
