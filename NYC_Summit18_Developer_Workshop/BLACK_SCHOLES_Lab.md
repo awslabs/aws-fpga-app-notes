@@ -39,12 +39,9 @@ strikeprice       |  strike price for the option
     cp ~/aws-fpga-app-notes/NYC_Summit18_Developer_Workshop/blackScholes_model/europeanOption/blackeuro ~/FinancialModels_AmazonF1/blackScholes_model/europeanOption/
         cp ~/aws-fpga-app-notes/NYC_Summit18_Developer_Workshop/blackScholes_model/asianOption/*awsxclbin ~/FinancialModels_AmazonF1/blackScholes_model/asianOption/
     cp ~/aws-fpga-app-notes/NYC_Summit18_Developer_Workshop/blackScholes_model/asianOption/blackeuro ~/FinancialModels_AmazonF1/blackScholes_model/asianOption/
+```
 
-    ```
-
-    ```
-
-#### Step 1: Running with the encoder on the CPU 
+#### Step 1: Running the simulator on the CPU 
 
 1. Run simulation models on the CPU.
     ```bash
@@ -53,7 +50,7 @@ strikeprice       |  strike price for the option
     ./blackeuro_c
     ```
 
-    The encoder will finish with a message similar to this one:
+    The simulator will finish with a message similar to this one:
     ```
     Starting execution. Time=1 rate=0.05 volatility =0.2 initprice=100 strikeprice=110 
     Execution completed
@@ -65,7 +62,7 @@ strikeprice       |  strike price for the option
 1. Repeat the previous step for the asianOption
 
  
-#### Step 2: Running with the encoder on the F1 FPGA 
+#### Step 2: Running the simulator on the F1 FPGA 
 
 
 1. Source the SDAccel runtime environment.
@@ -78,7 +75,7 @@ strikeprice       |  strike price for the option
     ./blackeuro 
     ```
 
-    The encoder will finish with a message similar to this one: 
+    The simulation will finish with a message similar to this one: 
     ```
     Starting execution. Time=1 rate=0.05 volatility =0.2 initprice=100 strikeprice=110
     Execution completed
