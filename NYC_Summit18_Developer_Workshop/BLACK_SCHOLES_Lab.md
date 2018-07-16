@@ -39,7 +39,7 @@ strikeprice       |  strike price for the option
     cp ~/aws-fpga-app-notes/NYC_Summit18_Developer_Workshop/blackScholes_model/europeanOption/blackeuro ~/FinancialModels_AmazonF1/blackScholes_model/europeanOption/
         cp ~/aws-fpga-app-notes/NYC_Summit18_Developer_Workshop/blackScholes_model/asianOption/*awsxclbin ~/FinancialModels_AmazonF1/blackScholes_model/asianOption/
     cp ~/aws-fpga-app-notes/NYC_Summit18_Developer_Workshop/blackScholes_model/asianOption/blackeuro ~/FinancialModels_AmazonF1/blackScholes_model/asianOption/
-```
+    ```
 
 #### Step 1: Running the simulator on the CPU 
 
