@@ -69,6 +69,7 @@ strikeprice       |  strike price for the option
 
 1. Source the SDAccel runtime environment.
     ```bash
+    cd ~/FinancialModels_AmazonF1/blackScholes_model/europeanOption/
     sudo sh
     source /opt/Xilinx/SDx/2017.1.rte/setup.sh
     ```
