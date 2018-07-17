@@ -87,8 +87,10 @@ strikeprice       |  strike price for the option
     the put price is: 10.6754
     ```   
 1. Repeat the previous step for the asianOption
-
-
+    ```bash
+    cd ~/FinancialModels_AmazonF1/blackScholes_model/asianOption/
+    ./blackasian
+    ``` 
 
 #### Step 3: Comparing performance 
 
