@@ -1,0 +1,9 @@
+23:20:40 INFO  : Registering command handlers for SDK TCF services
+23:20:42 INFO  : Launching XSCT server: xsct -n -interactive /home/centos/workspace/temp_xsdb_launch_script.tcl
+23:20:43 INFO  : Validating SDSoC License...
+23:20:43 INFO  : License for SDSoC is unavailable
+23:20:43 INFO  : Validating SDAccel License...
+23:20:43 INFO  : License available for SDAccel
+23:20:43 INFO  : XSCT server has started successfully.
+23:20:43 INFO  : Successfully done setting XSCT server connection channel  
+23:20:43 INFO  : Successfully done setting SDK workspace  

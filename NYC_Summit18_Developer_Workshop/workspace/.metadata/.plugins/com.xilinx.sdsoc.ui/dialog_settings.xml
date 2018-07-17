@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item value="/home/centos/aws-fpga/SDAccel/aws_platform/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0" key="sdx.custom.platform.repository.last.directory.dialog.location"/>
+	<item value="xilinx:aws-vu9p-f1:4ddr-xpr-2pr:4.0" key="sdx.platform"/>
+	<item value="/home/centos/workspace" key="sdx.project.location"/>
+	<item value="1" key="sdx.device.count"/>
+	<item value="false" key="sdx.is.shared.library"/>
+	<item value="false" key="sdx.is.system.root"/>
+	<item value="OpenCL" key="sdx.runtime"/>
+	<item value="/home/centos/aws-fpga/SDAccel/aws_platform/xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0" key="sdx.custom.platform.repository.locations"/>
+	<item value="linux" key="sdx.os"/>
+	<item value="IDCT" key="sdx.project.name"/>
+	<item value="linux_x86" key="sdx.system.configuration"/>
+</section>

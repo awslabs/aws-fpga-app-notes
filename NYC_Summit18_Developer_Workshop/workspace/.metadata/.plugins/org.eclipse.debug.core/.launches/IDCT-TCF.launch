@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="com.xilinx.opencl.launch.openCLLaunch.tcf">
+<booleanAttribute key="SDACCEL_DEVICE_PROFILE" value="true"/>
+<booleanAttribute key="SDACCEL_TIMELINE_REPORT" value="true"/>
+<booleanAttribute key="SDX_DO_BINARY_CONTAINERS_ARGS" value="false"/>
+<booleanAttribute key="SDX_USE_DEFAULT_WORKING_DIR" value="true"/>
+<booleanAttribute key="com.xilinx.sdx.internal.opencl.language.ui.launch.tcf.stop_at_kernal_start" value="true"/>
+<booleanAttribute key="com.xilinx.sdx.internal.opencl.language.ui.launch.tcf.stop_at_main" value="true"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROGRAM_ARGUMENTS" value=""/>
+<stringAttribute key="org.eclipse.cdt.launch.PROGRAM_NAME" value="Emulation-CPU/IDCT.exe"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="IDCT"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_ID_ATTR" value=""/>
+<stringAttribute key="org.eclipse.cdt.launch.WORKING_DIRECTORY" value="${workspace_loc:IDCT}/Emulation-CPU/IDCT-TCF"/>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/IDCT"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="4"/>
+</listAttribute>
+<mapAttribute key="org.eclipse.debug.core.environmentVariables">
+<mapEntry key="ENHANCED_CPU_EM" value="true"/>
+<mapEntry key="LD_LIBRARY_PATH" value="${env_var:XILINX_SDX}/runtime/lib/x86_64:${env_var:XILINX_SDX}/lib/lnx64.o:${env_var:XILINX_SDX}/lnx64/tools/gcc/lib64"/>
+<mapEntry key="XCL_EMULATION_MODE" value="true"/>
+<mapEntry key="XILINX_OPENCL" value="${env_var:XILINX_SDX}/"/>
+<mapEntry key="XILINX_SDACCEL" value="${env_var:XILINX_SDX}/"/>
+</mapAttribute>
+<booleanAttribute key="org.eclipse.tcf.debug.AttachChildren" value="true"/>
+<booleanAttribute key="org.eclipse.tcf.debug.DisconnectOnCtxExit" value="true"/>
+<booleanAttribute key="org.eclipse.tcf.debug.UseContextFilter" value="false"/>
+<booleanAttribute key="org.eclipse.tcf.debug.UseTerminal" value="true"/>
+</launchConfiguration>
