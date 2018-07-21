@@ -1,14 +1,27 @@
-From 92d6c8dce97c4f5f2ec174e42008039fee185846 Mon Sep 17 00:00:00 2001
-From: root <root@ip-172-31-26-165.ec2.internal>
-Date: Thu, 17 May 2018 21:25:54 +0000
+From b1af22c4b962bccc57129b21c1eebd598f3ee494 Mon Sep 17 00:00:00 2001
+From: John Nichols <jnichol@xilinx.com>
+Date: Fri, 20 Jul 2018 16:53:02 -0700
 Subject: [PATCH] Xilinx NGcodec hevc ffmpeg plugin
 
 ---
+ .gitignore                                         |  46 ++
  ffmpeg.c                                           |  32 +-
- libavcodec/Makefile                                |   7 +
- libavcodec/allcodecs.c                             |   1 +
+ libavcodec/Makefile                                |  12 +
+ libavcodec/allcodecs.c                             |   2 +
+ libavcodec/xlnx_h264/Makefile                      |   4 +
+ libavcodec/xlnx_h264/h264e_csregs.c                | 453 +++++++++++
+ libavcodec/xlnx_h264/h264e_csregs.h                |  35 +
+ libavcodec/xlnx_h264/h264e_csregs_private.h        | 440 +++++++++++
+ libavcodec/xlnx_h264/h264e_sdaccel.c               | 875 +++++++++++++++++++++
+ libavcodec/xlnx_h264/h264e_sdaccel.h               | 146 ++++
+ libavcodec/xlnx_h264/h264e_sdaccel_private.h       | 107 +++
+ libavcodec/xlnx_h264/h264e_sdaccel_utils.c         | 290 +++++++
+ libavcodec/xlnx_h264/h264e_sdaccel_utils.h         |  29 +
+ libavcodec/xlnx_h264/hw_h264.c                     | 105 +++
+ libavcodec/xlnx_h264/xlnx_h264_config.h            |  67 ++
+ libavcodec/xlnx_h264_enc.c                         | 122 +++
  libavcodec/xlnx_hevc/Makefile                      |   1 +
- libavcodec/xlnx_hevc/hw_hevc.c                     | 363 ++++++++++
+ libavcodec/xlnx_hevc/hw_hevc.c                     | 363 +++++++++
  libavcodec/xlnx_hevc/xlnx_hevc_config.h            |  50 ++
  libavcodec/xlnx_hevc_enc.c                         | 271 +++++++
  libavcodec/xlnx_hw/Makefile                        |   3 +
@@ -18,14 +31,14 @@ Subject: [PATCH] Xilinx NGcodec hevc ffmpeg plugin
  libavcodec/xlnx_hw/common/inc/xlnx_queue.h         |  17 +
  libavcodec/xlnx_hw/common/inc/xlnx_ts_queue.h      |  18 +
  .../xlnx_hw/common/inc/xlnx_types_internal.h       |  49 ++
- libavcodec/xlnx_hw/common/src/xcl.c                | 478 +++++++++++++
- libavcodec/xlnx_hw/common/src/xlnx_hrm.c           | 444 ++++++++++++
- libavcodec/xlnx_hw/common/src/xlnx_queue.c         |  86 +++
+ libavcodec/xlnx_hw/common/src/xcl.c                | 478 +++++++++++
+ libavcodec/xlnx_hw/common/src/xlnx_hrm.c           | 444 +++++++++++
+ libavcodec/xlnx_hw/common/src/xlnx_queue.c         |  86 ++
  libavcodec/xlnx_hw/common/src/xlnx_ts_queue.c      | 107 +++
  libavcodec/xlnx_hw/hevc/Makefile                   |   1 +
  libavcodec/xlnx_hw/hevc/enc_vu9p.c                 | 266 +++++++
  libavcodec/xlnx_hw/hevc/enc_vu9p.h                 |   9 +
- libavcodec/xlnx_hw/hevc/enc_vu9p_2c.c              | 793 +++++++++++++++++++++
+ libavcodec/xlnx_hw/hevc/enc_vu9p_2c.c              | 793 +++++++++++++++++++
  libavcodec/xlnx_hw/hevc/enc_vu9p_2c.h              |  16 +
  libavcodec/xlnx_hw/hevc/ku115_hevc_enc_config.h    |  13 +
  libavcodec/xlnx_hw/hevc/vu9p_hevc_enc_config.h     |  24 +
@@ -33,7 +46,20 @@ Subject: [PATCH] Xilinx NGcodec hevc ffmpeg plugin
  libavcodec/xlnx_hw/xlnx_hw.h                       |  14 +
  libavcodec/xlnx_hw/xlnx_hw_types.h                 |  55 ++
  libavutil/opencl.c                                 |   2 +-
- 29 files changed, 3236 insertions(+), 7 deletions(-)
+ 42 files changed, 5961 insertions(+), 7 deletions(-)
+ create mode 100644 .gitignore
+ create mode 100644 libavcodec/xlnx_h264/Makefile
+ create mode 100644 libavcodec/xlnx_h264/h264e_csregs.c
+ create mode 100644 libavcodec/xlnx_h264/h264e_csregs.h
+ create mode 100644 libavcodec/xlnx_h264/h264e_csregs_private.h
+ create mode 100644 libavcodec/xlnx_h264/h264e_sdaccel.c
+ create mode 100644 libavcodec/xlnx_h264/h264e_sdaccel.h
+ create mode 100644 libavcodec/xlnx_h264/h264e_sdaccel_private.h
+ create mode 100644 libavcodec/xlnx_h264/h264e_sdaccel_utils.c
+ create mode 100644 libavcodec/xlnx_h264/h264e_sdaccel_utils.h
+ create mode 100644 libavcodec/xlnx_h264/hw_h264.c
+ create mode 100644 libavcodec/xlnx_h264/xlnx_h264_config.h
+ create mode 100644 libavcodec/xlnx_h264_enc.c
  create mode 100644 libavcodec/xlnx_hevc/Makefile
  create mode 100644 libavcodec/xlnx_hevc/hw_hevc.c
  create mode 100644 libavcodec/xlnx_hevc/xlnx_hevc_config.h
@@ -60,11 +86,63 @@ Subject: [PATCH] Xilinx NGcodec hevc ffmpeg plugin
  create mode 100755 libavcodec/xlnx_hw/xlnx_hw.h
  create mode 100644 libavcodec/xlnx_hw/xlnx_hw_types.h
 
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..0736a38
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,46 @@
++*.a
++*.o
++*.o.*
++*.d
++*.def
++*.dll
++*.dylib
++*.exe
++*.exp
++*.gcda
++*.gcno
++*.h.c
++*.ilk
++*.lib
++*.pc
++*.pdb
++*.so
++*.so.*
++*.swp
++*.ver
++*_g
++\#*
++.\#*
++/.config
++/.version
++/ffmpeg
++/ffplay
++/ffprobe
++/ffserver
++/config.*
++/coverage.info
++/avversion.h
++/lcov/
++/src
++/mapfile
++doc/*
++bin/*
++include/*
++share/*
++build/*
++bavcodec/bsf_list.c
++libavformat/protocol_list.c
++libavutil/avconfig.h
++libavutil/ffversion.h
++libavcodec/bsf_list.c
++ffmpeg_build/*
 diff --git a/ffmpeg.c b/ffmpeg.c
-index 4b4dae4..9564826 100644
+index ea03179..b0642eb 100644
 --- a/ffmpeg.c
 +++ b/ffmpeg.c
-@@ -1177,6 +1177,11 @@ static void do_video_out(OutputFile *of,
+@@ -1175,6 +1175,11 @@ static void do_video_out(OutputFile *of,
      ost->last_dropped = nb_frames == nb0_frames && next_picture;
  
    /* duplicates frame if needed */
@@ -76,7 +154,7 @@ index 4b4dae4..9564826 100644
    for (i = 0; i < nb_frames; i++) {
      AVFrame *in_picture;
      av_init_packet(&pkt);
-@@ -3810,7 +3815,9 @@ static OutputStream *choose_output(void)
+@@ -3800,7 +3805,9 @@ static OutputStream *choose_output(void)
      int i;
      int64_t opts_min = INT64_MAX;
      OutputStream *ost_min = NULL;
@@ -87,7 +165,7 @@ index 4b4dae4..9564826 100644
      for (i = 0; i < nb_output_streams; i++) {
          OutputStream *ost = output_streams[i];
          int64_t opts = ost->st->cur_dts == AV_NOPTS_VALUE ? INT64_MIN :
-@@ -3819,13 +3826,26 @@ static OutputStream *choose_output(void)
+@@ -3809,13 +3816,26 @@ static OutputStream *choose_output(void)
          if (ost->st->cur_dts == AV_NOPTS_VALUE)
              av_log(NULL, AV_LOG_DEBUG, "cur_dts is invalid (this is harmless if it occurs once at the start per stream)\n");
  
@@ -120,10 +198,29 @@ index 4b4dae4..9564826 100644
      return ost_min;
  }
 diff --git a/libavcodec/Makefile b/libavcodec/Makefile
-index 0dd0c7b..937c929 100644
+index 0dd0c7b..64b3cad 100644
 --- a/libavcodec/Makefile
 +++ b/libavcodec/Makefile
-@@ -916,6 +916,13 @@ OBJS-$(CONFIG_LIBX265_ENCODER)            += libx265.o
+@@ -49,6 +49,10 @@ OBJS = allcodecs.o                                                      \
+        utils.o                                                          \
+        vorbis_parser.o                                                  \
+        xiph.o                                                           \
++	   xlnx_h264/hw_h264.o 												\
++	   xlnx_h264/h264e_csregs.o 										\
++	   xlnx_h264/h264e_sdaccel.o 										\
++	   xlnx_h264/h264e_sdaccel_utils.o
+ 
+ # subsystems
+ OBJS-$(CONFIG_AANDCTTABLES)            += aandcttab.o
+@@ -454,6 +458,7 @@ OBJS-$(CONFIG_PBM_DECODER)             += pnmdec.o pnm.o
+ OBJS-$(CONFIG_PBM_ENCODER)             += pnmenc.o
+ OBJS-$(CONFIG_PCX_DECODER)             += pcx.o
+ OBJS-$(CONFIG_PCX_ENCODER)             += pcxenc.o
++OBJS-$(CONFIG_XLNX_H264_ENCODER)       += xlnx_h264_enc.o  
+ OBJS-$(CONFIG_PGM_DECODER)             += pnmdec.o pnm.o
+ OBJS-$(CONFIG_PGM_ENCODER)             += pnmenc.o
+ OBJS-$(CONFIG_PGMYUV_DECODER)          += pnmdec.o pnm.o
+@@ -916,6 +921,13 @@ OBJS-$(CONFIG_LIBX265_ENCODER)            += libx265.o
  OBJS-$(CONFIG_LIBXAVS_ENCODER)            += libxavs.o
  OBJS-$(CONFIG_LIBXVID_ENCODER)            += libxvid.o
  OBJS-$(CONFIG_LIBZVBI_TELETEXT_DECODER)   += libzvbi-teletextdec.o ass.o
@@ -138,17 +235,2763 @@ index 0dd0c7b..937c929 100644
  # parsers
  OBJS-$(CONFIG_AAC_LATM_PARSER)         += latm_parser.o
 diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
-index 4df4772..cf592b6 100644
+index 4df4772..a20a76c 100644
 --- a/libavcodec/allcodecs.c
 +++ b/libavcodec/allcodecs.c
-@@ -673,6 +673,7 @@ static void register_all(void)
+@@ -673,6 +673,8 @@ static void register_all(void)
      REGISTER_ENCODER(VP8_VAAPI,         vp8_vaapi);
      REGISTER_DECODER(VP9_CUVID,         vp9_cuvid);
      REGISTER_DECODER(VP9_MEDIACODEC,    vp9_mediacodec);
 +    REGISTER_ENCODER(XLNX_HEVC,         xlnx_hevc);
++    REGISTER_ENCODER(XLNX_H264,         xlnx_h264);
  
      /* parsers */
      REGISTER_PARSER(AAC,                aac);
+diff --git a/libavcodec/xlnx_h264/Makefile b/libavcodec/xlnx_h264/Makefile
+new file mode 100644
+index 0000000..7ca5338
+--- /dev/null
++++ b/libavcodec/xlnx_h264/Makefile
+@@ -0,0 +1,4 @@
++OBJS                            += xlnx_h264/hw_h264.o \
++								   xlnx_h264/h264e_csregs.o \
++								   xlnx_h264/h264e_sdaccel.o \
++								   xlnx_h264/h264e_sdaccel_utils.o
+diff --git a/libavcodec/xlnx_h264/h264e_csregs.c b/libavcodec/xlnx_h264/h264e_csregs.c
+new file mode 100644
+index 0000000..dd35da0
+--- /dev/null
++++ b/libavcodec/xlnx_h264/h264e_csregs.c
+@@ -0,0 +1,453 @@
++/*
++-- Copyright notice:
++-- Copyright (c) 2017 Alma Technologies S.A.
++-- www.alma-technologies.com
++-- All rights reserved worldwide.
++
++-- This copy is made available under the terms of the GNU General Public
++-- License version 2.1 as published by the Free Software Foundation; either
++-- version 2.1 of the License, or (at your option) any later version.
++--
++-- This copy is distributed in the hope that it will be useful,
++-- but WITHOUT ANY WARRANTY; without even the implied warranty of
++-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Please See the GNU
++-- General Public License for more details.
++--
++-- You should have received a copy of the GNU General Public
++-- License along with FFmpeg; if not, write to the Free Software
++-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++*/
++
++#include <stdio.h>
++#include "h264e_csregs.h"
++#include "h264e_csregs_private.h"
++
++void h264eSetControlRegsDefaults(H264E_CFG_PVT* ph264eCFG);
++void h264eSetReg(uint *puiRegFile, int regOffs, int regFieldHI, int regFieldLO, int regFieldVal);
++uint h264eGetReg(uint *puiRegFile, int regOffs, int regFieldHI, int regFieldLO);
++
++void h264ePrintStatusRegs(int* pRegFile)
++{
++    for(int i = 0; i < 64; i++)
++    {
++        H264EMSG(printf("H264-E CORE STATUS[0x%.2X] = 0x%.8X\n", i, pRegFile[i]));
++    }
++    return;
++}
++
++void h264ePrintControlRegs(int* pRegFile)
++{
++    for(int i = 0; i < 64; i++)
++    {
++        H264EMSG(printf("CREG[0x%.2X] = 0x%.8X\n", i, pRegFile[i]));
++    }
++    return;
++}
++
++int h264eGetNalSize(int* pRegFile)
++{
++    return pRegFile[CSREG_PICLEN];
++}
++
++int h264eGetErrorCode(int* pRegFile)
++{
++    return pRegFile[CSREG_ERRID];
++}
++
++int h264eGetDbgStatus(int* pRegFile)
++{
++    return pRegFile[CSREG_DEBUG];
++}
++
++void h264eSetControlRegs(H264E_USR* ph264eUsr, char* CRegsFile)
++{
++    H264E_CFG_PVT  h264eCFGPvt;
++    H264E_CFG_PVT* ph264eCFG;
++    if(!ph264eUsr->bUseUserContextAsCfg)
++    {
++        ph264eCFG = &h264eCFGPvt;
++        h264eSetControlRegsDefaults(ph264eCFG);
++        ph264eCFG->X = ph264eUsr->FrameX;
++        ph264eCFG->Y = ph264eUsr->FrameY;
++        if(ph264eUsr->HWOptimizeScanFormat)
++        {
++             ph264eCFG->VInputFormat = ph264eUsr->ScanFormat == H264E_MACROBLOCK ? 0 : 2;
++        }
++        else
++        {
++            ph264eCFG->VInputFormat = ph264eUsr->ScanFormat == H264E_MACROBLOCK       ? 0 :
++                                      ph264eUsr->ScanFormat == H264E_PLANAR_PACKED    ? 1 :
++                                      ph264eUsr->ScanFormat == H264E_PLANAR_SEPARATED ? 1 : 2;
++        }
++        ph264eCFG->Timescale            = ph264eUsr->Timescale;
++        ph264eCFG->NUIT                 = ph264eUsr->Nuit;
++        ph264eCFG->Level                = ph264eUsr->Level;
++        ph264eCFG->IPeriod              = ph264eUsr->GOPLength         == -1 ? ph264eCFG->IPeriod              : ph264eUsr->GOPLength;
++        ph264eCFG->IRefColumns          = ph264eUsr->IntraRefreshCol   == -1 ? ph264eCFG->IRefColumns          : ph264eUsr->IntraRefreshCol;
++        ph264eCFG->nMBRowsInSliceReq    = ph264eUsr->MBRowsPerSlice    == -1 ? ph264eCFG->nMBRowsInSliceReq    : ph264eUsr->MBRowsPerSlice;
++        ph264eCFG->UseDeBlockingFilter  = ph264eUsr->DeblockingFilter  == -1 ? ph264eCFG->UseDeBlockingFilter  :
++                                          ph264eUsr->DeblockingFilter  ==  0 ? 0                               :
++                                          ph264eUsr->DBRestrict        ==  1 ? 2                               : 1;
++        ph264eCFG->InterMVSliceRestrict = ph264eUsr->MVRestrict        == -1 ? ph264eCFG->InterMVSliceRestrict : (bool)ph264eUsr->MVRestrict;
++        ph264eCFG->QPI                  = ph264eUsr->QPI               == -1 ? ph264eCFG->QPI                  : ph264eUsr->QPI;
++        ph264eCFG->QPP                  = ph264eUsr->QPP               == -1 ? ph264eCFG->QPP                  : ph264eUsr->QPP;
++        ph264eCFG->QPChrOffs            = ph264eUsr->QPChrOffset       == -1 ? ph264eCFG->QPChrOffs            : ph264eUsr->QPChrOffset;
++        ph264eCFG->Rate                 = ph264eUsr->Bitrate;
++        ph264eCFG->nMBsInBasicUnit      = ph264eUsr->BUSize            == -1 ? ph264eCFG->nMBsInBasicUnit      : ph264eUsr->BUSize;
++        ph264eCFG->FIFOSize             = ph264eUsr->RCFIFOSize        == -1 ? ph264eCFG->FIFOSize             : ph264eUsr->RCFIFOSize;
++        ph264eCFG->bCABAC               = ph264eUsr->UseCABAC          == -1 ? ph264eCFG->bCABAC               : (bool)ph264eUsr->UseCABAC;
++    }
++    else
++    {
++        ph264eCFG = (H264E_CFG_PVT*)ph264eUsr->UserContext;
++        if(ph264eUsr->HWOptimizeScanFormat)
++        {
++            ph264eCFG->VInputFormat = ph264eUsr->ScanFormat == H264E_MACROBLOCK ? 0 : 2;
++        }
++        if(ph264eCFG->VInputFormat == 2 && ph264eCFG->UseFrameBuffer)
++        {
++            ph264eCFG->VInputFormat = 3;
++        }
++    }
++    uint vidinres_reg;
++    uint vidinscan_reg;
++    uint vidints_reg;
++    uint vidinuit_reg;
++    uint vidinlevel_reg;
++    uint vidinvuist_reg;
++    uint gopattr_reg;
++    uint sliceattr_reg;
++    uint qpsliceattr_reg;
++    uint rcattr_reg;
++    uint rcqplims_reg;
++    uint rcxopts_reg;
++    uint predattr_reg;
++    uint encopts_reg;
++    uint xpredattr_reg;
++    uint xrcxopts_reg;
++    uint xrcxopts_pid_reg[5];
++    uint instruction_reg;
++    uint xtmemptr_reg;
++    static const int LevelLUT[52] = {
++       0, 0, 0, 0, 0, 0, 0, 0,  /*  0-7 */
++       0, 1, 0, 2,              /*  8-11 */
++       3, 4, 0, 0, 0, 0, 0, 0,  /* 12-19 */
++       5, 6, 7, 0, 0, 0, 0, 0,  /* 20-27 */
++       0, 0, 8, 9,10, 0, 0, 0,  /* 28-35 */
++       0, 0, 0, 0,11,12,13, 0,  /* 36-43 */
++       0, 0, 0, 0, 0, 0,14,15   /* 44-51 */
++    };
++    vidinres_reg = 0;
++    h264eSetReg(&vidinres_reg, 0, FRAME_X_HI, FRAME_X_LO, ph264eCFG->X);
++    h264eSetReg(&vidinres_reg, 0, FRAME_Y_HI, FRAME_Y_LO, ph264eCFG->Y * (ph264eCFG->bInterlaced ? 2 : 1));
++    vidinscan_reg = 0;
++#ifdef USE_UHT_CORE
++    h264eSetReg(&vidinscan_reg, 0, SCAN_FORMAT_HI, SCAN_FORMAT_LO, ph264eCFG->csp);
++#else
++    h264eSetReg(&vidinscan_reg, 0, SCAN_FORMAT_HI, SCAN_FORMAT_LO, (ph264eCFG->csp == YUV420 ? ph264eCFG->VInputFormat : 4 + ph264eCFG->VInputFormat));
++#endif
++    h264eSetReg(&vidinscan_reg, 0, PSP_HI,         PSP_LO,         ph264eCFG->bpp);
++    h264eSetReg(&vidinscan_reg, 0, FRAMEDROP_FLAG, FRAMEDROP_FLAG, (int) ph264eCFG->bFrameDrop);
++    vidints_reg = 0;
++    h264eSetReg(&vidints_reg, 0, TIMESCALE_HI, TIMESCALE_LO, ph264eCFG->Timescale);
++    vidinuit_reg = 0;
++    h264eSetReg(&vidinuit_reg, 0, NUIT_HI, NUIT_LO, ph264eCFG->NUIT);
++    vidinlevel_reg = 0;
++    h264eSetReg(&vidinlevel_reg, 0, LEVEL_HI, LEVEL_LO, LevelLUT[ph264eCFG->Level]);
++    vidinvuist_reg = 0;
++    h264eSetReg(&vidinvuist_reg, 0, V_VIDEO_SIGNAL_TYPE_PRESENT_FLAG, V_VIDEO_SIGNAL_TYPE_PRESENT_FLAG, (ph264eCFG->VUI_VideoFormat > 0 || ph264eCFG->VUI_VideoFullRangeFlag ? 1 : 0));
++    h264eSetReg(&vidinvuist_reg, 0, V_VIDEO_FORMAT_HI,                V_VIDEO_FORMAT_LO,                (ph264eCFG->VUI_VideoFormat > 0 ? ph264eCFG->VUI_VideoFormat : 0));
++    h264eSetReg(&vidinvuist_reg, 0, V_VIDEO_FULL_RANGE_FLAG,          V_VIDEO_FULL_RANGE_FLAG,           ph264eCFG->VUI_VideoFullRangeFlag);
++    gopattr_reg = 0;
++    if (ph264eCFG->IPeriod == 0xFFFFFFFF)
++    {
++       h264eSetReg(&gopattr_reg, 0, IPERIOD_HI, IPERIOD_LO, 0);
++    }
++    else
++    {
++       h264eSetReg(&gopattr_reg, 0, IPERIOD_HI, IPERIOD_LO, ph264eCFG->IPeriod);
++    }
++    h264eSetReg(&gopattr_reg, 0, IREFCOLS_HI, IREFCOLS_LO, ph264eCFG->IRefColumns);
++    sliceattr_reg = 0;
++    h264eSetReg(&sliceattr_reg, 0, SLICE_MBROWS_HI,      SLICE_MBROWS_L0,      ph264eCFG->nMBRowsInSliceReq);
++    h264eSetReg(&sliceattr_reg, 0, DB_EN_FLAG,           DB_EN_FLAG,           ph264eCFG->UseDeBlockingFilter  > 0 ? 1 : 0);
++#ifndef USE_UHT_CORE
++    h264eSetReg(&sliceattr_reg, 0, DB_SLCBNDRS_FLAG,     DB_SLCBNDRS_FLAG,     ph264eCFG->UseDeBlockingFilter == 2 ? 1 : 0);
++#endif
++    h264eSetReg(&sliceattr_reg, 0, DB_ALPHA_HI,          DB_ALPHA_LO,          ph264eCFG->sliceAlphaOffset);
++    h264eSetReg(&sliceattr_reg, 0, DB_BETA_HI,           DB_BETA_LO,           ph264eCFG->sliceBetaOffset);
++#ifndef USE_UHT_CORE
++    h264eSetReg(&sliceattr_reg, 0, INTERSLICECROSS_FLAG, INTERSLICECROSS_FLAG, (int) ph264eCFG->InterMVSliceRestrict);
++#endif
++    qpsliceattr_reg = 0;
++    h264eSetReg(&qpsliceattr_reg, 0, QPINIT_I_HI,  QPINIT_I_LO,  ph264eCFG->QPI + ph264eCFG->QpBdOffset);
++    h264eSetReg(&qpsliceattr_reg, 0, QPINIT_P_HI,  QPINIT_P_LO,  ph264eCFG->QPP + ph264eCFG->QpBdOffset);
++    h264eSetReg(&qpsliceattr_reg, 0, QPCHROFFS_HI, QPCHROFFS_LO, ph264eCFG->QPChrOffs);
++    h264eSetReg(&qpsliceattr_reg, 0, QPTHR_HI,     QPTHR_LO,     ph264eCFG->bTQThresholding ? 1 : 0);
++    rcattr_reg = 0;
++    h264eSetReg(&rcattr_reg, 0, RCBITRATE_HI,    RCBITRATE_LO,    ph264eCFG->Rate    >> 3);
++    h264eSetReg(&rcattr_reg, 0, RCMAXBITRATE_HI, RCMAXBITRATE_LO, ph264eCFG->MaxRate >> 3);
++    rcqplims_reg = 0;
++    h264eSetReg(&rcqplims_reg, 0, QPI_MIN_HI, QPI_MIN_LO, ph264eCFG->QPI_min + ph264eCFG->QpBdOffset);
++    h264eSetReg(&rcqplims_reg, 0, QPI_MAX_HI, QPI_MAX_LO, ph264eCFG->QPI_max + ph264eCFG->QpBdOffset);
++    h264eSetReg(&rcqplims_reg, 0, QPP_MIN_HI, QPP_MIN_LO, ph264eCFG->QPP_min + ph264eCFG->QpBdOffset);
++    h264eSetReg(&rcqplims_reg, 0, QPP_MAX_HI, QPP_MAX_LO, ph264eCFG->QPP_max + ph264eCFG->QpBdOffset);
++    rcxopts_reg = 0;
++    h264eSetReg(&rcxopts_reg, 0, BUSIZE_HI, BUSIZE_LO, (ph264eCFG->nMBsInBasicUnit < 0 ? 0 : ph264eCFG->nMBsInBasicUnit));
++    if (ph264eCFG->RCMethod == RCM_PID)
++    {
++        h264eSetReg(&rcxopts_reg, 0, RCPERIOD_HI, RCPERIOD_LO, ph264eCFG->FIFOSize >> 3);
++    }
++    else
++    {
++        h264eSetReg(&rcxopts_reg, 0, RCPERIOD_HI, RCPERIOD_LO, ph264eCFG->RCPeriod);
++    }
++    encopts_reg = 0;
++    h264eSetReg(&encopts_reg, 0, CABAC_FLAG,      CABAC_FLAG,      (int) ph264eCFG->bCABAC);
++    h264eSetReg(&encopts_reg, 0, FLUSHFRAME_FLAG, FLUSHFRAME_FLAG, 1);
++    h264eSetReg(&encopts_reg, 0, NALTRZWORD_FLAG, NALTRZWORD_FLAG, (ph264eCFG->NALTrZeros == 2 ? 1 : 0));
++#ifdef USE_UHT_CORE
++    h264eSetReg(&encopts_reg, 0, ACTCENGS_HI,     ACTCENGS_LO,     (int) ph264eCFG->nCEngines);
++#endif
++    predattr_reg = 0;
++    h264eSetReg(&predattr_reg, 0, MEVBS_P16X16_FLAG, MEVBS_P16X16_FLAG, ph264eCFG->bVBSEnableMask[0]);
++    h264eSetReg(&predattr_reg, 0, MEVBS_P16X8_FLAG,  MEVBS_P16X8_FLAG,  ph264eCFG->bInterVBSenable & ph264eCFG->bVBSEnableMask[1]);
++    h264eSetReg(&predattr_reg, 0, MEVBS_P8X16_FLAG,  MEVBS_P8X16_FLAG,  ph264eCFG->bInterVBSenable & ph264eCFG->bVBSEnableMask[2]);
++    h264eSetReg(&predattr_reg, 0, MEVBS_P8X8_FLAG,   MEVBS_P8X8_FLAG,   ph264eCFG->bInterVBSenable & ph264eCFG->bVBSEnableMask[3]);
++    h264eSetReg(&predattr_reg, 0, MEPXLAC_HI,        MEPXLAC_LO,        ph264eCFG->InterAccuracy/2);
++    h264eSetReg(&predattr_reg, 0, XTRACOST_FLAG,     XTRACOST_FLAG,    !ph264eCFG->bVBSOptions[VBS_USE_XTRA_PART_COST]);
++    h264eSetReg(&predattr_reg, 0, XTRACOSTP8x8_FLAG, XTRACOSTP8x8_FLAG, ph264eCFG->bVBSOptions[VBS_USE_XTRA_PART_COST_P8x8]);
++    h264eSetReg(&predattr_reg, 0, INTRA_IN_P_FLAG,   INTRA_IN_P_FLAG,   ph264eCFG->bUseIntraInInter);
++    h264eSetReg(&predattr_reg, 0, I16x16_FLAG,       I16x16_FLAG,      !ph264eCFG->bI16x16Dis);
++    h264eSetReg(&predattr_reg, 0, I4x4_FLAG,         I4x4_FLAG,        !ph264eCFG->bI4x4Dis);
++    int i, mask;
++    for (mask=0, i=0; i<4; i++) mask |= ((int) ph264eCFG->bIntraLuma16x16Mask[i]) << i;
++    h264eSetReg(&predattr_reg, 0, I16x16_MASK_HI,    I16x16_MASK_LO,    mask);
++    for (mask=0, i=0; i<4; i++) mask |= ((int) ph264eCFG->bIntraChromaMask[i]) << i;
++    h264eSetReg(&predattr_reg, 0, ICHR_MASK_HI,      ICHR_MASK_LO,      mask);
++    for (mask=0, i=0; i<9; i++) mask |= ((int) ph264eCFG->bIntraLuma4x4Mask[i]) << i;
++    h264eSetReg(&predattr_reg, 0, I4x4_MASK_HI,      I4x4_MASK_LO,      mask);
++    xpredattr_reg = 0;
++    h264eSetReg(&xpredattr_reg, 0, SRX_HI,   SRX_LO,   ph264eCFG->InterSearchRangeWidth/8);
++    h264eSetReg(&xpredattr_reg, 0, SRY_HI,   SRY_LO,   ph264eCFG->InterSearchRangeHeight/2);
++    h264eSetReg(&xpredattr_reg, 0, VIMPW_HI, VIMPW_LO, ph264eCFG->MPPriorities[0]);
++    h264eSetReg(&xpredattr_reg, 0, VIMPR_HI, VIMPR_LO, ph264eCFG->MPPriorities[1]);
++    h264eSetReg(&xpredattr_reg, 0, VOMPW_HI, VOMPW_LO, ph264eCFG->MPPriorities[2]);
++    h264eSetReg(&xpredattr_reg, 0, REFWR_HI, REFWR_LO, ph264eCFG->MPPriorities[3]);
++    xrcxopts_reg = 0;
++    h264eSetReg(&xrcxopts_reg, 0, QPADJSTRENGTH_HI,  QPADJSTRENGTH_LO,  ph264eCFG->AQStrength);
++    h264eSetReg(&xrcxopts_reg, 0, USEINITQP_FLAG,    USEINITQP_FLAG,    ph264eCFG->bRcExtraOpt[0]);
++    h264eSetReg(&xrcxopts_reg, 0, USESCENECUT_FLAG,  USESCENECUT_FLAG,  ph264eCFG->bRcExtraOpt[1]);
++    h264eSetReg(&xrcxopts_reg, 0, USERCOVERDUE_FLAG, USERCOVERDUE_FLAG, ph264eCFG->bRcExtraOpt[2]);
++    h264eSetReg(&xrcxopts_reg, 0, STRICTCBR_FLAG,    STRICTCBR_FLAG,    ph264eCFG->bRcExtraOpt[3]);
++    h264eSetReg(&xrcxopts_reg, 0, DISMADTH_FLAG,     DISMADTH_FLAG,     ph264eCFG->bRcExtraOpt[4]);
++    h264eSetReg(&xrcxopts_reg, 0, VBRF_HI,           VBRF_LO,           ph264eCFG->rcVbrFactor);
++    h264eSetReg(&xrcxopts_reg, 0, ICPBRDFR_HI,       ICPBRDFR_LO,       ph264eCFG->initialCbpRdInfr);
++    for (int i=0; i<5; i++)
++    {
++        xrcxopts_pid_reg[i] = ph264eCFG->xrcxopts_pid[i];
++    }
++    instruction_reg = 0;
++    h264eSetReg(&instruction_reg, 0, SWCLR_FLAG,     SWCLR_FLAG,     0);
++    h264eSetReg(&instruction_reg, 0, SWSUSPEND_FLAG, SWSUSPEND_FLAG, 0);
++    xtmemptr_reg = 0;
++    h264eSetReg(&xtmemptr_reg, 0, XTMEMPTR_HI, XTMEMPTR_LO, ph264eCFG->XtmemPtr);
++    h264eSetReg((uint*)CRegsFile, CSREG_VIDINRES,      31, 0, vidinres_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_VIDINSCAN,     31, 0, vidinscan_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_VIDINTS,       31, 0, vidints_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_VIDINUIT,      31, 0, vidinuit_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_VIDINLEVEL,    31, 0, vidinlevel_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_VIDINVUIST,    31, 0, vidinvuist_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_GOPATTR,       31, 0, gopattr_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_SLICEATTR,     31, 0, sliceattr_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_QPSLICEATTR,   31, 0, qpsliceattr_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_RCATTR,        31, 0, rcattr_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_RCQPLIMS,      31, 0, rcqplims_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_RCXOPTS,       31, 0, rcxopts_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_PREDATTR,      31, 0, predattr_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_ENCOPTS,       31, 0, encopts_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_XPREDATTR,     31, 0, xpredattr_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_XRCXOPTS,      31, 0, xrcxopts_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_INSTRUCTION,   31, 0, instruction_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_XTMEMPTR,      31, 0, xtmemptr_reg);
++    h264eSetReg((uint*)CRegsFile, CSREG_XRCXOPTS_PID0, 31, 0, xrcxopts_pid_reg[0]);
++    h264eSetReg((uint*)CRegsFile, CSREG_XRCXOPTS_PID1, 31, 0, xrcxopts_pid_reg[1]);
++    h264eSetReg((uint*)CRegsFile, CSREG_XRCXOPTS_PID2, 31, 0, xrcxopts_pid_reg[2]);
++    h264eSetReg((uint*)CRegsFile, CSREG_XRCXOPTS_PID3, 31, 0, xrcxopts_pid_reg[3]);
++    h264eSetReg((uint*)CRegsFile, CSREG_XRCXOPTS_PID4, 31, 0, xrcxopts_pid_reg[4]);
++    if(ph264eCFG->PrintControlRegisters)
++    {
++        h264ePrintControlRegs((int*)CRegsFile);
++    }
++    return;
++}
++
++void h264eSetControlRegsDefaults(H264E_CFG_PVT* ph264eCFG)
++{
++    ph264eCFG->X                      = 1280;
++    ph264eCFG->Y                      = 720;
++    ph264eCFG->bInterlaced            = false;
++    ph264eCFG->VInputFormat           = VIPLANAR;
++    ph264eCFG->bpp                    = 8;
++    ph264eCFG->csp                    = YUV420;
++    ph264eCFG->Timescale              = 50000;
++    ph264eCFG->NUIT                   = 1000;
++    ph264eCFG->Level                  = 31;
++    ph264eCFG->QPI                    = 25;
++    ph264eCFG->QPP                    = 25;
++    ph264eCFG->QPChrOffs              = 0;
++    ph264eCFG->QpBdOffset             = 0;
++    ph264eCFG->bTQThresholding        = true;
++    ph264eCFG->UseDeBlockingFilter    = 1;
++    ph264eCFG->sliceAlphaOffset       = 0;
++    ph264eCFG->sliceBetaOffset        = 0;
++    ph264eCFG->nMBRowsInSliceReq      = 0;
++    ph264eCFG->InterSearchRangeWidth  = 32;
++    ph264eCFG->InterSearchRangeHeight = 20;
++    ph264eCFG->InterAccuracy          = 4;
++    ph264eCFG->InterMVSliceRestrict   = false;
++    ph264eCFG->bInterVBSenable        = true;
++    ph264eCFG->bUseIntraInInter       = true;
++    ph264eCFG->NALTrZeros             = 0;
++    ph264eCFG->NALFlushOnFrame        = 1;
++    ph264eCFG->bFrameDrop             = false;
++    ph264eCFG->VUI_VideoFormat        = -1;
++    ph264eCFG->VUI_VideoFullRangeFlag = 0;
++#ifdef USE_CABAC
++    ph264eCFG->bCABAC                 = true;
++#else
++    ph264eCFG->bCABAC                 = false;
++#endif
++    ph264eCFG->AQStrength             = 4;
++    ph264eCFG->XtmemPtr               = 0;
++    ph264eCFG->nCEngines              = 1;
++    ph264eCFG->MPPriorities[0]        = 3;
++    ph264eCFG->MPPriorities[1]        = 2;
++    ph264eCFG->MPPriorities[2]        = 1;
++    ph264eCFG->MPPriorities[3]        = 1;
++    ph264eCFG->Rate                   = 0;
++    ph264eCFG->FIFOSize               = 0;
++    ph264eCFG->MaxRate                = 0;
++    ph264eCFG->nMBsInBasicUnit        = 0;
++    ph264eCFG->RCPeriod               = 0;
++    ph264eCFG->QPI_min                = 0;
++    ph264eCFG->QPI_max                = 51;
++    ph264eCFG->QPP_min                = 0;
++    ph264eCFG->QPP_max                = 51;
++    ph264eCFG->IPeriod                = 30;
++    ph264eCFG->IRefColumns            = 0;
++    ph264eCFG->RCMethod               = RCM_PID;
++    ph264eCFG->initialCbpRdInfr       = 0;
++    ph264eCFG->rcVbrFactor            = 16;
++    for (int i = 1; i < RC_EXTRA_OPT_MASK_WIDTH; i++)
++    {
++        ph264eCFG->bRcExtraOpt[i] = false;
++    }
++    for(int i = 0; i < 7; i++)
++    {
++        if(i < 4)
++        {
++            ph264eCFG->bVBSEnableMask[i] = true;
++        }
++        else
++        {
++            ph264eCFG->bVBSEnableMask[i] = false;
++        }
++        if(i < 5)
++        {
++            ph264eCFG->bVBSOptions[i] = true;
++        }
++        else
++        {
++            ph264eCFG->bVBSOptions[i] = false;
++        }
++    }
++    ph264eCFG->bVBSOptions[3] = false;
++    ph264eCFG->bI16x16Dis     = 0;
++    ph264eCFG->bI4x4Dis       = false;
++    for(int i = 0; i < 9; i++)
++    {
++        if(i < 4)
++        {
++            ph264eCFG->bIntraLuma16x16Mask[i] = true;
++            ph264eCFG->bIntraChromaMask[i]    = true;
++        }
++        ph264eCFG->bIntraLuma4x4Mask[i] = true;
++    }
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[0], 0, PID_KU_IONPY_HI,             PID_KU_IONPY_LO,              PID_KU_IONPY);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[0], 0, PID_KU_IP_HI,                PID_KU_IP_LO,                 PID_KU_IP);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[0], 0, PID_KI_UPD_IONPY_HI,         PID_KI_UPD_IONPY_LO,          PID_KI_UPD_IONPY);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[0], 0, PID_KI_UPD_IP_HI,            PID_KI_UPD_IP_LO,             PID_KI_UPD_IP);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[0], 0, PID_USE_IBU_THR_FLAG,        PID_USE_IBU_THR_FLAG,         PID_USE_IBU_THR);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[0], 0, PID_FIFO_STATUS_TARGET_HI,   PID_FIFO_STATUS_TARGET_LO,    PID_FIFO_STATUS_TARGET);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[1], 0, PID_USE_COLOCATED_FLAG,      PID_USE_COLOCATED_FLAG,       PID_USE_COLOCATED);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[1], 0, PID_IFRAME_BUFFER_FACTOR_HI, PID_IFRAME_BUFFER_FACTOR_LO,  PID_IFRAME_BUFFER_FACTOR);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[1], 0, PID_QP_STEP_FR_HI,           PID_QP_STEP_FR_LO,            PID_QP_STEP_FR);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[1], 0, PID_QP_STEP_IBU_HI,          PID_QP_STEP_IBU_LO,           PID_QP_STEP_IBU);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[1], 0, PID_FSTATUS_0_HI,            PID_FSTATUS_0_LO,             PID_FSTATUS_0);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[1], 0, PID_THRFRMLIM_0_FLAG,        PID_THRFRMLIM_0_FLAG,         PID_THRFRMLIM_0);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[1], 0, PID_FSTATUS_1_HI,            PID_FSTATUS_1_LO,             PID_FSTATUS_1);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[1], 0, PID_THRFRMLIM_1_FLAG,        PID_THRFRMLIM_1_FLAG,         PID_THRFRMLIM_1);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[2], 0, PID_FSTATUS_2_HI,            PID_FSTATUS_2_LO,             PID_FSTATUS_2);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[2], 0, PID_THRFRMLIM_2_FLAG,        PID_THRFRMLIM_2_FLAG,         PID_THRFRMLIM_2);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[2], 0, PID_FSTATUS_3_HI,            PID_FSTATUS_3_LO,             PID_FSTATUS_3);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[2], 0, PID_THRFRMLIM_3_FLAG,        PID_THRFRMLIM_3_FLAG,         PID_THRFRMLIM_3);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[2], 0, PID_FSTATUS_4_HI,            PID_FSTATUS_4_LO,             PID_FSTATUS_4);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[2], 0, PID_THRFRMLIM_4_FLAG,        PID_THRFRMLIM_4_FLAG,         PID_THRFRMLIM_4);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[2], 0, PID_QP_STEP_0_HI,            PID_QP_STEP_0_LO,             PID_QP_STEP_0);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[2], 0, PID_QP_THR_0_HI,             PID_QP_THR_0_LO,              PID_QP_THR_0);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[3], 0, PID_QP_STEP_1_HI,            PID_QP_STEP_1_LO,             PID_QP_STEP_1);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[3], 0, PID_QP_THR_1_HI,             PID_QP_THR_1_LO,              PID_QP_THR_1);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[3], 0, PID_QP_STEP_2_HI,            PID_QP_STEP_2_LO,             PID_QP_STEP_2);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[3], 0, PID_QP_THR_2_HI,             PID_QP_THR_2_LO,              PID_QP_THR_2);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[3], 0, PID_QP_STEP_3_HI,            PID_QP_STEP_3_LO,             PID_QP_STEP_3);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[3], 0, PID_QP_THR_3_HI,             PID_QP_THR_3_LO,              PID_QP_THR_3);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[3], 0, PID_QP_STEP_4_HI,            PID_QP_STEP_4_LO,             PID_QP_STEP_4);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[3], 0, PID_QP_THR_4_HI,             PID_QP_THR_4_LO,              PID_QP_THR_4);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[4], 0, PID_RAMP_METHOD_HI,          PID_RAMP_METHOD_LO,           PID_RAMP_METHOD);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[4], 0, PID_USE_KD_FLAG,             PID_USE_KD_FLAG,              PID_USE_KD);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[4], 0, PID_USE_KI_UPD_FLAG,         PID_USE_KI_UPD_FLAG,          PID_USE_KI_UPD);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[4], 0, PID_USE_KI_UPDM_FLAG,        PID_USE_KI_UPDM_FLAG,         PID_USE_KI_UPDM);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[4], 0, PID_USE_SCENE_THR_FLAG,      PID_USE_SCENE_THR_FLAG,       PID_USE_SCENE_THR);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[4], 0, PID_USE_AVG_QP_THR_FLAG,     PID_USE_AVG_QP_THR_FLAG,      PID_USE_AVG_QP_THR);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[4], 0, PID_AVG_QP_THR_HI,           PID_AVG_QP_THR_LO,            PID_AVG_QP_THR);
++    h264eSetReg(&ph264eCFG->xrcxopts_pid[4], 0, PID_SCENE_THR_HI,            PID_SCENE_THR_LO,             PID_SCENE_THR);
++    return;
++}
++
++void h264eSetReg(uint      *puiRegFile,
++                 int        regOffs,
++                 int        regFieldHI,
++                 int        regFieldLO,
++                 int        regFieldVal)
++{
++    uint FieldMask;
++    uint regVal;
++    uint regFieldValP;
++    FieldMask      = 0xFFFFFFFF;
++    FieldMask    >>= ((8*sizeof(uint)) - (regFieldHI - regFieldLO + 1));
++    regFieldValP   = regFieldVal & FieldMask;
++    FieldMask    <<= regFieldLO;
++    regFieldValP <<= regFieldLO;
++    FieldMask      = ~FieldMask;
++    regVal         = puiRegFile[regOffs];
++    regVal        &= FieldMask;
++    regVal        |= regFieldValP;
++    puiRegFile[regOffs] = regVal;
++    return;
++}
++
++uint h264eGetReg(uint *puiRegFile,
++                 int   regOffs,
++                 int   regFieldHI,
++                 int   regFieldLO)
++{
++    uint retval;
++    uint FieldMask;
++    FieldMask     = 0xFFFFFFFF;
++    FieldMask   >>= ((8*sizeof(uint)) - (regFieldHI - regFieldLO + 1));
++    retval        = puiRegFile[regOffs];
++    retval      >>= regFieldLO;
++    retval       &= FieldMask;
++    return retval;
++}
+diff --git a/libavcodec/xlnx_h264/h264e_csregs.h b/libavcodec/xlnx_h264/h264e_csregs.h
+new file mode 100644
+index 0000000..43556b1
+--- /dev/null
++++ b/libavcodec/xlnx_h264/h264e_csregs.h
+@@ -0,0 +1,35 @@
++/*
++-- Copyright notice:
++-- Copyright (c) 2017 Alma Technologies S.A.
++-- www.alma-technologies.com
++-- All rights reserved worldwide.
++
++-- This copy is made available under the terms of the GNU General Public
++-- License version 2.1 as published by the Free Software Foundation; either
++-- version 2.1 of the License, or (at your option) any later version.
++--
++-- This copy is distributed in the hope that it will be useful,
++-- but WITHOUT ANY WARRANTY; without even the implied warranty of
++-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Please See the GNU
++-- General Public License for more details.
++--
++-- You should have received a copy of the GNU General Public
++-- License along with FFmpeg; if not, write to the Free Software
++-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++*/
++
++#ifndef _H264E_SDACCEL_CSREGS_H_
++#define _H264E_SDACCEL_CSREGS_H_
++
++#include "h264e_sdaccel.h"
++
++void h264eSetControlRegs   (H264E_USR* ph264eUsr, char* CRegsFile);
++void h264ePrintStatusRegs  (int* pRegFile);
++void h264ePrintControlRegs (int* pRegFile);
++int  h264eGetNalSize       (int* pRegFile);
++int  h264eGetErrorCode     (int* pRegFile);
++int  h264eGetDbgStatus     (int* pRegFile);
++
++#endif // _H264E_SDACCEL_CSREGS_H_
++
++
+diff --git a/libavcodec/xlnx_h264/h264e_csregs_private.h b/libavcodec/xlnx_h264/h264e_csregs_private.h
+new file mode 100644
+index 0000000..64e796b
+--- /dev/null
++++ b/libavcodec/xlnx_h264/h264e_csregs_private.h
+@@ -0,0 +1,440 @@
++/*
++-- Copyright notice:
++-- Copyright (c) 2017 Alma Technologies S.A.
++-- www.alma-technologies.com
++-- All rights reserved worldwide.
++
++-- This copy is made available under the terms of the GNU General Public
++-- License version 2.1 as published by the Free Software Foundation; either
++-- version 2.1 of the License, or (at your option) any later version.
++--
++-- This copy is distributed in the hope that it will be useful,
++-- but WITHOUT ANY WARRANTY; without even the implied warranty of
++-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Please See the GNU
++-- General Public License for more details.
++--
++-- You should have received a copy of the GNU General Public
++-- License along with FFmpeg; if not, write to the Free Software
++-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++*/
++
++#ifndef _H264E_CSREGS_PRIVATE_H_
++#define _H264E_CSREGS_PRIVATE_H_
++
++#include <stdbool.h>
++
++typedef unsigned int uint;
++
++typedef struct _QPs {
++
++   int QPIPic;
++   int QPPPic;
++   int dQPISlice;
++   int dQPPSlice;
++   int dQPIMB;
++   int dQPPMB;
++   int QPEffectiveI;
++   int QPEffectiveP;
++   int QpBdOffset;
++
++} QPs;
++
++#define RC_EXTRA_OPT_MASK_WIDTH 5
++
++typedef struct _H264E_CFG_PVT {
++
++   int      X;
++   int      Y;
++   int      nMBRowsInSlice;
++   int      nMBRowsInSliceReq;
++   int      QPI;
++   int      QPP;
++   int      QPChrOffs;
++   int      QpBdOffset;
++   bool     bTQThresholding;
++   unsigned IPeriod;
++   unsigned IRefColumns;
++   int      UseDeBlockingFilter;
++   int      sliceAlphaOffset;
++   int      sliceBetaOffset;
++   float    FrameRate;
++   unsigned Timescale;
++   unsigned NUIT;
++   int      nMBsInBasicUnit;
++   unsigned RCMethod;
++   int      RCPeriod;
++   int      Rate;
++   int      MaxRate;
++   int      FIFOSize;
++   int      QPI_min;
++   int      QPI_max;
++   int      QPP_min;
++   int      QPP_max;
++   int      FramesToBeEncoded;
++   bool     bInputFromPipe;
++   int      pipeType;
++   int      InterSearchAlgorithm;
++   int      InterSearchRangeWidth;
++   int      InterSearchRangeHeight;
++   int      InterSRWOriginPolicy;
++   int      InterAccuracy;
++   int      InterQPELWindow;
++   int      InterPSKIPPolicy;
++   int      InterSADBits;
++   bool     InterMVSliceRestrict;
++   int      InterIMENeighborA;
++   int      InterFMENeighborA;
++   int      MPPriorities[4];
++   bool     bInterUseP0;
++   bool     bInterQP2S;
++   bool     bInterVBSenable;
++   bool     bVBSEnableMask[7];
++   bool     bVBSOptions[7];
++   int      bI16x16Dis;
++   bool     bIntraLuma16x16Mask[4];
++   bool     bI4x4Dis;
++   bool     bIntraLuma4x4Mask[9];
++   bool     bIntraChromaMask[4];
++   bool     bUseIntraInInter;
++   bool     bForceIPCMInIntra;
++   int      NALTrZeros;
++   int      NALFlushOnFrame;
++   bool     bFrameDrop;
++   QPs      h264eQPs;
++   int      VInputFormat;
++   int      bpp;
++   int      csp;
++   int      subWidthC;
++   int      subHeightC;
++   int      endianess;
++   int      Level;
++   unsigned XtmemPtr;
++   int      TBA;
++   bool     TBASMask[9];
++   void*    pPFIFile;
++   char     cClipInfo[2048];
++   int      Profile;
++   bool     bCABAC;
++   bool     bInterlaced;
++   bool     bIsTopFieldYUV;
++   bool     bBatch;
++   bool     bRcExtraOpt[RC_EXTRA_OPT_MASK_WIDTH];
++   char     rcExtraOpt[512];
++   unsigned rcVbrFactor;
++   unsigned estatsLevel;
++   char     rcRegsFileName[512];
++   FILE*    rcRegsFile;
++   bool     bUseSMAPData;
++   bool     bHrdEnable;
++   bool     bCbr;
++   uint     cpbSizeInKbps;
++   uint     initialCbpRdIn90Khz;
++   uint     initialCbpRdInfr;
++   bool     bRcHrd;
++   int      AQStrength;
++   uint     xrcxopts_pid[5];
++   bool     bDumpIOFrames;
++   uint     nNALOutWidth;
++   uint     nCEngines;
++   uint     YSecNomPad16;
++   int      TBDBG;
++   int      VUI_VideoFormat;
++   int      VUI_VideoFullRangeFlag;
++   int      UseHW;
++   char     KernelFile[2048];
++   char     TargetDevice[2048];
++   char     KernelName[2048];
++   FILE*    pYUVFile;
++   int      UsePlanarSeparated;
++   int      PackPlanarSeparated;
++   int      PlanarToInterleavedInHW;
++   int      HWBench;
++   int      UseFrameBuffer;
++   int      FrameOffset;
++   int      PrintControlRegisters;
++
++} H264E_CFG_PVT;
++
++#define CSREG_VIDINRES      0x00
++#define CSREG_VIDINSCAN     0x01
++#define CSREG_VIDINTS       0x02
++#define CSREG_VIDINUIT      0x03
++#define CSREG_VIDINLEVEL    0x04
++#define CSREG_VIDINVUIST    0x05
++#define CSREG_GOPATTR       0x10
++#define CSREG_SLICEATTR     0x11
++#define CSREG_QPSLICEATTR   0x12
++#define CSREG_RCATTR        0x13
++#define CSREG_RCQPLIMS      0x14
++#define CSREG_RCXOPTS       0x15
++#define CSREG_PREDATTR      0x16
++#define CSREG_ENCOPTS       0x17
++#define CSREG_XPREDATTR     0x3F
++#define CSREG_XRCXOPTS      0x3E
++#define CSREG_COREVER       0x3D
++#define CSREG_CORECFG       0x3C
++#define CSREG_XRCXOPTS_PID0 0x3B
++#define CSREG_XRCXOPTS_PID1 0x3A
++#define CSREG_XRCXOPTS_PID2 0x39
++#define CSREG_XRCXOPTS_PID3 0x38
++#define CSREG_XRCXOPTS_PID4 0x37
++#define CSREG_RCSTATUS      0x36
++#define CSREG_INSTRUCTION   0x20
++#define CSREG_STATUS        0x21
++#define CSREG_ERRID         0x22
++#define CSREG_IDRCNT        0x23
++#define CSREG_FRAMECNT      0x24
++#define CSREG_SEQLEN        0x25
++#define CSREG_PICLEN        0x26
++#define CSREG_SLICELEN      0x27
++#define CSREG_FRAMEDROPCNT  0x28
++#define CSREG_XTMEMPTR      0x30
++#define CSREG_DEBUG         0x3F
++#define FRAME_X_LO      0
++#define FRAME_X_HI     15
++#define FRAME_Y_LO     16
++#define FRAME_Y_HI     31
++#define SCAN_FORMAT_LO  0
++#define SCAN_FORMAT_HI  3
++#define PSP_LO          4
++#define PSP_HI          7
++#define FRAMEDROP_FLAG 16
++#define TIMESCALE_LO    0
++#define TIMESCALE_HI   31
++#define NUIT_LO         0
++#define NUIT_HI        31
++#define LEVEL_LO        0
++#define LEVEL_HI        4
++#define V_VIDEO_SIGNAL_TYPE_PRESENT_FLAG 0
++#define V_VIDEO_FORMAT_LO                4
++#define V_VIDEO_FORMAT_HI                7
++#define V_VIDEO_FULL_RANGE_FLAG          8
++#define IPERIOD_LO   0
++#define IPERIOD_HI  15
++#define IREFCOLS_LO 16
++#define IREFCOLS_HI 31
++#define SLICE_MBROWS_L0       0
++#define SLICE_MBROWS_HI      15
++#define DB_EN_FLAG           16
++#define DB_SLCBNDRS_FLAG     17
++#define DB_ALPHA_LO          20
++#define DB_ALPHA_HI          23
++#define DB_BETA_LO           24
++#define DB_BETA_HI           27
++#define INTERSLICECROSS_FLAG 28
++#define QPINIT_I_LO      0
++#define QPINIT_I_HI      7
++#define QPINIT_P_LO      8
++#define QPINIT_P_HI     15
++#define QPCHROFFS_LO    16
++#define QPCHROFFS_HI    23
++#define QPTHR_LO        24
++#define QPTHR_HI        25
++#define RCBITRATE_LO     0
++#define RCBITRATE_HI    15
++#define RCMAXBITRATE_LO 16
++#define RCMAXBITRATE_HI 31
++#define QPI_MIN_LO       0
++#define QPI_MIN_HI       7
++#define QPI_MAX_LO       8
++#define QPI_MAX_HI      15
++#define QPP_MIN_LO      16
++#define QPP_MIN_HI      23
++#define QPP_MAX_LO      24
++#define QPP_MAX_HI      31
++#define BUSIZE_LO        0
++#define BUSIZE_HI       15
++#define RCPERIOD_LO     16
++#define RCPERIOD_HI     31
++#define CABAC_FLAG       0
++#define FLUSHFRAME_FLAG  4
++#define NALTRZWORD_FLAG  8
++#define ACTCENGS_LO     12
++#define ACTCENGS_HI     15
++#define MEVBS_P16X16_FLAG  0
++#define MEVBS_P16X8_FLAG   1
++#define MEVBS_P8X16_FLAG   2
++#define MEVBS_P8X8_FLAG    3
++#define MEPXLAC_LO         4
++#define MEPXLAC_HI         5
++#define XTRACOST_FLAG      6
++#define XTRACOSTP8x8_FLAG  7
++#define INTRA_IN_P_FLAG    8
++#define I16x16_FLAG        9
++#define I4x4_FLAG         10
++#define I16x16_MASK_LO    12
++#define I16x16_MASK_HI    15
++#define ICHR_MASK_LO      16
++#define ICHR_MASK_HI      19
++#define I4x4_MASK_LO      20
++#define I4x4_MASK_HI      28
++#define SRX_LO             0
++#define SRX_HI             7
++#define SRY_LO             8
++#define SRY_HI            15
++#define VIMPW_LO          16
++#define VIMPW_HI          19
++#define VIMPR_LO          20
++#define VIMPR_HI          23
++#define VOMPW_LO          24
++#define VOMPW_HI          27
++#define REFWR_LO          28
++#define REFWR_HI          31
++#define QPADJSTRENGTH_LO   0
++#define QPADJSTRENGTH_HI   3
++#define USEINITQP_FLAG     4
++#define USESCENECUT_FLAG   5
++#define USERCOVERDUE_FLAG  6
++#define STRICTCBR_FLAG     7
++#define DISMADTH_FLAG      8
++#define VBRF_LO            9
++#define VBRF_HI            15
++#define ICPBRDFR_LO        16
++#define ICPBRDFR_HI        23
++#define SWCLR_FLAG     0
++#define SWSUSPEND_FLAG 1
++#define XTMEMPTR_LO    0
++#define XTMEMPTR_HI   31
++#define PID_KU_IONPY_LO              0
++#define PID_KU_IONPY_HI              3
++#define PID_KU_IP_LO                 4
++#define PID_KU_IP_HI                 7
++#define PID_KI_UPD_IONPY_LO          8
++#define PID_KI_UPD_IONPY_HI         15
++#define PID_KI_UPD_IP_LO            16
++#define PID_KI_UPD_IP_HI            23
++#define PID_FIFO_STATUS_TARGET_LO   24
++#define PID_FIFO_STATUS_TARGET_HI   29
++#define PID_USE_COLOCATED_FLAG      30
++#define PID_USE_IBU_THR_FLAG        31
++#define PID_IFRAME_BUFFER_FACTOR_LO  0
++#define PID_IFRAME_BUFFER_FACTOR_HI  7
++#define PID_QP_STEP_FR_LO            8
++#define PID_QP_STEP_FR_HI           11
++#define PID_QP_STEP_IBU_LO          12
++#define PID_QP_STEP_IBU_HI          15
++#define PID_FSTATUS_0_LO            16
++#define PID_FSTATUS_0_HI            22
++#define PID_THRFRMLIM_0_FLAG        23
++#define PID_FSTATUS_1_LO            24
++#define PID_FSTATUS_1_HI            30
++#define PID_THRFRMLIM_1_FLAG        31
++#define PID_FSTATUS_2_LO             0
++#define PID_FSTATUS_2_HI             6
++#define PID_THRFRMLIM_2_FLAG         7
++#define PID_FSTATUS_3_LO             8
++#define PID_FSTATUS_3_HI            14
++#define PID_THRFRMLIM_3_FLAG        15
++#define PID_FSTATUS_4_LO            16
++#define PID_FSTATUS_4_HI            22
++#define PID_THRFRMLIM_4_FLAG        23
++#define PID_QP_STEP_0_LO            24
++#define PID_QP_STEP_0_HI            27
++#define PID_QP_THR_0_LO             28
++#define PID_QP_THR_0_HI             31
++#define PID_QP_STEP_1_LO             0
++#define PID_QP_STEP_1_HI             3
++#define PID_QP_THR_1_LO              4
++#define PID_QP_THR_1_HI              7
++#define PID_QP_STEP_2_LO             8
++#define PID_QP_STEP_2_HI            11
++#define PID_QP_THR_2_LO             12
++#define PID_QP_THR_2_HI             15
++#define PID_QP_STEP_3_LO            16
++#define PID_QP_STEP_3_HI            19
++#define PID_QP_THR_3_LO             20
++#define PID_QP_THR_3_HI             23
++#define PID_QP_STEP_4_LO            24
++#define PID_QP_STEP_4_HI            27
++#define PID_QP_THR_4_LO             28
++#define PID_QP_THR_4_HI             31
++#define PID_RAMP_METHOD_LO           0
++#define PID_RAMP_METHOD_HI           1
++#define PID_USE_KD_FLAG              2
++#define PID_USE_KI_UPD_FLAG          3
++#define PID_USE_KI_UPDM_FLAG         4
++#define PID_USE_SCENE_THR_FLAG       5
++#define PID_USE_AVG_QP_THR_FLAG      6
++#define PID_AVG_QP_THR_LO           16
++#define PID_AVG_QP_THR_HI           23
++#define PID_SCENE_THR_LO            24
++#define PID_SCENE_THR_HI            31
++#define PID_USE_COLOCATED          0
++#define PID_RAMP_METHOD            1
++#define PID_KU_IONPY               8
++#define PID_KU_IP                  4
++#define PID_KI_UPD_IONPY          16
++#define PID_KI_UPD_IP              8
++#define PID_USE_KP                 1
++#define PID_USE_KI                 1
++#define PID_USE_KD                 1
++#define PID_USE_KI_UPD             1
++#define PID_USE_KI_UPDM            1
++#define PID_USE_IBU_THR            1
++#define PID_USE_AVG_QP_THR         1
++#define PID_USE_SCENE_THR          1
++#define PID_AVG_QP_THR            16
++#define PID_SCENE_THR             64
++#define PID_FIFO_STATUS_TARGET    25
++#define PID_IFRAME_BUFFER_FACTOR  65
++#define PID_QP_STEP_FR             3
++#define PID_QP_STEP_IBU            2
++#define PID_FSTATUS_4              0
++#define PID_QP_STEP_4              4
++#define PID_QP_THR_4              12
++#define PID_THRFRMLIM_4            0
++#define PID_FSTATUS_3             50
++#define PID_QP_STEP_3              3
++#define PID_QP_THR_3               9
++#define PID_THRFRMLIM_3            0
++#define PID_FSTATUS_2             37
++#define PID_QP_STEP_2              2
++#define PID_QP_THR_2               6
++#define PID_THRFRMLIM_2            1
++#define PID_FSTATUS_1             12
++#define PID_QP_STEP_1              1
++#define PID_QP_THR_1               3
++#define PID_THRFRMLIM_1            1
++#define PID_FSTATUS_0              5
++#define PID_QP_STEP_0              0
++#define PID_QP_THR_0               0
++#define PID_THRFRMLIM_0            1
++#define VBS_DIFF_8x16_16x8_PREDICTOR 0
++#define VBS_DIFF_8x8_PREDICTOR       1
++#define VBS_USE_XTRA_PART_COST       2
++#define VBS_USE_XTRA_PART_COST_P8x8  3
++#define PSKIP_USE_HIGH_COST          4
++#define VIMBPLANAR     0
++#define VIPLANAR       1
++#define VIINTERLEAVED  2
++#define VIINTERLEAVEDF 3
++#define TBA_DISABLE 0
++#define TBA_INIT    1
++#define TBA_APPEND  2
++#define TBA_FINISH  3
++#define TBA_SINGLE  4
++#define BASELINE  66
++#define MAIN      77
++#define HIGH     100
++#define HIGH10P  110
++#define HIGH422  122
++#define HIGH444  244
++#define YUV400 0
++#define YUV420 1
++#define YUV422 2
++#define YUV444 3
++#define RC_MASK_SMARTINIT_QP     0
++#define RC_MASK_SCENE_CUT_DETECT 1
++#define RC_MASK_DISOVERDUE       2
++#define RC_MASK_STRICTCBR        3
++#define RC_MASK_DISMATH          4
++#define RCM_PID 0
++#define RCM_M1  1
++#define RCM_M0  2
++#define RCM_M2  3
++
++static const int SUB_WIDTH_C_PVT[4]  = {0, 2, 2, 1};
++static const int SUB_HEIGHT_C_PVT[4] = {0, 2, 1, 1};
++
++
++#endif // _H264E_CSREGS_PRIVATE_H_
+diff --git a/libavcodec/xlnx_h264/h264e_sdaccel.c b/libavcodec/xlnx_h264/h264e_sdaccel.c
+new file mode 100644
+index 0000000..6b0b8e4
+--- /dev/null
++++ b/libavcodec/xlnx_h264/h264e_sdaccel.c
+@@ -0,0 +1,875 @@
++/*
++-- Copyright notice:
++-- Copyright (c) 2017 Alma Technologies S.A.
++-- www.alma-technologies.com
++-- All rights reserved worldwide.
++
++-- This copy is made available under the terms of the GNU General Public
++-- License version 2.1 as published by the Free Software Foundation; either
++-- version 2.1 of the License, or (at your option) any later version.
++--
++-- This copy is distributed in the hope that it will be useful,
++-- but WITHOUT ANY WARRANTY; without even the implied warranty of
++-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Please See the GNU
++-- General Public License for more details.
++--
++-- You should have received a copy of the GNU General Public
++-- License along with FFmpeg; if not, write to the Free Software
++-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++*/
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <time.h>
++#include <CL/opencl.h>
++#include <CL/cl_ext.h>
++#include "libavutil/atomic.h"
++#include "h264e_sdaccel.h"
++#include "h264e_sdaccel_private.h"
++#include "h264e_sdaccel_utils.h"
++#include "h264e_csregs.h"
++
++static int kernel_number = -1;
++static const int kernel_ddr_map[] = {
++	XCL_MEM_DDR_BANK0,
++	XCL_MEM_DDR_BANK0,
++	XCL_MEM_DDR_BANK1,
++	XCL_MEM_DDR_BANK1,
++	XCL_MEM_DDR_BANK2,
++	XCL_MEM_DDR_BANK2,
++	XCL_MEM_DDR_BANK3,
++	XCL_MEM_DDR_BANK3
++	};
++
++static const int kernel_map[] = {0,2,4,6,1,3,5,7};
++
++int h264eInitSW(H264E_KCFG* ph264eKCFG);
++int h264eEndSW (H264E_KCFG* ph264eKCFG);
++int h264eInitHW(H264E_KCFG* ph264eKCFG);
++int h264eEndHW (H264E_KCFG* ph264eKCFG);
++int h264eClear (H264E_KCFG* ph264eKCFG);
++
++int h264eWriteDeviceBuffer(H264E_CL* ph264eCL,
++                           char*     pHostBuffer,
++                           cl_mem    DeviceBuffer,
++                           int       HostOffset,
++                           int       DeviceOffset,
++                           int       ByteSize,
++                           bool      bSync
++                           );
++
++int h264eReadDeviceBuffer(H264E_CL* ph264eCL,
++                          char*     pHostBuffer,
++                          cl_mem    DeviceBuffer,
++                          int       HostOffset,
++                          int       DeviceOffset,
++                          int       ByteSize
++                          );
++
++int h264eSetKernelArguments(H264E_KCFG* ph264eKCFG,
++                            int         KernelRunType
++                            );
++
++int h264eExecuteKernel(H264E_CL* ph264eCL, cl_event *event);
++
++
++int h264eWriteYUV(H264E_KERNEL_HANDLE h264eKernelHandle,
++                  char* pHostYBuffer,
++                  char* pHostUBuffer,
++                  char* pHostVBuffer);
++
++void *h264eEncoderThread(void *h264eKernelHandle);
++
++void h264eUpdateStats(H264E_TIME* ph264eTime);
++void h264eReportDebugStatus(int DebugStatus);
++
++H264E_KERNEL_HANDLE h264eInit(const H264E_USR* pch264eUsr)
++{
++    H264E_KCFG* ph264eKCFG;
++    int         ans;
++    if(pch264eUsr == NULL) return NULL;
++    ph264eKCFG = malloc(sizeof(H264E_KCFG));
++    if(ph264eKCFG == NULL) return NULL;
++    H264E_CL*   ph264eCL   = &ph264eKCFG->h264eCL;
++    H264E_USR*  ph264eUsr  = &ph264eKCFG->h264eUsr;
++    H264E_CNTX* ph264eCntx = &ph264eKCFG->h264eCntx;
++    memcpy(ph264eUsr, pch264eUsr, sizeof(H264E_USR));
++    ans  = h264eInitSW(ph264eKCFG);
++    ans |= h264eInitHW(ph264eKCFG);
++    if(ans < 0)
++    {
++        h264eEndSW(ph264eKCFG);
++        h264eEndHW(ph264eKCFG);
++
++        free(ph264eKCFG);
++        return NULL;
++    }
++    memset(ph264eCntx->CRegsFile, 0, sizeof(ph264eCntx->CRegsFile));
++    memset(ph264eCntx->SRegsFile, 0, sizeof(ph264eCntx->SRegsFile));
++    h264eSetControlRegs(ph264eUsr, ph264eCntx->CRegsFile);
++    ans = h264eWriteDeviceBuffer(ph264eCL,
++                                 ph264eCntx->CRegsFile,
++                                 ph264eCntx->DeviceBuffer,
++                                 0,
++                                 ph264eCntx->CRegsPtr,
++                                 sizeof(ph264eCntx->CRegsFile),
++                                 true
++                                 );
++    ans |= h264eSetKernelArguments(ph264eKCFG, CONTROL_RT);
++    ans |= h264eExecuteKernel(ph264eCL, NULL);
++    ans |= h264eSetKernelArguments(ph264eKCFG, STATUS_RT);
++    ans |= h264eExecuteKernel(ph264eCL, NULL);
++    if(ans < 0)
++    {
++        h264eEndSW(ph264eKCFG);
++        h264eEndHW(ph264eKCFG);
++        free(ph264eKCFG);
++        return NULL;
++    }
++    ans = h264eReadDeviceBuffer(ph264eCL,
++                                ph264eKCFG->h264eCntx.SRegsFile,
++                                ph264eKCFG->h264eCntx.DeviceBuffer,
++                                0,
++                                ph264eKCFG->h264eCntx.SRegsPtr,
++                                sizeof(ph264eKCFG->h264eCntx.SRegsFile)
++                                );
++    if(ans < 0)
++    {
++        h264eEndSW(ph264eKCFG);
++        h264eEndHW(ph264eKCFG);
++
++        free(ph264eKCFG);
++        return NULL;
++    }
++    int ErrID = h264eGetErrorCode((int*)ph264eKCFG->h264eCntx.SRegsFile);
++    if(ErrID)
++    {
++        H264EMSG(printf("ERROR: H.264 core programming error\n"));
++        h264eClear(ph264eKCFG);
++        h264eEndSW(ph264eKCFG);
++        h264eEndHW(ph264eKCFG);
++        free(ph264eKCFG);
++        return NULL;
++    }
++    else
++    {
++        return (void*)ph264eKCFG;
++    }
++}
++
++int h264eEnd(H264E_KERNEL_HANDLE h264eKernelHandle)
++{
++    int ans;
++    if(h264eKernelHandle == NULL)
++    {
++        H264EMSG(printf("ERROR: Invalid kernel handle\n"));
++        return H264E_BAD_KERNEL_HANDLE;
++    }
++    H264E_KCFG* ph264eKCFG = (H264E_KCFG*)h264eKernelHandle;
++    ans  = h264eEndSW(ph264eKCFG);
++    ans |= h264eEndHW(ph264eKCFG);
++    if(ans < 0)
++    {
++        return H264E_END_ERR;
++    }
++    else
++    {
++        return H264E_OK;
++    }
++}
++
++int h264eWriteYUV(H264E_KERNEL_HANDLE h264eKernelHandle,
++                  char* pHostYBuffer,
++                  char* pHostUBuffer,
++                  char* pHostVBuffer)
++{
++    H264E_KCFG* ph264eKCFG = (H264E_KCFG*)h264eKernelHandle;
++    int  YSizeInBytes     = 0;
++    int  ChrSizeInBytes   = 0;
++    int  FrameSizeInBytes = 0;
++    int  VDataIdx         = 0;
++    H264E_CL* ph264eCL = &ph264eKCFG->h264eCL;
++    H264E_CNTX *ph264eCNTX = &ph264eKCFG->h264eCntx;
++    VDataIdx = ph264eCNTX->VDataIdx;
++    H264ETIME(timespec tss);
++    H264ETIME(timespec tse);
++    H264ETIME(clock_gettime(CLOCK_MONOTONIC_RAW, &tss));
++    if(ph264eKCFG->h264eUsr.ScanFormat == H264E_PLANAR_SEPARATED)
++    {
++        if(pHostYBuffer == NULL || pHostUBuffer == NULL || pHostVBuffer == NULL)
++        {
++            H264EMSG(printf("ERROR: Invalid Y, U or V data pointer(s)\n"));
++            return H264E_BAD_COMP_PTR;
++        }
++        YSizeInBytes     =  ph264eKCFG->h264eUsr.FrameX * ph264eKCFG->h264eUsr.FrameY;
++        ChrSizeInBytes   = (ph264eKCFG->h264eUsr.FrameX * ph264eKCFG->h264eUsr.FrameY) / 4;
++        FrameSizeInBytes = YSizeInBytes + 2*ChrSizeInBytes;
++        if(ph264eKCFG->h264eUsr.PackPlanarSeparated)
++        {
++            memcpy(ph264eKCFG->h264eCntx.pPackedPlanarHostBuffer,                                 pHostYBuffer, YSizeInBytes);
++            memcpy(ph264eKCFG->h264eCntx.pPackedPlanarHostBuffer + YSizeInBytes,                  pHostUBuffer, ChrSizeInBytes);
++            memcpy(ph264eKCFG->h264eCntx.pPackedPlanarHostBuffer + YSizeInBytes + ChrSizeInBytes, pHostVBuffer, ChrSizeInBytes);
++            h264eWriteDeviceBuffer(ph264eCL,
++                                   ph264eKCFG->h264eCntx.pPackedPlanarHostBuffer,
++                                   ph264eKCFG->h264eCntx.DeviceBuffer,
++                                   0,
++                                   ph264eKCFG->h264eCntx.VDataPtr[VDataIdx],
++                                   FrameSizeInBytes,
++                                   true
++                                   );
++            if(ph264eCL->bWRDeviceBufferFailed) return H264E_DEVBUFF_WR_ERR;
++        }
++        else
++        {
++            h264eWriteDeviceBuffer(ph264eCL,
++                                   pHostYBuffer,
++                                   ph264eKCFG->h264eCntx.DeviceBuffer,
++                                   0,
++                                   ph264eKCFG->h264eCntx.VDataPtr[VDataIdx],
++                                   YSizeInBytes,
++                                   true
++                                   );
++            if(ph264eCL->bWRDeviceBufferFailed) return H264E_DEVBUFF_WR_ERR;
++            h264eWriteDeviceBuffer(ph264eCL,
++                                   pHostUBuffer,
++                                   ph264eKCFG->h264eCntx.DeviceBuffer,
++                                   0,
++                                   ph264eKCFG->h264eCntx.VDataPtr[VDataIdx] + YSizeInBytes,
++                                   ChrSizeInBytes,
++                                   true
++                                   );
++            if(ph264eCL->bWRDeviceBufferFailed) return H264E_DEVBUFF_WR_ERR;
++            h264eWriteDeviceBuffer(ph264eCL,
++                                   pHostVBuffer,
++                                   ph264eKCFG->h264eCntx.DeviceBuffer,
++                                   0,
++                                   ph264eKCFG->h264eCntx.VDataPtr[VDataIdx] + YSizeInBytes + ChrSizeInBytes,
++                                   ChrSizeInBytes,
++                                   true
++                                   );
++            if(ph264eCL->bWRDeviceBufferFailed) return H264E_DEVBUFF_WR_ERR;
++        }
++
++        if(ph264eKCFG->h264eUsr.HWOptimizeScanFormat)
++        {
++              ph264eKCFG->h264eCntx.Format = PLANAR_TO_INTERLEAVED_FRMT;
++        }
++        else
++        {
++            ph264eKCFG->h264eCntx.Format = NO_CHANGE_FRMT;
++        }
++    }
++    else
++    {
++        if(pHostYBuffer == NULL)
++        {
++            H264EMSG(printf("ERROR: Invalid Y data pointer\n"));
++            return H264E_BAD_COMP_PTR;
++        }
++        if(ph264eKCFG->h264eUsr.ScanFormat == H264E_PLANAR_PACKED)
++        {
++            YSizeInBytes     =  ph264eKCFG->h264eUsr.FrameX * ph264eKCFG->h264eUsr.FrameY;
++            ChrSizeInBytes   = (ph264eKCFG->h264eUsr.FrameX * ph264eKCFG->h264eUsr.FrameY) / 4;
++            FrameSizeInBytes = YSizeInBytes + 2*ChrSizeInBytes;
++            if(ph264eKCFG->h264eUsr.HWOptimizeScanFormat)
++            {
++                ph264eKCFG->h264eCntx.Format = PLANAR_TO_INTERLEAVED_FRMT;
++            }
++            else
++            {
++                ph264eKCFG->h264eCntx.Format = NO_CHANGE_FRMT;
++            }
++        }
++        else if(ph264eKCFG->h264eUsr.ScanFormat == H264E_INTERLEAVED_YC)
++        {
++            YSizeInBytes     =  ph264eKCFG->h264eUsr.FrameX * ph264eKCFG->h264eUsr.FrameY;
++            ChrSizeInBytes   = (ph264eKCFG->h264eUsr.FrameX * ph264eKCFG->h264eUsr.FrameY) / 4;
++            FrameSizeInBytes = YSizeInBytes + 2*ChrSizeInBytes;
++            ph264eKCFG->h264eCntx.Format = NO_CHANGE_FRMT;
++        }
++        else if(ph264eKCFG->h264eUsr.ScanFormat == H264E_INTERLEAVED_CY)
++        {
++            YSizeInBytes     =  ph264eKCFG->h264eUsr.FrameX * ph264eKCFG->h264eUsr.FrameY;
++            ChrSizeInBytes   = (ph264eKCFG->h264eUsr.FrameX * ph264eKCFG->h264eUsr.FrameY) / 4;
++            FrameSizeInBytes = YSizeInBytes + 2*ChrSizeInBytes;
++            ph264eKCFG->h264eCntx.Format = NO_CHANGE_FRMT;
++        }
++        else if(ph264eKCFG->h264eUsr.ScanFormat == H264E_MACROBLOCK)
++        {
++            int FrameX = ph264eKCFG->h264eUsr.FrameX;
++            int FrameY = ph264eKCFG->h264eUsr.FrameY;
++            FrameX = ((FrameX + 15) / 16) * 16;
++            FrameY = ((FrameY + 15) / 16) * 16;
++            YSizeInBytes     =  FrameX * FrameY;
++            ChrSizeInBytes   = (FrameX * FrameY) / 4;
++            FrameSizeInBytes = YSizeInBytes + 2*ChrSizeInBytes;
++            ph264eKCFG->h264eCntx.Format = NO_CHANGE_FRMT;
++        }
++        h264eWriteDeviceBuffer(ph264eCL,
++                               pHostYBuffer,
++                               ph264eKCFG->h264eCntx.DeviceBuffer,
++                               0,
++                               ph264eKCFG->h264eCntx.VDataPtr[VDataIdx],
++                               FrameSizeInBytes,
++                               true
++                               );
++        if(ph264eCL->bWRDeviceBufferFailed) return H264E_DEVBUFF_WR_ERR;
++    }
++    H264ETIME(clock_gettime(CLOCK_MONOTONIC_RAW, &tse));
++    H264ETIME(ph264eKCFG->h264eTime.WriteDeviceBufferTime = tse.tv_nsec - tss.tv_nsec);
++    return H264E_OK;
++}
++
++int h264eEncodeFrame(H264E_KERNEL_HANDLE h264eKernelHandle,
++                     char* pHostYBuffer,
++                     char* pHostUBuffer,
++                     char* pHostVBuffer,
++                     char* pHostNALBuffer,
++                     int   frame_count
++                     )
++{
++    int  rc;
++    int  NalSizeInBytes   = 0;
++    if(h264eKernelHandle == NULL)
++    {
++        H264EMSG(printf("ERROR: Invalid kernel handle\n"));
++        return H264E_BAD_KERNEL_HANDLE;
++    }
++    if(pHostNALBuffer == NULL)
++    {
++        H264EMSG(printf("ERROR: Invalid NAL pointer\n"));
++        return H264E_BAD_NAL_PTR;
++    }
++    H264E_KCFG* ph264eKCFG = (H264E_KCFG*)h264eKernelHandle;
++    H264E_CL* ph264eCL = &ph264eKCFG->h264eCL;
++    H264ETIME(timespec tss);
++    H264ETIME(timespec tse);
++    H264ETIME(clock_gettime(CLOCK_MONOTONIC_RAW, &tss));
++    rc = h264eWriteYUV(h264eKernelHandle,
++                       pHostYBuffer,
++                       pHostUBuffer,
++                       pHostVBuffer);
++    if (rc != H264E_OK) return rc;
++    if (frame_count == 0)
++    {
++        H264ETIME(clock_gettime(CLOCK_MONOTONIC_RAW, &tss));
++        h264eSetKernelArguments(ph264eKCFG, ENCODE_RT);
++        if(ph264eCL->bSetKernelArgsFailed) return H264E_ARGSET_ERR;
++        h264eExecuteKernel(ph264eCL, &ph264eCL->kernel_event);
++        if(ph264eCL->bExecuteKernelFailed) return H264E_EXEC_ERR;
++        return H264E_DEFER_DATA;
++    }
++    else
++    {
++        clWaitForEvents(1, &ph264eCL->kernel_event);
++        H264ETIME(clock_gettime(CLOCK_MONOTONIC_RAW, &tss));
++        h264eReadDeviceBuffer(ph264eCL,
++                            ph264eKCFG->h264eCntx.SRegsFile,
++                            ph264eKCFG->h264eCntx.DeviceBuffer,
++                            0,
++                            ph264eKCFG->h264eCntx.SRegsPtr,
++                            sizeof(ph264eKCFG->h264eCntx.SRegsFile)
++                            );
++        if(ph264eCL->bRDDeviceBufferFailed) return H264E_DEVBUFF_RD_ERR;
++        H264ETIME(clock_gettime(CLOCK_MONOTONIC_RAW, &tse));
++        H264ETIME(ph264eKCFG->h264eTime.EncodeAndReadNALSizeTime = tse.tv_nsec - tss.tv_nsec);
++        NalSizeInBytes = h264eGetNalSize((int*)ph264eKCFG->h264eCntx.SRegsFile);
++        if(NalSizeInBytes == 0)
++        {
++            H264EMSG(printf("ERROR: H.264 core returned 0 NAL size\n"));
++            return H264E_CORE_ERR;
++        }
++        H264ETIME(clock_gettime(CLOCK_MONOTONIC_RAW, &tss));
++        h264eReadDeviceBuffer(ph264eCL,
++                              pHostNALBuffer,
++                              ph264eKCFG->h264eCntx.DeviceBuffer,
++                              0,
++                              ph264eKCFG->h264eCntx.NALPtr,
++                              NalSizeInBytes
++                            );
++        if(ph264eCL->bRDDeviceBufferFailed) return H264E_DEVBUFF_RD_ERR;
++        H264ETIME(clock_gettime(CLOCK_MONOTONIC_RAW, &tse));
++        H264ETIME(ph264eKCFG->h264eTime.ReadNALBufferTime = tse.tv_nsec - tss.tv_nsec);
++        H264ETIME(h264eUpdateStats(&ph264eKCFG->h264eTime));
++        H264ETIME(clock_gettime(CLOCK_MONOTONIC_RAW, &tss));
++        h264eSetKernelArguments(ph264eKCFG, ENCODE_RT);
++        if(ph264eCL->bSetKernelArgsFailed) return H264E_ARGSET_ERR;
++        h264eExecuteKernel(ph264eCL, &ph264eCL->kernel_event);
++        if(ph264eCL->bExecuteKernelFailed) return H264E_EXEC_ERR;
++        H264ETIME(clock_gettime(CLOCK_MONOTONIC_RAW, &tse));
++        H264ETIME(ph264eKCFG->h264eTime.ExecuteKernelTime = tse.tv_nsec - tss.tv_nsec);
++        rc = NalSizeInBytes;
++    }
++    return rc;
++}
++
++int h264eInitSW(H264E_KCFG* ph264eKCFG)
++{
++    int rc = 0;
++    int IPCoreMemSizeInBytes;
++    int CRegsSizeInBytes;
++    int SRegsSizeInBytes;
++    int VDataSizeInBytes;
++    int NALSizeInBytes;
++    H264E_USR*  ph264eUsr  = &ph264eKCFG->h264eUsr;
++    H264E_CNTX* ph264eCntx = &ph264eKCFG->h264eCntx;
++    CRegsSizeInBytes = 64 * 4;
++    SRegsSizeInBytes = 64 * 4;
++    VDataSizeInBytes     = ph264eUsr->FrameX * ph264eUsr->FrameY * 1.5;
++    IPCoreMemSizeInBytes = VDataSizeInBytes * 4;
++    NALSizeInBytes       = VDataSizeInBytes;
++    IPCoreMemSizeInBytes *= 1.1;
++    VDataSizeInBytes     *= 1.1;
++    NALSizeInBytes       *= 1.1;
++    IPCoreMemSizeInBytes = ((IPCoreMemSizeInBytes / 4096) + 1) * 4096;
++    CRegsSizeInBytes     = ((CRegsSizeInBytes     / 4096) + 1) * 4096;
++    SRegsSizeInBytes     = ((SRegsSizeInBytes     / 4096) + 1) * 4096;
++    VDataSizeInBytes     = ((VDataSizeInBytes     / 4096) + 1) * 4096;
++    NALSizeInBytes       = ((NALSizeInBytes       / 4096) + 1) * 4096;
++    ph264eCntx->NALPtr   = IPCoreMemSizeInBytes;
++    ph264eCntx->SRegsPtr = ph264eCntx->NALPtr   + NALSizeInBytes;
++    ph264eCntx->CRegsPtr = ph264eCntx->SRegsPtr + SRegsSizeInBytes;
++    ph264eCntx->VDataPtr[0] = ph264eCntx->CRegsPtr + CRegsSizeInBytes;
++    ph264eCntx->VDataPtr[1] = ph264eCntx->VDataPtr[0] + VDataSizeInBytes;
++    ph264eCntx->VDataIdx                = 0;
++    ph264eCntx->Format                  = 0;
++    ph264eCntx->DeviceBuffer            = 0;
++    ph264eCntx->DeviceBufferSizeInBytes = ph264eCntx->VDataPtr[1] + VDataSizeInBytes;
++    memset(&ph264eKCFG->h264eTime, 0, sizeof(H264E_TIME));
++    ph264eCntx->pPackedPlanarHostBuffer = NULL;
++    if(ph264eUsr->ScanFormat == H264E_PLANAR_SEPARATED && ph264eUsr->PackPlanarSeparated)
++    {
++        ph264eCntx->pPackedPlanarHostBuffer = malloc(ph264eUsr->FrameX *
++													 ph264eUsr->FrameY *
++													 2);
++        if(ph264eCntx->pPackedPlanarHostBuffer == NULL)
++        {
++            H264EMSG(printf("ERROR: Failed to allocate host buffer for packing planar separated input\n"));
++            return H264E_INITSW_ERR;
++        }
++    }
++    if(ph264eUsr->PackPlanarSeparated  < 0 || ph264eUsr->PackPlanarSeparated  > 0) ph264eUsr->PackPlanarSeparated  = 1;
++    if(ph264eUsr->HWOptimizeScanFormat < 0 || ph264eUsr->HWOptimizeScanFormat > 0) ph264eUsr->HWOptimizeScanFormat = 1;
++	printf("Creating request message queue\n");
++	rc = av_thread_message_queue_alloc(&ph264eKCFG->h264eReqMsgQ, 1, sizeof(H264E_REQ_MSG));
++	printf("Creating response message queue\n");
++	rc |= av_thread_message_queue_alloc(&ph264eKCFG->h264eRspMsgQ,
++									   5, sizeof(H264E_RSP_MSG));
++	if (rc < 0)
++	{
++		printf("Failed to allocate message queue\n");
++		exit(1);
++	}
++	rc = pthread_create(&ph264eKCFG->h264eThread, NULL,
++						h264eEncoderThread, ph264eKCFG);
++    return H264E_OK;
++}
++
++int h264eEndSW(H264E_KCFG* ph264eKCFG)
++{
++	H264E_REQ_MSG reqMsg;
++	reqMsg.endThread = 1;
++	av_thread_message_queue_send(ph264eKCFG->h264eReqMsgQ, &reqMsg, 0);
++	pthread_join(ph264eKCFG->h264eThread, NULL);
++	av_thread_message_queue_free(&ph264eKCFG->h264eReqMsgQ);
++	av_thread_message_queue_free(&ph264eKCFG->h264eRspMsgQ);
++    if(ph264eKCFG->h264eCntx.pPackedPlanarHostBuffer != NULL)
++    {
++        free(ph264eKCFG->h264eCntx.pPackedPlanarHostBuffer);
++        ph264eKCFG->h264eCntx.pPackedPlanarHostBuffer = NULL;
++    }
++    H264EMSG(printf("\n"));
++    H264EMSG(printf("\t\t======================================================\n"));
++    H264EMSG(printf("\t\tTotal Write Device Buffer Run-Time    : %8.2f sec\n",  ph264eKCFG->h264eTime.WriteDeviceBufferTotalTimeMS    / 1000.0));
++    H264EMSG(printf("\t\tTotal Execute Kernel Run-Time         : %8.2f sec\n",  ph264eKCFG->h264eTime.ExecuteKernelTotalTimeMS        / 1000.0));
++    H264EMSG(printf("\t\tTotal Encode & Read NAL Size Run-Time : %8.2f sec\n",  ph264eKCFG->h264eTime.EncodeAndReadNALSizeTotalTimeMS / 1000.0));
++    H264EMSG(printf("\t\tTotal Read NAL Buffer Run-Time        : %8.2f sec\n",  ph264eKCFG->h264eTime.ReadNALBufferTotalTimeMS        / 1000.0));
++    H264ETIME(
++        double TotalCLTime;
++        TotalCLTime = ph264eKCFG->h264eTime.WriteDeviceBufferTotalTimeMS    +
++                      ph264eKCFG->h264eTime.ExecuteKernelTotalTimeMS        +
++                      ph264eKCFG->h264eTime.EncodeAndReadNALSizeTotalTimeMS +
++                      ph264eKCFG->h264eTime.ReadNALBufferTotalTimeMS;
++        TotalCLTime /= 1000.0;
++    );
++    H264EMSG(printf("\t\t======================================================\n"));
++    H264EMSG(printf("\t\tTotal CL Run-Time                     : %8.2f sec\n", TotalCLTime));
++    H264EMSG(printf("\t\t======================================================\n"));
++    H264EMSG(printf("\n"));
++    return H264E_OK;
++}
++
++int h264eInitHW(H264E_KCFG* ph264eKCFG)
++{
++   int k_num;
++   if(!ph264eKCFG->h264eUsr.bCLIsOK)
++   {
++	   k_num = avpriv_atomic_int_add_and_fetch(&kernel_number, 1);
++	   ph264eKCFG->h264eCL.kernel_num = kernel_map[k_num];
++       ph264eKCFG->h264eCL.pDeviceName        = ph264eKCFG->h264eUsr.pDeviceName;
++       ph264eKCFG->h264eCL.pKernelBinFileName = ph264eKCFG->h264eUsr.pKernelBinFileName;
++	   snprintf(ph264eKCFG->h264eCL.pKernelName, 64, "%s_%d", 
++                ph264eKCFG->h264eUsr.pKernelName, 
++                ph264eKCFG->h264eCL.kernel_num);
++       h264e_cl_init(&ph264eKCFG->h264eCL);
++       if(!ph264eKCFG->h264eCL.bCLIsOK)
++       {
++           H264EMSG(printf("ERROR: Failed to initialize CL\n"));
++           return H264E_INITHW_ERR;
++       }
++   }
++   else
++   {
++       ph264eKCFG->h264eCL.commands = ph264eKCFG->h264eUsr.commands;
++       ph264eKCFG->h264eCL.context  = ph264eKCFG->h264eUsr.context;
++       ph264eKCFG->h264eCL.kernel   = ph264eKCFG->h264eUsr.kernel;
++   }
++   	cl_mem_ext_ptr_t cl_mem_ptr;
++	cl_mem_ptr.obj = 0;
++	cl_mem_ptr.param = 0;
++	cl_mem_ptr.flags = kernel_ddr_map[ph264eKCFG->h264eCL.kernel_num];
++   ph264eKCFG->h264eCntx.DeviceBuffer = clCreateBuffer(ph264eKCFG->h264eCL.context,
++                                                       CL_MEM_READ_WRITE | CL_MEM_EXT_PTR_XILINX,
++                                                       ph264eKCFG->h264eCntx.DeviceBufferSizeInBytes,
++                                                       &cl_mem_ptr,
++                                                       NULL);
++   if(!ph264eKCFG->h264eCntx.DeviceBuffer)
++   {
++       H264EMSG(printf("ERROR: Failed to allocate device memory\n"));
++        return H264E_DEVBUFF_ERR;
++   }
++    return H264E_OK;
++}
++
++int h264eEndHW(H264E_KCFG* ph264eKCFG)
++{
++    int err;
++    int ans;
++    int retval = H264E_OK;
++   if(ph264eKCFG->h264eCntx.DeviceBuffer)
++   {
++        err = clReleaseMemObject(ph264eKCFG->h264eCntx.DeviceBuffer);
++        if(err != CL_SUCCESS)
++        {
++            H264EMSG(printf("ERROR: Failed to release device buffer\n"));
++            retval = H264E_DEVBUFF_ERR;
++   }
++   }
++   if(ph264eKCFG->h264eCL.bCLIsOK && !ph264eKCFG->h264eUsr.bCLIsOK)
++   {
++        ans = h264e_cl_end(&(ph264eKCFG->h264eCL));
++        if(ans < 0) retval = ans;
++   }
++   return retval;
++}
++
++int h264eWriteDeviceBuffer(H264E_CL* ph264eCL,
++                           char*     pHostBuffer,
++                           cl_mem    DeviceBuffer,
++                           int       HostOffset,
++                           int       DeviceOffset,
++                           int       ByteSize,
++                           bool      bSync
++                           )
++{
++   int      err;
++   cl_event writeevent;
++   if(bSync)
++   {
++       err = clEnqueueWriteBuffer(ph264eCL->commands,
++                                  DeviceBuffer,
++                                  CL_TRUE,
++                                  DeviceOffset,
++                                  ByteSize,
++                                  pHostBuffer + HostOffset,
++                                  0,
++                                  NULL,
++                                  &writeevent
++                                  );
++   }
++   else
++   {
++       err = clEnqueueWriteBuffer(ph264eCL->commands,
++                                  DeviceBuffer,
++                                  CL_TRUE,
++                                  DeviceOffset,
++                                  ByteSize,
++                                  pHostBuffer + HostOffset,
++                                  0,
++                                  NULL,
++                                  NULL
++                                  );
++   }
++   if(err != CL_SUCCESS)
++   {
++      H264EMSG(printf("ERROR: Failed to write to device buffer\n"));
++        ph264eCL->bWRDeviceBufferFailed = true;
++        return H264E_DEVBUFF_WR_ERR;
++   }
++   if(bSync)
++   {
++      clWaitForEvents(1, &writeevent);
++   }
++    ph264eCL->bWRDeviceBufferFailed = false;
++    return H264E_OK;
++}
++
++int h264eReadDeviceBuffer(H264E_CL* ph264eCL,
++                          char*     pHostBuffer,
++                          cl_mem    DeviceBuffer,
++                          int       HostOffset,
++                          int       DeviceOffset,
++                          int       ByteSize)
++{
++    int err;
++    cl_event readevent;
++    err = clEnqueueReadBuffer(ph264eCL->commands,
++                              DeviceBuffer,
++                              CL_TRUE,
++                              DeviceOffset,
++                              ByteSize,
++                              pHostBuffer + HostOffset,
++                              0,
++                              NULL,
++                              &readevent
++                              );
++    if(err != CL_SUCCESS)
++    {
++        H264EMSG(printf("ERROR: Failed to read device buffer (error %d)\n", err));
++        ph264eCL->bRDDeviceBufferFailed = true;
++        return H264E_DEVBUFF_RD_ERR;
++    }
++    clWaitForEvents(1, &readevent);
++    ph264eCL->bRDDeviceBufferFailed = false;
++    return H264E_OK;
++}
++
++int h264eSetKernelArguments(H264E_KCFG* ph264eKCFG,
++                            int         KernelRunType
++                            )
++{
++    int err;
++    H264E_CL*   ph264eCL   = &ph264eKCFG->h264eCL;
++    H264E_USR*  ph264eUsr  = &ph264eKCFG->h264eUsr;
++    H264E_CNTX* ph264eCntx = &ph264eKCFG->h264eCntx;
++    int CRegsPtr = ph264eCntx->CRegsPtr;
++    int SRegsPtr = ph264eCntx->SRegsPtr;
++    int VDataPtr = ph264eCntx->VDataPtr[ph264eCntx->VDataIdx];
++    int NALPtr   = ph264eCntx->NALPtr;
++    int Format   = ph264eCntx->Format;
++    int FrameX   = ph264eUsr->FrameX;
++    int FrameY   = ph264eUsr->FrameY;
++    if(ph264eUsr->ScanFormat == H264E_MACROBLOCK)
++    {
++        FrameX = ((FrameX + 15) / 16) * 16;
++        FrameY = ((FrameY + 15) / 16) * 16;
++    }
++    cl_kernel kernel       = ph264eCL->kernel;
++    cl_mem    DeviceBuffer = ph264eCntx->DeviceBuffer;
++    err  = 0;
++    err  = clSetKernelArg(kernel, 0, sizeof(cl_mem), &DeviceBuffer);
++    err |= clSetKernelArg(kernel, 1, sizeof(int), &CRegsPtr);
++    err |= clSetKernelArg(kernel, 2, sizeof(int), &SRegsPtr);
++    err |= clSetKernelArg(kernel, 3, sizeof(int), &VDataPtr);
++    err |= clSetKernelArg(kernel, 4, sizeof(int), &NALPtr);
++    err |= clSetKernelArg(kernel, 5, sizeof(int), &FrameX);
++    err |= clSetKernelArg(kernel, 6, sizeof(int), &FrameY);
++    err |= clSetKernelArg(kernel, 7, sizeof(int), &Format);
++    err |= clSetKernelArg(kernel, 8, sizeof(int), &KernelRunType);
++    if(err != CL_SUCCESS)
++    {
++        H264EMSG(printf("ERROR: Failed to set kernel arguments (error %d)\n", err));
++        ph264eKCFG->h264eCL.bSetKernelArgsFailed = true;
++        return H264E_ARGSET_ERR;
++    }
++    ph264eKCFG->h264eCL.bSetKernelArgsFailed = false;
++    return H264E_OK;
++}
++
++int h264eExecuteKernel(H264E_CL* ph264eCL, cl_event *event)
++{
++    int err;
++    cl_event execwait;
++    cl_event *pEvent;
++    if (event)
++        pEvent = event;
++    else
++        pEvent = &execwait;
++    err = clEnqueueTask(ph264eCL->commands, ph264eCL->kernel, 0, NULL, pEvent);
++    if(err != CL_SUCCESS)
++    {
++        H264EMSG(printf("ERROR: Failed to execute kernel (error %d)\n", err));
++        ph264eCL->bExecuteKernelFailed = true;
++        return H264E_EXEC_ERR;
++    }
++    if (event == NULL)
++    {
++        clWaitForEvents(1, &execwait);
++        ph264eCL->bExecuteKernelFailed = false;
++    }
++    return H264E_OK;
++}
++
++const char* h264eReadStatusRegs(H264E_KERNEL_HANDLE h264eKernelHandle)
++{
++    if(h264eKernelHandle == NULL)
++    {
++        H264EMSG(printf("ERROR: Invalid kernel handle\n"));
++        return NULL;
++    }
++   H264E_KCFG* ph264eKCFG = (H264E_KCFG*)h264eKernelHandle;
++   h264eSetKernelArguments(ph264eKCFG, STATUS_RT);
++    if(ph264eKCFG->h264eCL.bSetKernelArgsFailed) return NULL;
++
++   h264eExecuteKernel(&ph264eKCFG->h264eCL, NULL);
++    if(ph264eKCFG->h264eCL.bExecuteKernelFailed) return NULL;
++   h264eReadDeviceBuffer(&ph264eKCFG->h264eCL,
++                         ph264eKCFG->h264eCntx.SRegsFile,
++                         ph264eKCFG->h264eCntx.DeviceBuffer,
++                         0,
++                         ph264eKCFG->h264eCntx.SRegsPtr,
++                         sizeof(ph264eKCFG->h264eCntx.SRegsFile)
++                         );
++    if(ph264eKCFG->h264eCL.bRDDeviceBufferFailed) return NULL;
++   return ph264eKCFG->h264eCntx.SRegsFile;
++}
++
++int h264eClear(H264E_KCFG* ph264eKCFG)
++{
++   h264eSetKernelArguments(ph264eKCFG, CLEAR_RT);
++    if(ph264eKCFG->h264eCL.bSetKernelArgsFailed) return H264E_ARGSET_ERR;
++   h264eExecuteKernel(&ph264eKCFG->h264eCL, NULL);
++    if(ph264eKCFG->h264eCL.bExecuteKernelFailed) return H264E_EXEC_ERR;
++    return H264E_OK;
++}
++
++int h264eSetUserContext(H264E_KERNEL_HANDLE h264eKernelHandle, void* Context)
++{
++    if(h264eKernelHandle == NULL)
++    {
++        H264EMSG(printf("ERROR: Invalid kernel handle\n"));
++        return H264E_BAD_KERNEL_HANDLE;
++    }
++    H264E_KCFG* ph264eKCFG = (H264E_KCFG*)h264eKernelHandle;
++    ph264eKCFG->h264eUsr.UserContext = Context;
++    return H264E_OK;
++}
++
++void* h264eGetUserContext(H264E_KERNEL_HANDLE h264eKernelHandle)
++{
++    if(h264eKernelHandle == NULL)
++    {
++        H264EMSG(printf("ERROR: Invalid kernel handle\n"));
++        return NULL;
++    }
++    H264E_KCFG* ph264eKCFG = (H264E_KCFG*)h264eKernelHandle;
++    return ph264eKCFG->h264eUsr.UserContext;
++}
++
++void h264eUpdateStats(H264E_TIME* ph264eTime)
++{
++    ph264eTime->nFrames++;
++    ph264eTime->WriteDeviceBufferTimeMS    = (double)ph264eTime->WriteDeviceBufferTime    / 1E6;
++    ph264eTime->ExecuteKernelTimeMS        = (double)ph264eTime->ExecuteKernelTime        / 1E6;
++    ph264eTime->EncodeAndReadNALSizeTimeMS = (double)ph264eTime->EncodeAndReadNALSizeTime / 1E6;
++    ph264eTime->ReadNALBufferTimeMS        = (double)ph264eTime->ReadNALBufferTime        / 1E6;
++    if(ph264eTime->WriteDeviceBufferTimeMS    < 0) ph264eTime->WriteDeviceBufferTimeMS    += 1000.0;
++    if(ph264eTime->ExecuteKernelTimeMS        < 0) ph264eTime->ExecuteKernelTimeMS        += 1000.0;
++    if(ph264eTime->EncodeAndReadNALSizeTimeMS < 0) ph264eTime->EncodeAndReadNALSizeTimeMS += 1000.0;
++    if(ph264eTime->ReadNALBufferTimeMS        < 0) ph264eTime->ReadNALBufferTimeMS        += 1000.0;
++    ph264eTime->WriteDeviceBufferTotalTimeMS    += ph264eTime->WriteDeviceBufferTimeMS;
++    ph264eTime->ExecuteKernelTotalTimeMS        += ph264eTime->ExecuteKernelTimeMS;
++    ph264eTime->EncodeAndReadNALSizeTotalTimeMS += ph264eTime->EncodeAndReadNALSizeTimeMS;
++    ph264eTime->ReadNALBufferTotalTimeMS        += ph264eTime->ReadNALBufferTimeMS;
++    return;
++}
++
++const H264E_TIME* h264eGetStats(H264E_KERNEL_HANDLE h264eKernelHandle)
++{
++    if(h264eKernelHandle == NULL)
++    {
++        H264EMSG(printf("ERROR: Invalid kernel handle\n"));
++        return NULL;
++    }
++    H264E_KCFG* ph264eKCFG = (H264E_KCFG*)h264eKernelHandle;
++    return &ph264eKCFG->h264eTime;
++}
++
++void h264eReportDebugStatus(int DebugStatus)
++{
++    int i = 0;
++    printf("TIMEOUT: xtmem_req_val     = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmem_req_rdy     = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmem_wdata_val   = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmem_wdata_rdy   = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmem_rdata_val   = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmem_rdata_rdy   = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: sreg_wrreq_val    = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: sreg_wrreq_rdy    = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: vdata_rdreq_val   = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: vdata_rdreq_rdy   = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: nal_wrreq_val     = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: nal_wrreq_rdy     = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmemin_wrreq_val = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmemin_wrreq_rdy = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmemin_rdreq_val = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmemin_rdreq_rdy = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: vdata_rdata_val   = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: vdata_rdata_rdy   = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: nal_wdata_val     = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: nal_wdata_rdy     = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmemin_wdata_val = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmemin_wdata_rdy = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmemin_rdata_val = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: xtmemin_rdata_rdy = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: vdata_dout_val    = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: vdata_dout_rdy    = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: vdata_val         = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: vdata_rdy         = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: nal_val           = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    printf("TIMEOUT: nal_rdy           = %d\n", DebugStatus & (0x20000000 >> i++) ? 1 : 0);
++    return;
++}
++
++void *h264eEncoderThread(void *h264eKernelHandle)
++{
++   	H264E_KCFG* ph264eKCFG = (H264E_KCFG*)h264eKernelHandle;
++    H264E_CNTX *ph264eCNTX = &ph264eKCFG->h264eCntx;
++    H264E_CL   *ph264eCL   = &ph264eKCFG->h264eCL;
++	AVThreadMessageQueue *reqMq = ph264eKCFG->h264eReqMsgQ;
++	AVThreadMessageQueue *rspMq = ph264eKCFG->h264eRspMsgQ;
++	H264E_REQ_MSG reqMsg;
++	H264E_RSP_MSG rspMsg;
++    int frame_count = 0;
++    int NalSizeInBytes;
++	printf("Starting thread for kernel %d\n", ph264eCL->kernel_num);
++    printf("Using latest version of Alma plugin\n");
++	while(1)
++	{
++        ph264eCNTX->VDataIdx = frame_count & 1;
++		av_thread_message_queue_recv(reqMq, &reqMsg, 0);
++		if (reqMsg.endThread)
++        {
++            clWaitForEvents(1, &ph264eCL->kernel_event);
++			break;
++        }
++		else
++		{
++			NalSizeInBytes = h264eEncodeFrame(ph264eKCFG,
++              	     				  		  reqMsg.pHostYBuffer,
++                     		 				  reqMsg.pHostUBuffer,
++                     		 				  reqMsg.pHostVBuffer,
++                     		 				  reqMsg.pHostNALBuffer,
++                                              frame_count);
++            frame_count++;
++            if (NalSizeInBytes == H264E_DEFER_DATA)
++                continue;
++            rspMsg.NalSizeInBytes = NalSizeInBytes;
++			rspMsg.pHostNALBuffer = reqMsg.pHostNALBuffer;
++			rspMsg.pFrame = reqMsg.pFrame;
++			av_thread_message_queue_send(rspMq, &rspMsg, 0);
++		}
++	}
++	pthread_exit(NULL);
++}
+diff --git a/libavcodec/xlnx_h264/h264e_sdaccel.h b/libavcodec/xlnx_h264/h264e_sdaccel.h
+new file mode 100644
+index 0000000..d79116f
+--- /dev/null
++++ b/libavcodec/xlnx_h264/h264e_sdaccel.h
+@@ -0,0 +1,146 @@
++/*
++-- Copyright notice:
++-- Copyright (c) 2017 Alma Technologies S.A.
++-- www.alma-technologies.com
++-- All rights reserved worldwide.
++
++-- This copy is made available under the terms of the GNU General Public
++-- License version 2.1 as published by the Free Software Foundation; either
++-- version 2.1 of the License, or (at your option) any later version.
++--
++-- This copy is distributed in the hope that it will be useful,
++-- but WITHOUT ANY WARRANTY; without even the implied warranty of
++-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Please See the GNU
++-- General Public License for more details.
++--
++-- You should have received a copy of the GNU General Public
++-- License along with FFmpeg; if not, write to the Free Software
++-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++*/
++
++#ifndef _H264E_SDACCEL_H_
++#define _H264E_SDACCEL_H_
++
++#include <stdbool.h>
++#include <CL/opencl.h>
++#include <CL/cl_ext.h>
++#include "libavcodec/avcodec.h"
++
++struct _H264E_RSP_MSG;
++typedef struct _H264E_RSP_MSG H264E_RSP_MSG;
++
++#ifdef H264E_DEBUG
++    #define H264E_PROFILING
++    #define H264EMSG(s) s
++#else
++    #define H264EMSG(s) ;
++#endif
++
++#ifdef H264E_PROFILING
++    #define H264ETIME(s) s
++#else
++    #define H264ETIME(s) ;
++#endif
++
++typedef void* H264E_KERNEL_HANDLE;
++#define H264E_PLANAR_PACKED     0
++#define H264E_PLANAR_SEPARATED  1
++#define H264E_INTERLEAVED_YC    2
++#define H264E_INTERLEAVED_CY    3
++#define H264E_MACROBLOCK        4
++
++typedef struct _H264E_USR {
++    char*            pKernelBinFileName;
++    char*            pDeviceName;
++    char*            pKernelName;
++    bool             bCLIsOK;
++    cl_context        context;
++    cl_command_queue  commands;
++    cl_kernel         kernel;
++    int               FrameX;
++    int               FrameY;
++    int               ScanFormat;
++    int               PackPlanarSeparated;
++    int               HWOptimizeScanFormat;
++    int               Timescale;
++    int               Nuit;
++    int               Level;
++    int               GOPLength;
++    int               IntraRefreshCol;
++    int               MBRowsPerSlice;
++    int               DeblockingFilter;
++    int               DBRestrict;
++    int               MVRestrict;
++    int               QPI;
++    int               QPP;
++    int               QPChrOffset;
++    int               Bitrate;
++    int               BUSize;
++    int               RCFIFOSize;
++    int               UseCABAC;
++    void*             UserContext;
++    bool              bUseUserContextAsCfg;
++
++} H264E_USR;
++
++typedef struct _H264E_TIME {
++
++    long int WriteDeviceBufferTime;
++    long int ExecuteKernelTime;
++    long int EncodeAndReadNALSizeTime;
++    long int ReadNALBufferTime;
++
++    double   WriteDeviceBufferTimeMS;
++    double   ExecuteKernelTimeMS;
++    double   EncodeAndReadNALSizeTimeMS;
++    double   ReadNALBufferTimeMS;
++
++    double   WriteDeviceBufferTotalTimeMS;
++    double   ExecuteKernelTotalTimeMS;
++    double   EncodeAndReadNALSizeTotalTimeMS;
++    double   ReadNALBufferTotalTimeMS;
++
++    unsigned long int nFrames;
++
++} H264E_TIME;
++
++H264E_KERNEL_HANDLE h264eInit(const H264E_USR* ph264eUsr);
++int                 h264eEnd (H264E_KERNEL_HANDLE h264eKernelHandle);
++
++int h264eEncodeFrame(H264E_KERNEL_HANDLE h264eKernelHandle,
++                     char* pHostYBuffer,
++                     char* pHostUBuffer,
++                     char* pHostVBuffer,
++                     char* pHostNALBuffer,
++                     int   frame_count
++                     );
++
++void h264eSendEncodeFrame(H264E_KERNEL_HANDLE h264eKernelHandle,
++                          AVFrame *pic, char *pCurrentBuffer);
++
++int h264eRecvEncodeFrame(H264E_KERNEL_HANDLE h264eKernelHandle,
++						 H264E_RSP_MSG		 *rspMsg);
++
++const char* h264eReadStatusRegs(H264E_KERNEL_HANDLE h264eKernelHandle);
++int               h264eSetUserContext(H264E_KERNEL_HANDLE h264eKernelHandle, void* Context);
++void*       h264eGetUserContext(H264E_KERNEL_HANDLE h264eKernelHandle);
++const H264E_TIME* h264eGetStats      (H264E_KERNEL_HANDLE h264eKernelHandle);
++
++#define H264E_OK                 0
++#define H264E_END_ERR           -1
++#define H264E_BAD_KERNEL_HANDLE -2
++#define H264E_BAD_COMP_PTR      -3
++#define H264E_BAD_NAL_PTR       -4
++#define H264E_CORE_ERR          -5
++#define H264E_INITSW_ERR        -6
++#define H264E_INITHW_ERR        -7
++#define H264E_DEVBUFF_ERR       -8
++#define H264E_DEVBUFF_WR_ERR    -9
++#define H264E_DEVBUFF_RD_ERR    -10
++#define H264E_ARGSET_ERR        -11
++#define H264E_EXEC_ERR          -12
++#define H264E_CL_INIT_ERR       -13
++#define H264E_CL_END_ERR        -14
++#define H264E_DEFER_DATA        -15
++
++#endif // _H264E_SDACCEL_H_
+diff --git a/libavcodec/xlnx_h264/h264e_sdaccel_private.h b/libavcodec/xlnx_h264/h264e_sdaccel_private.h
+new file mode 100644
+index 0000000..e9db942
+--- /dev/null
++++ b/libavcodec/xlnx_h264/h264e_sdaccel_private.h
+@@ -0,0 +1,107 @@
++/*
++-- Copyright notice:
++-- Copyright (c) 2017 Alma Technologies S.A.
++-- www.alma-technologies.com
++-- All rights reserved worldwide.
++
++-- This copy is made available under the terms of the GNU General Public
++-- License version 2.1 as published by the Free Software Foundation; either
++-- version 2.1 of the License, or (at your option) any later version.
++--
++-- This copy is distributed in the hope that it will be useful,
++-- but WITHOUT ANY WARRANTY; without even the implied warranty of
++-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Please See the GNU
++-- General Public License for more details.
++--
++-- You should have received a copy of the GNU General Public
++-- License along with FFmpeg; if not, write to the Free Software
++-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++*/
++
++#ifndef _H264E_SDACCEL_PRIVATE_H_
++#define _H264E_SDACCEL_PRIVATE_H_
++
++#include <CL/opencl.h>
++#include <pthread.h>
++#include <libavutil/threadmessage.h>
++#include "libavcodec/avcodec.h"
++#include "h264e_sdaccel.h"
++
++#define CLEAR_RT          0
++#define CONTROL_RT        1
++#define STATUS_RT         2
++#define CONTROL_STATUS_RT 3
++#define CONTROL_ENCODE_RT 4
++#define ENCODE_RT         5
++#define TEST0_RT          6
++#define TEST1_RT          7
++#define NO_CHANGE_FRMT                     0
++#define PLANAR_TO_INTERLEAVED_FRMT         1
++#define INTERLEAVED_YC_TO_INTERLEAVED_FRMT 2
++#define INTERLEAVED_CY_TO_INTERLEAVED_FRMT 3
++
++typedef struct _H264E_CL {
++
++    char*            pDeviceName;
++    char*            pKernelBinFileName;
++    char             pKernelName[64];
++    cl_platform_id   platform_id;
++    cl_device_id     device_id;
++    cl_context       context;
++    cl_command_queue commands;
++    cl_program       program;
++    cl_kernel        kernel;
++    cl_event         kernel_event;
++	int              kernel_num;
++    bool             bCLIsOK;
++    bool             bWRDeviceBufferFailed;
++    bool             bRDDeviceBufferFailed;
++    bool             bSetKernelArgsFailed;
++    bool             bExecuteKernelFailed;
++
++} H264E_CL;
++
++typedef struct _H264E_CNTX {
++
++    cl_mem DeviceBuffer;
++    int    DeviceBufferSizeInBytes;
++    int    CRegsPtr;
++    int    SRegsPtr;
++    int    VDataIdx;
++    int    VDataPtr[2];
++    int    NALPtr;
++    int    Format;
++    char   CRegsFile[256];
++    char   SRegsFile[256];
++    char*  pPackedPlanarHostBuffer;
++
++} H264E_CNTX;
++
++typedef struct _H264E_KCFG {
++
++    H264E_USR  	   		 h264eUsr;
++    H264E_CL   	   		 h264eCL;
++    H264E_CNTX 	   		 h264eCntx;
++    H264E_TIME           h264eTime;
++	pthread_t  	   		 h264eThread;
++	AVThreadMessageQueue *h264eReqMsgQ;
++	AVThreadMessageQueue *h264eRspMsgQ;
++
++} H264E_KCFG;
++
++typedef struct _H264E_REQ_MSG {
++	char	*pHostYBuffer;
++	char	*pHostUBuffer;
++	char	*pHostVBuffer;
++	char	*pHostNALBuffer;
++	AVFrame *pFrame;
++	int	  	 endThread;
++} H264E_REQ_MSG;
++
++typedef struct _H264E_RSP_MSG {
++	int	  	 NalSizeInBytes;
++	char	*pHostNALBuffer;
++	AVFrame *pFrame;
++} H264E_RSP_MSG;
++
++#endif // _H264E_SDACCEL_PRIVATE_H_
+diff --git a/libavcodec/xlnx_h264/h264e_sdaccel_utils.c b/libavcodec/xlnx_h264/h264e_sdaccel_utils.c
+new file mode 100644
+index 0000000..562a395
+--- /dev/null
++++ b/libavcodec/xlnx_h264/h264e_sdaccel_utils.c
+@@ -0,0 +1,290 @@
++/*
++-- Copyright notice:
++-- Copyright (c) 2017 Alma Technologies S.A.
++-- www.alma-technologies.com
++-- All rights reserved worldwide.
++
++-- This copy is made available under the terms of the GNU General Public
++-- License version 2.1 as published by the Free Software Foundation; either
++-- version 2.1 of the License, or (at your option) any later version.
++--
++-- This copy is distributed in the hope that it will be useful,
++-- but WITHOUT ANY WARRANTY; without even the implied warranty of
++-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Please See the GNU
++-- General Public License for more details.
++--
++-- You should have received a copy of the GNU General Public
++-- License along with FFmpeg; if not, write to the Free Software
++-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++*/
++
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <pthread.h>
++#include "libavutil/log.h"
++#include "h264e_sdaccel.h"
++#include "h264e_sdaccel_utils.h"
++
++static pthread_mutex_t g_cl_mutex = PTHREAD_MUTEX_INITIALIZER;
++static cl_program      g_cl_program;
++static int	       g_is_loaded = 0;
++
++#define TARGET_DEVICE "xilinx:xil-accel-rd-vu9p:4ddr-xpr:4.1"
++
++#if defined(SDX_PLATFORM) && !defined(TARGET_DEVICE)
++   #define STR_VALUE(arg)   #arg
++   #define GET_STRING(name) STR_VALUE(name)
++   #define TARGET_DEVICE    GET_STRING(SDX_PLATFORM)
++#endif
++
++int load_file_to_memory(const char *filename, unsigned char **result);
++
++int h264e_cl_init(H264E_CL* ph264eCL)
++{
++    char             cl_platform_vendor[1001];
++    char             target_device_name[2048];
++    char             kernel_name[2048];
++   cl_platform_id   platform_id;
++   cl_device_id     device_id;
++   cl_context       context;
++   cl_command_queue commands;
++   cl_kernel        kernel;
++    cl_int           err;
++    const char* default_target_device_name = TARGET_DEVICE;
++    const char* default_kernel_name        = "ALMA_H264_E_KERNEL";
++   ph264eCL->bCLIsOK = false;
++    if(ph264eCL->pDeviceName != NULL)
++   {
++        strcpy(target_device_name, ph264eCL->pDeviceName);
++   }
++    else
++    {
++        strcpy(target_device_name, default_target_device_name);
++    }
++    if(ph264eCL->pKernelName != NULL)
++    {
++        strcpy(kernel_name, ph264eCL->pKernelName);
++    }
++    else
++    {
++        strcpy(kernel_name, default_kernel_name);
++    }
++   cl_platform_id platforms[16];
++   cl_uint        platform_count;
++   int            platform_found = 0;
++   err = clGetPlatformIDs(16, platforms, &platform_count);
++   if(err != CL_SUCCESS)
++   {
++      H264EMSG(printf("ERROR: Failed to find an OpenCL platform\n"));
++        return H264E_CL_INIT_ERR;
++   }
++   H264EMSG(printf("INFO: Found %d platforms\n", platform_count));
++   for(unsigned int iplat=0; iplat<platform_count; iplat++)
++   {
++      err = clGetPlatformInfo(platforms[iplat], CL_PLATFORM_VENDOR, 1000, (void *)cl_platform_vendor,NULL);
++
++      if(err != CL_SUCCESS)
++      {
++            H264EMSG(printf("ERROR: clGetPlatformInfo(CL_PLATFORM_VENDOR) failed\n"));
++            return H264E_CL_INIT_ERR;
++      }
++
++      if(strcmp(cl_platform_vendor, "Xilinx") == 0)
++      {
++         H264EMSG(printf("INFO: Selected platform %d from %s\n", iplat, cl_platform_vendor));
++         platform_id = platforms[iplat];
++         platform_found = 1;
++      }
++   }
++   if(!platform_found)
++   {
++      H264EMSG(printf("ERROR: Platform Xilinx not found\n"));
++        return H264E_CL_INIT_ERR;
++   }
++   cl_uint      num_devices;
++   unsigned int device_found = 0;
++   cl_device_id devices[16];
++   char         cl_device_name[1001];
++   err = clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_ACCELERATOR, 16, devices, &num_devices);
++   if(err != CL_SUCCESS)
++   {
++      H264EMSG(printf("ERROR: Failed to create a device group\n"));
++        return H264E_CL_INIT_ERR;
++   }
++   for(unsigned int i=0; i<num_devices; i++)
++   {
++      err = clGetDeviceInfo(devices[i], CL_DEVICE_NAME, 1024, cl_device_name, 0);
++
++      if(err != CL_SUCCESS)
++      {
++         H264EMSG(printf("ERROR: Failed to get device name for device %d\n", i));
++            return H264E_CL_INIT_ERR;
++      }
++      else
++      {
++         H264EMSG(printf("INFO: CL_DEVICE_NAME[%d / %d] = %s\n", i, num_devices, cl_device_name));
++      }
++
++      if(strcmp(cl_device_name, target_device_name) == 0)
++      {
++         device_id = devices[i];
++         device_found = 1;
++         H264EMSG(printf("INFO: Selected %s as the target device\n", cl_device_name));
++      }
++   }
++   if(!device_found)
++   {
++      H264EMSG(printf("ERROR: Target device %s not found\n", target_device_name));
++        return H264E_CL_INIT_ERR;
++   }
++   context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
++   if(!context)
++   {
++      H264EMSG(printf("ERROR: Failed to create a compute context\n"));
++        return H264E_CL_INIT_ERR;
++   }
++   commands = clCreateCommandQueue(context, device_id, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, &err);
++   if(!commands)
++   {
++      H264EMSG(printf("ERROR: Failed to create commands queue\n"));
++      return H264E_CL_INIT_ERR;
++   }
++   pthread_mutex_lock(&g_cl_mutex);
++   cl_int status;
++   unsigned char *kernelbinary;
++   if (!g_is_loaded)
++   {
++		H264EMSG(printf("INFO: loading kernel binary %s\n", ph264eCL->pKernelFileName));
++       	int n_i0 = load_file_to_memory(ph264eCL->pKernelBinFileName, (unsigned char **) &kernelbinary);
++       	if(n_i0 < 0)
++       	{
++            H264EMSG(printf("ERROR: failed to load kernel binary from: %s\n", ph264eCL->pKernelBinFileName));
++            return H264E_CL_INIT_ERR;
++       	}
++        size_t n0 = n_i0;
++	    g_cl_program = clCreateProgramWithBinary(context,
++												 1,
++												 &device_id,
++												 &n0,
++												 (const unsigned char **) &kernelbinary,
++												 &status,
++												 &err);
++		if((!g_cl_program) || (err!=CL_SUCCESS))
++		{
++			H264EMSG(printf("ERROR: Failed to create compute program from binary %d\n", err));
++            return H264E_CL_INIT_ERR;
++		}
++	    free(kernelbinary);
++		err = clBuildProgram(g_cl_program, 0, NULL, NULL, NULL, NULL);
++		if(err != CL_SUCCESS)
++		{
++			size_t len;
++			char   buffer[2048];
++
++			H264EMSG(printf("ERROR: Failed to build program executable\n"));
++			clGetProgramBuildInfo(g_cl_program, device_id, CL_PROGRAM_BUILD_LOG, sizeof(buffer), buffer, &len);
++			H264EMSG(printf("%s\n", buffer));
++            return H264E_CL_INIT_ERR;
++		}
++			g_is_loaded = 1;
++		}
++		else
++		{
++			clRetainProgram(g_cl_program);
++		}
++		pthread_mutex_unlock(&g_cl_mutex);
++	    kernel = clCreateKernel(g_cl_program, ph264eCL->pKernelName, &err);
++   if(!kernel || err != CL_SUCCESS)
++   {
++      H264EMSG(printf("ERROR: Failed to create compute kernel\n"));
++      return -1;
++   }
++   ph264eCL->platform_id = platform_id;
++   ph264eCL->device_id   = device_id;
++   ph264eCL->context     = context;
++   ph264eCL->commands    = commands;
++   ph264eCL->program     = g_cl_program;
++   ph264eCL->kernel      = kernel;
++   ph264eCL->bCLIsOK     = true;
++    return H264E_OK;
++}
++
++int h264e_cl_end(H264E_CL* ph264eCL)
++{
++    cl_int err;
++    int    retval = H264E_OK;
++    err = clReleaseProgram(ph264eCL->program);
++    if(err != CL_SUCCESS)
++    {
++        H264EMSG(printf("ERROR: Failed to release program\n"));
++        retval = H264E_CL_END_ERR;
++    }
++    else
++    {
++        H264EMSG(printf("INFO: Released program\n"));
++    }
++   clReleaseKernel(ph264eCL->kernel);
++    if(err != CL_SUCCESS)
++    {
++        H264EMSG(printf("ERROR: Failed to release kernel\n"));
++        retval = H264E_CL_END_ERR;
++    }
++    else
++    {
++        H264EMSG(printf("INFO: Released kernel\n"));
++    }
++   clReleaseCommandQueue(ph264eCL->commands);
++    if(err != CL_SUCCESS)
++    {
++        H264EMSG(printf("ERROR: Failed to release commands queue\n"));
++        retval = H264E_CL_END_ERR;
++    }
++    else
++    {
++        H264EMSG(printf("INFO: Released commands queue\n"));
++    }
++   clReleaseContext(ph264eCL->context);
++    if(err != CL_SUCCESS)
++    {
++        H264EMSG(printf("ERROR: Failed to release context\n"));
++        retval = H264E_CL_END_ERR;
++    }
++    else
++    {
++        H264EMSG(printf("INFO: Released context\n"));
++    }
++    clReleaseDevice(ph264eCL->device_id);
++    if(err != CL_SUCCESS)
++    {
++        H264EMSG(printf("ERROR: Failed to release device\n"));
++        retval = H264E_CL_END_ERR;
++    }
++    else
++    {
++        H264EMSG(printf("INFO: Released device\n"));
++}
++    return retval;
++}
++
++int load_file_to_memory(const char *filename, unsigned char **result)
++{
++   int size = 0;
++   FILE *f = fopen(filename, "rb");
++   if(f == NULL)
++   {
++       *result = NULL;
++        return -1; // -1 means file opening fail
++   }
++   fseek(f, 0, SEEK_END);
++   size = ftell(f);
++   fseek(f, 0, SEEK_SET);
++   *result = malloc(size);
++   if(size != fread(*result, sizeof(char), size, f))
++   {
++      free(*result);
++      return -2; // -2 means file reading fail
++   }
++   fclose(f);
++   return size;
++ }
+diff --git a/libavcodec/xlnx_h264/h264e_sdaccel_utils.h b/libavcodec/xlnx_h264/h264e_sdaccel_utils.h
+new file mode 100644
+index 0000000..ebaad55
+--- /dev/null
++++ b/libavcodec/xlnx_h264/h264e_sdaccel_utils.h
+@@ -0,0 +1,29 @@
++/*
++-- Copyright notice:
++-- Copyright (c) 2017 Alma Technologies S.A.
++-- www.alma-technologies.com
++-- All rights reserved worldwide.
++
++-- This copy is made available under the terms of the GNU General Public
++-- License version 2.1 as published by the Free Software Foundation; either
++-- version 2.1 of the License, or (at your option) any later version.
++--
++-- This copy is distributed in the hope that it will be useful,
++-- but WITHOUT ANY WARRANTY; without even the implied warranty of
++-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Please See the GNU
++-- General Public License for more details.
++--
++-- You should have received a copy of the GNU General Public
++-- License along with FFmpeg; if not, write to the Free Software
++-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++*/
++
++#ifndef _H264E_SDACCEL_UTILS_H_
++#define _H264E_SDACCEL_UTILS_H_
++
++#include "h264e_sdaccel_private.h"
++
++int h264e_cl_init(H264E_CL* ph264eCL);
++int h264e_cl_end (H264E_CL* ph264eCL);
++
++#endif // _H264E_SDACCEL_UTILS_H_
+diff --git a/libavcodec/xlnx_h264/hw_h264.c b/libavcodec/xlnx_h264/hw_h264.c
+new file mode 100644
+index 0000000..e2571f0
+--- /dev/null
++++ b/libavcodec/xlnx_h264/hw_h264.c
+@@ -0,0 +1,105 @@
++/*
++-- Copyright notice:
++-- Copyright (c) 2017 Alma Technologies S.A.
++-- www.alma-technologies.com
++-- All rights reserved worldwide.
++
++-- This copy is made available under the terms of the GNU General Public
++-- License version 2.1 as published by the Free Software Foundation; either
++-- version 2.1 of the License, or (at your option) any later version.
++--
++-- This copy is distributed in the hope that it will be useful,
++-- but WITHOUT ANY WARRANTY; without even the implied warranty of
++-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Please See the GNU
++-- General Public License for more details.
++--
++-- You should have received a copy of the GNU General Public
++-- License along with FFmpeg; if not, write to the Free Software
++-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++*/
++
++#include <inttypes.h>
++#include <stdlib.h>
++#include <linux/limits.h>
++#include <unistd.h>
++#include <string.h>
++#include <assert.h>
++#include "libavutil/opencl.h"
++#include "libavutil/log.h"
++#include "h264e_sdaccel.h"
++#include "h264e_sdaccel_private.h"
++#include "h264e_csregs.h"
++#include "xlnx_h264_config.h"
++
++void ff_init_h264_xlnx_hw(AVCodecContext *avctx)
++{
++    H264E_USR           h264eUsr;
++	unsigned char* xcl_path = getenv("XLNX_XCLBIN_PATH");
++	if (NULL == xcl_path)
++	{
++       av_log(NULL, AV_LOG_INFO, " * XLNX_XCLBIN_PATH not found\n");
++       return;
++	}
++	char *xcl_fullpath = malloc(PATH_MAX);
++	snprintf(xcl_fullpath, PATH_MAX, "%s/h264_8k1c.xclbin", xcl_path);
++	h264eUsr.pKernelBinFileName   = xcl_fullpath;
++	h264eUsr.pDeviceName		  = "xilinx:xil-accel-rd-vu9p:4ddr-xpr:4.1";
++	h264eUsr.pKernelName		  = "ALMA_H264_E_KERNEL";
++    h264eUsr.bCLIsOK              = false;
++    h264eUsr.FrameX               = avctx->width;
++    h264eUsr.FrameY               = avctx->height;
++    h264eUsr.ScanFormat           = H264E_PLANAR_SEPARATED;
++    h264eUsr.PackPlanarSeparated  = 0;
++    h264eUsr.HWOptimizeScanFormat = 1;
++	h264eUsr.Timescale        	  = 60000;
++	h264eUsr.Nuit                 = 1000;
++	h264eUsr.Level                = 42;
++	h264eUsr.GOPLength         	  = avctx->gop_size;
++	h264eUsr.IntraRefreshCol      = -1;
++	h264eUsr.MBRowsPerSlice       = -1;
++	h264eUsr.DeblockingFilter     = -1;
++	h264eUsr.DBRestrict           = -1;
++	h264eUsr.MVRestrict           = -1;
++	h264eUsr.QPI                  = avctx->global_quality;
++	h264eUsr.QPP                  = avctx->global_quality;
++	h264eUsr.QPChrOffset          = -1;
++	h264eUsr.Bitrate              = (avctx->bit_rate)/1000;
++	h264eUsr.BUSize               = -1;
++	h264eUsr.RCFIFOSize           = -1;
++	h264eUsr.UseCABAC             = -1;
++    h264eUsr.bUseUserContextAsCfg = false;
++    avctx->priv_data = h264eInit(&h264eUsr);
++}
++
++void h264eSendEncodeFrame(H264E_KERNEL_HANDLE h264eKernelHandle,
++						  AVFrame *pic, char *pCurrentBuffer)
++{
++	H264E_KCFG *ph264eKCFG = (H264E_KCFG*)h264eKernelHandle;
++	H264E_REQ_MSG reqMsg;
++	reqMsg.pHostYBuffer = pic->data[Y];
++	reqMsg.pHostUBuffer = pic->data[U];
++	reqMsg.pHostVBuffer = pic->data[V];
++	reqMsg.pHostNALBuffer = pCurrentBuffer;
++	reqMsg.pFrame		= pic;
++	reqMsg.endThread 	= 0;
++	av_thread_message_queue_send(ph264eKCFG->h264eReqMsgQ, &reqMsg, 0);
++}
++
++int h264eRecvEncodeFrame(H264E_KERNEL_HANDLE h264eKernelHandle,
++						 H264E_RSP_MSG		*rsp)
++{
++	H264E_KCFG *ph264eKCFG = (H264E_KCFG*)h264eKernelHandle;
++	int rc;
++	rc = av_thread_message_queue_recv(ph264eKCFG->h264eRspMsgQ, rsp,
++								  AV_THREAD_MESSAGE_NONBLOCK);
++	if (rc == AVERROR(EAGAIN))
++		return 0;
++	return 1;
++}
++
++void ff_uninit_h264_xlnx_hw(AVCodecContext *avctx)
++{
++   h264eEnd(avctx->priv_data);
++}
++
++
+diff --git a/libavcodec/xlnx_h264/xlnx_h264_config.h b/libavcodec/xlnx_h264/xlnx_h264_config.h
+new file mode 100644
+index 0000000..517b3e5
+--- /dev/null
++++ b/libavcodec/xlnx_h264/xlnx_h264_config.h
+@@ -0,0 +1,67 @@
++/*
++-- Copyright notice:
++-- Copyright (c) 2017 Alma Technologies S.A.
++-- www.alma-technologies.com
++-- All rights reserved worldwide.
++
++-- This copy is made available under the terms of the GNU General Public
++-- License version 2.1 as published by the Free Software Foundation; either
++-- version 2.1 of the License, or (at your option) any later version.
++--
++-- This copy is distributed in the hope that it will be useful,
++-- but WITHOUT ANY WARRANTY; without even the implied warranty of
++-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. Please See the GNU
++-- General Public License for more details.
++--
++-- You should have received a copy of the GNU General Public
++-- License along with FFmpeg; if not, write to the Free Software
++-- Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++*/
++
++#ifndef _XLNX_H264_CONFIG_H_
++#define _XLNX_H264_CONFIG_H_
++
++#include "libavcodec/avcodec.h"
++
++#define OCLCHECK(method, ... )                                                 \
++do {                                                                           \
++    status = method(__VA_ARGS__);                                              \
++    if (status != CL_SUCCESS) {                                                \
++        av_log(NULL, AV_LOG_ERROR, # method " error '%s'\n",                   \
++               av_opencl_errstr(status));                                      \
++        return;                                                                \
++    }                                                                          \
++} while (0)
++
++#define OCLCHECK1(method, ... )                                                \
++do {                                                                           \
++    status = method(__VA_ARGS__);                                              \
++    if (status != CL_SUCCESS) {                                                \
++        av_log(NULL, AV_LOG_ERROR, # method " error '%s'\n",                   \
++               av_opencl_errstr(status));                                      \
++        return AVERROR_EXTERNAL;                                               \
++    }                                                                          \
++} while (0)
++
++#define CREATEBUF(out, flags, size)	                                       \
++do {                                                                           \
++    out = clCreateBuffer(cl_env->context, flags, size, NULL, &status);         \
++    if (status != CL_SUCCESS) {                                                \
++        av_log(NULL, AV_LOG_ERROR, "Could not create OpenCL buffer\n");        \
++        return;                                                                \
++    }                                                                          \
++} while (0)
++
++typedef enum
++{
++	Y = 0,
++	U = 1,
++	V = 2
++}col_fmt_t;
++
++void ff_init_h264_xlnx_hw(AVCodecContext *c);
++void ff_uninit_h264_xlnx_hw(AVCodecContext *c);
++uint8_t *ff_h264_xlnx_hw(AVCodecContext *avctx, AVFrame *pic,
++					   char *pCurrentBuffer, uint32_t *dstSize);
++
++#endif //_XLNX_H264_CONFIG_H_
+diff --git a/libavcodec/xlnx_h264_enc.c b/libavcodec/xlnx_h264_enc.c
+new file mode 100644
+index 0000000..97f85a5
+--- /dev/null
++++ b/libavcodec/xlnx_h264_enc.c
+@@ -0,0 +1,122 @@
++/*
++ * Xilinx H.264 Alma encoder
++ *
++ * Copyright (C) 2017 Xilinx Inc.
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++#include <stdio.h>
++#include "avcodec.h"
++#include "internal.h"
++#include "xlnx_h264/xlnx_h264_config.h"
++#include "xlnx_h264/h264e_sdaccel_private.h"
++
++static int xlnx_h264_encode_init(AVCodecContext *avctx)
++{
++    //printf("xlnx_h264_encode_init IN\n");
++    switch(avctx->pix_fmt)
++    {
++         case AV_PIX_FMT_YUV420P:
++            avctx->bits_per_raw_sample = 8;
++            break;
++         default:
++            av_log(NULL, AV_LOG_ERROR,"ERROR: Pixel format not supported...\n");
++            return AVERROR(EINVAL);
++            break;
++    }
++    ff_init_h264_xlnx_hw(avctx);
++    return 0;
++}
++
++static int xlnx_h264_encode_frame(AVCodecContext *avctx, AVPacket *pkt, const AVFrame *pic, int *got_packet)
++{
++
++    //av_log(NULL, AV_LOG_DEBUG, "xlnx_h264_encode_frame IN\n");
++    int EntrySize = avctx->bits_per_raw_sample == 8 ? 1 : 2;
++    int EntryCount = 0;
++    uint64_t EncodeBuffSize = 0;
++	uint8_t *pBuffer = NULL;
++	AVFrame *pFrame;
++	H264E_RSP_MSG	rspMsg;
++	int		rc;
++
++	if (!pic)
++	{
++		*got_packet = 0;
++		return 0;
++	}
++
++    switch(pic->format)
++    {
++        case AV_PIX_FMT_YUV420P:
++            EntryCount = 2;
++            break;
++        default:
++            av_log(NULL, AV_LOG_ERROR,"Error. Encoding unknown pixel format.\n");
++            return AVERROR_INVALIDDATA;
++            break;
++    }
++    
++	pFrame = av_frame_clone(pic);
++    EncodeBuffSize = EntryCount * (pic->width) * (pic->height) * EntrySize;
++
++	pBuffer = av_malloc(EncodeBuffSize);
++
++	// Send the encode request
++	h264eSendEncodeFrame(avctx->priv_data, pFrame, pBuffer);
++
++	// Check if the encode has completed
++	rc = h264eRecvEncodeFrame(avctx->priv_data, &rspMsg);
++
++	if (rc == 1)
++	{
++		*got_packet = 1;
++		av_packet_from_data(pkt, rspMsg.pHostNALBuffer,
++							rspMsg.NalSizeInBytes);
++		pkt->pts = pkt->dts = (int64_t)rspMsg.pFrame->pts;
++		av_frame_unref(rspMsg.pFrame);
++		av_frame_free(&rspMsg.pFrame);
++	}
++	else
++	{
++    	*got_packet = 0;
++	}
++	
++    return 0;
++}
++
++static int xlnx_h264_encode_close(AVCodecContext *avctx)
++{
++    printf("xlnx_h264_encode_close IN\n");
++    ff_uninit_h264_xlnx_hw(avctx);
++    return 0;
++}
++
++AVCodec ff_xlnx_h264_encoder = {
++    .name           = "xlnx_h264_enc",
++    .long_name      = NULL_IF_CONFIG_SMALL("Xilinx Advanced Video Codec (H.264) Encoder"),
++    .type           = AVMEDIA_TYPE_VIDEO,
++    .id             = AV_CODEC_ID_H264,
++	.priv_data_size = sizeof(H264E_KCFG),
++    .init           = xlnx_h264_encode_init,
++    .encode2        = xlnx_h264_encode_frame,
++    .close          = xlnx_h264_encode_close,
++    .capabilities   = CODEC_CAP_DR1 | CODEC_CAP_DELAY,
++    .pix_fmts       = (const enum AVPixelFormat[]) {
++        			      AV_PIX_FMT_YUV420P, AV_PIX_FMT_NONE
++    				  },
++};
 diff --git a/libavcodec/xlnx_hevc/Makefile b/libavcodec/xlnx_hevc/Makefile
 new file mode 100644
 index 0000000..b32df98
@@ -3525,5 +6368,5 @@ index af35770..00992b4 100644
  typedef struct {
      int err_code;
 -- 
-1.8.3.1
+2.7.4
 
