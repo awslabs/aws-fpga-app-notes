@@ -61,13 +61,13 @@ make TARGET=hw DEVICE=$AWS_PLATFORM kernel
 
 Before examining different implementation options for the host code, take a look at the structure of the code. The host code file is designed to let you focus on the key aspects of host code optimization. Towards that end, three classes are provided through header files in the common source directory (srcCommon):  
 
-   * [hostcode_opt/srcCommon/AlignedAllocator.h](hostcode_opt/srcCommon/AlignedAllocator.h): Strictly speaking the AlignedAllocator is a small struct with two methods. This struct is provided as a helper class to support aligned memory allocation for the test vectors. Memory aligned blocks of data can be transfered much more rapidly and the OpenCL library will create warnings if the data transmitted isn't memory aligned.
+   * [hostcode_opt/srcCommon/AlignedAllocator.h](srcCommon/AlignedAllocator.h): Strictly speaking the AlignedAllocator is a small struct with two methods. This struct is provided as a helper class to support aligned memory allocation for the test vectors. Memory aligned blocks of data can be transfered much more rapidly and the OpenCL library will create warnings if the data transmitted isn't memory aligned.
 
-   * [hostcode_opt/srcCommon/ApiHandle.h](hostcode_opt/srcCommon/ApiHandle.h): This class encapsulates the main OpenCL objects, namely the context, the program, the device_id, the execution kernel, and the command_queue. These structures are populated by the constructor which basically steps through the default sequence of OpenCL function calls. There are only two configuration parameters to the constructor: the first is a string containing the name of the bitstream (xclbin) to be used to program the FPGA, the second is a boolean to determine if an out-of-order queue or a sequential execution queue should be created.
+   * [hostcode_opt/srcCommon/ApiHandle.h](srcCommon/ApiHandle.h): This class encapsulates the main OpenCL objects, namely the context, the program, the device_id, the execution kernel, and the command_queue. These structures are populated by the constructor which basically steps through the default sequence of OpenCL function calls. There are only two configuration parameters to the constructor: the first is a string containing the name of the bitstream (xclbin) to be used to program the FPGA, the second is a boolean to determine if an out-of-order queue or a sequential execution queue should be created.
 
    The class provides accessor functions to the queue, context, and kernel required for the generation of buffers and the scheduling of tasks on the accelerator. The class also automatically releases the allocated OpenCL objects when the ApiHandle destructor is called.
 
-   * [hostcode_opt/srcCommon/Task.h](hostcode_opt/srcCommon/Task.h): An object of class "Task" represents a single instance of the workload to be executed on the accelerator. Whenever an object of this class is constructed, the input and output vectors are allocated and initialized, based on the buffer size to be transfered per task invocation. Similarly, the destructor will deallocate any object generated during the task execution. It should also be noted, this encapsulation of a single workload for the invocation of a module allows this class also to contain an output validator function (outputOk).
+   * [hostcode_opt/srcCommon/Task.h](srcCommon/Task.h): An object of class "Task" represents a single instance of the workload to be executed on the accelerator. Whenever an object of this class is constructed, the input and output vectors are allocated and initialized, based on the buffer size to be transfered per task invocation. Similarly, the destructor will deallocate any object generated during the task execution. It should also be noted, this encapsulation of a single workload for the invocation of a module allows this class also to contain an output validator function (outputOk).
 
    The constructor of this class contains two parameters: the first, bufferSize, determines how many 512 bit values are transfered when this task is executed; the second, processDelay, simply provides the similary named kernel parameter and is also used during validation.
 
@@ -151,7 +151,7 @@ Details of the sdaccel.ini file can be found in the SDAccel Environment User Gui
 
 The Application Timeline viewer illustrates the full run of the executable. The three main sections of the timeline are the OpenCL API Calls, the Data Transfer section, and the Kernel Enqueues. Zooming in on the section illustrating the actual accelerator execution and selecting one of the kernel enqueues, shows an image similar to the following.
 
-![](images/hostcode_opt/OrderedQueue.PNG)
+![](../images/hostcode_opt/OrderedQueue.PNG)
 
 The blue arrows identify dependencies, and you can see that every Write/Execute/Read task execution has a dependency on the previous Write/Execute/Read operation set. This effectively serializes the execution.
 
@@ -189,7 +189,7 @@ sdx -workspace workspace -report *.wdb
 
 Zooming into the Application Timeline and clicking any kernel enqueue, will result in a figure very similar to the following:
 
-![](images/hostcode_opt/OutOfOrderQueue.PNG)
+![](../images/hostcode_opt/OutOfOrderQueue.PNG)
 
 If you select other pass kernel enqueues, you will see that all 10 of them are now showing dependencies only within the write/execute/read group. This allows the read and write operations to overlap with the execution, and you are effectively pipelining the software write, execute, and read. This can considerably improve overall performance as the communication overhead is happening concurrently with the execution of the accelerator.
 
@@ -251,7 +251,7 @@ sdx -workspace workspace -report *.wdb
 
 Then if you zoom into the Application Timeline, a figure quite similar to the one below should be observable.
 
-![](images/hostcode_opt/clFinish.PNG)
+![](../images/hostcode_opt/clFinish.PNG)
 
 The key elements in this figure are the red box named clFinish and the larger gap between the kernel enqueues every three invocations of the accelerator.  
 
@@ -294,7 +294,7 @@ sdx -workspace workspace -report *.wdb
 
 Then if you zoom into the Application Timeline, a figure should now be similar to the one below.
 
-![](images/hostcode_opt/clEventSync.PNG)
+![](../images/hostcode_opt/clEventSync.PNG)
 
 As you can see, in the later part of the timeline there are five executions of pass executed without any unnecessary gaps. However, even more telling are the data transfers at the point of the marker. At this point, three packages were sent over to be processed by the accelerator, and one was already received back. However, as we have synchronized the next scheduling of write/execute/read on the completion of the first acclerator invocation, we now observe another write operation before any other package is received. This clearly identifies overlapping execution.
 
@@ -365,9 +365,9 @@ gnuplot -p -c auxFiles/plot.txt
 
 ```
 
-Note, the sweeping script, [hostcode_opt/auxFiles/run.py](hostcode_opt/auxFiles/run.py) requires a python installation which is available in most systems. Executing the sweep, will run and record the FPGA Throughput for buffer size arguments of 8 to 19. The measured throughput values are recorded together with the actual number of bytes per transfer in the runBuf/results.csv file which is printed at the end of the makefile execution. When analyzing these numbers, a step function similar to the the following image should be observable:
+Note, the sweeping script, [hostcode_opt/auxFiles/run.py](auxFiles/run.py) requires a python installation which is available in most systems. Executing the sweep, will run and record the FPGA Throughput for buffer size arguments of 8 to 19. The measured throughput values are recorded together with the actual number of bytes per transfer in the runBuf/results.csv file which is printed at the end of the makefile execution. When analyzing these numbers, a step function similar to the the following image should be observable:
 
-![](images/hostcode_opt/stepFunc.PNG)
+![](../images/hostcode_opt/stepFunc.PNG)
 
 This image shows that the buffer size clearly impacts performance and starts to level out around 2 MBytes. Note, this image is created via gnuplot from the results.csv file and if found on your system will be displayed automatically after you run the sweep.
 
@@ -388,7 +388,7 @@ Please note, there are many ways to implement your host code, and improve perfor
 Please have a closer look at SDAccel Profiling and Optimization Guide (UG1207) which details the tools and processes to analyze the application performance in general, and also lists some common pitfalls.
 
 <p align="center"><b>
-Start the next module: <a href="WRAP_UP.md">4. Wrap-up and Next Steps</a>
+Start the next module: <a href="../WRAP_UP.md">4. Wrap-up and Next Steps</a>
 </b></p>  
 
 <hr/>
