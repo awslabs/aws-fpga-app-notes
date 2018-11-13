@@ -32,7 +32,6 @@ Please also note that although the entire tutorial is performed on an F1 instanc
     ```bash
     cd ~/aws-fpga
     source sdaccel_setup.sh
-    source $XILINX_SDX/settings64.sh 
     cd ~
     ```
 	*Note: the sdaccel_setup.sh script might generate warning messages, but these can be safely ignored.*

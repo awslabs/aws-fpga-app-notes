@@ -138,7 +138,7 @@ You should now be connected to the remote F1 instance running Centos 7.
     ```bash
     cd ~/aws-fpga
     source sdaccel_setup.sh
-    source $XILINX_SDX/settings64.sh 
+
     ```
 
     *Note: the sdaccel_setup.sh script might generate warning messages, but these can be safely ignored.*
