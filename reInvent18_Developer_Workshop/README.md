@@ -35,7 +35,7 @@ This developer workshop is divided in 4 modules. It is recommended to complete e
 1. **Connecting to your F1 instance** \
 You will start an EC2 F1 instance based on the FPGA developer AMI and connect to it using a remote desktop client. Once connected, you will confirm you can execute a simple application on F1.
 1. **Developing and optimizing F1 applications with SDAccel** \
-You will use the SDAccel development environment to create, profile and optimize an F1 accelerator. The workshop focuses on the 2D video frame Filter , a compute intensive function which is widely used in image processing software.
+You will use the SDAccel development environment to create, profile and optimize an F1 accelerator. The workshop focuses on the 2D video frame Filter , a compute intensive function which is widely used in image processing.
 1. **Optimizing host code** \
 You will experiment with profiling & debug tools to optimize host code to enhance your application.
 1. **Wrap-up and next steps** \
