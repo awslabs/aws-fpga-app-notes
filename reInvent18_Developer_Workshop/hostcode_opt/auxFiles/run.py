@@ -18,7 +18,7 @@ for i in range(8, 20):
     fields = {}
     buffersize = 1 << i
     print (" Running with argument %s transfers %s bytes" % (i, buffersize*512/8))
-    run = subprocess.Popen(['./pass', '../xclbin/pass.hw.xilinx_vcu1525_dynamic_5_1.xclbin', str(i)], stdout = subprocess.PIPE)
+    run = subprocess.Popen(['./pass', '../xclbin/pass.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin', str(i)], stdout = subprocess.PIPE)
     for line in iter(run.stdout.readline, ''):
         extract ( fields , line.rstrip())
     s=""
