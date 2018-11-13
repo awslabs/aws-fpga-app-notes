@@ -1,0 +1,192 @@
+!SESSION 2018-11-09 20:12:30.888 -----------------------------------------------
+eclipse.buildId=2016.1
+java.version=1.8.0_112
+java.vendor=Oracle Corporation
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY org.eclipse.emf.ecore 2 0 2018-11-09 20:12:40.881
+!MESSAGE Both 'com.autoesl.autopilot.ui.models' and 'com.autoesl.autopilot.ui.models' register a package for 'com.autoesl.autopilot.solution'
+
+!ENTRY org.eclipse.ui 2 0 2018-11-09 20:12:41.266
+!MESSAGE Warnings while parsing the commands from the 'org.eclipse.ui.commands' and 'org.eclipse.ui.actionDefinitions' extension points.
+!SUBENTRY 1 org.eclipse.ui 2 0 2018-11-09 20:12:41.266
+!MESSAGE Commands should really have a category: plug-in='com.xilinx.sdk.appwiz', id='com.xilinx.sdk.app.commands.ChangeAtfBuiltReferences', categoryId='com.xilinx.sdk.app.commands.category'
+
+!ENTRY org.eclipse.ui 2 0 2018-11-09 20:12:44.238
+!MESSAGE Warnings while parsing the commands from the 'org.eclipse.ui.commands' and 'org.eclipse.ui.actionDefinitions' extension points.
+!SUBENTRY 1 org.eclipse.ui 2 0 2018-11-09 20:12:44.238
+!MESSAGE Commands should really have a category: plug-in='com.xilinx.sdk.appwiz', id='com.xilinx.sdk.app.commands.ChangeAtfBuiltReferences', categoryId='com.xilinx.sdk.app.commands.category'
+
+!ENTRY org.eclipse.ui 4 0 2018-11-09 20:12:48.766
+!MESSAGE The org.eclipse.ui.IStartup extension from 'com.xilinx.sdk.cmdline' does not provide a valid 'startup' element.
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-09 20:12:54.083
+!MESSAGE XSCT Command: [set sdk::sdk_chan tcfchan#0], Thread: Thread-17
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-09 20:12:54.152
+!MESSAGE XSCT Command: [::hsi::utils::init_repo], Thread: Worker-3
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-09 20:12:54.260
+!MESSAGE XSCT Command: [plnx-install-path  ; ::scw::scw_mode gui], Thread: Thread-9
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-09 20:12:54.283
+!MESSAGE XSCT command with result: [set sdk::sdk_chan tcfchan#0], Result: [null, tcfchan#0]. Thread: Thread-17
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-09 20:12:54.305
+!MESSAGE XSCT Command: [setws /home/centos/src/project_data/workshop/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D_6K/workspace], Thread: Thread-17
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-09 20:12:54.459
+!MESSAGE XSCT command with result: [::hsi::utils::init_repo], Result: [null, ]. Thread: Worker-3
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-09 20:12:54.480
+!MESSAGE XSCT command with result: [plnx-install-path  ; ::scw::scw_mode gui], Result: [null, ]. Thread: Thread-9
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-09 20:12:54.501
+!MESSAGE XSCT command with result: [setws /home/centos/src/project_data/workshop/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D_6K/workspace], Result: [null, ]. Thread: Thread-17
+
+!ENTRY org.eclipse.cdt.core 1 0 2018-11-09 20:16:20.612
+!MESSAGE Indexed 'Filter2D' (0 sources, 0 headers) in 0.002 sec: 0 declarations; 0 references; 0 unresolved inclusions; 0 syntax errors; 0 unresolved names (0%)
+
+!ENTRY org.eclipse.cdt.core 1 0 2018-11-09 20:16:20.747
+!MESSAGE Indexed 'Filter2D_system' (0 sources, 0 headers) in 0.001 sec: 0 declarations; 0 references; 0 unresolved inclusions; 0 syntax errors; 0 unresolved names (0%)
+!SESSION 2018-11-12 22:42:13.012 -----------------------------------------------
+eclipse.buildId=2016.1
+java.version=1.8.0_112
+java.vendor=Oracle Corporation
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86_64 -data workspace
+
+!ENTRY org.eclipse.emf.ecore 2 0 2018-11-12 22:42:15.072
+!MESSAGE Both 'com.autoesl.autopilot.ui.models' and 'com.autoesl.autopilot.ui.models' register a package for 'com.autoesl.autopilot.solution'
+
+!ENTRY org.eclipse.ui 2 0 2018-11-12 22:42:15.600
+!MESSAGE Warnings while parsing the commands from the 'org.eclipse.ui.commands' and 'org.eclipse.ui.actionDefinitions' extension points.
+!SUBENTRY 1 org.eclipse.ui 2 0 2018-11-12 22:42:15.600
+!MESSAGE Commands should really have a category: plug-in='com.xilinx.sdk.appwiz', id='com.xilinx.sdk.app.commands.ChangeAtfBuiltReferences', categoryId='com.xilinx.sdk.app.commands.category'
+
+!ENTRY org.eclipse.ui 2 0 2018-11-12 22:42:16.779
+!MESSAGE Warnings while parsing the commands from the 'org.eclipse.ui.commands' and 'org.eclipse.ui.actionDefinitions' extension points.
+!SUBENTRY 1 org.eclipse.ui 2 0 2018-11-12 22:42:16.780
+!MESSAGE Commands should really have a category: plug-in='com.xilinx.sdk.appwiz', id='com.xilinx.sdk.app.commands.ChangeAtfBuiltReferences', categoryId='com.xilinx.sdk.app.commands.category'
+
+!ENTRY org.eclipse.ui 4 0 2018-11-12 22:42:26.864
+!MESSAGE The org.eclipse.ui.IStartup extension from 'com.xilinx.sdk.cmdline' does not provide a valid 'startup' element.
+
+!ENTRY org.eclipse.tcf 4 0 2018-11-12 22:42:30.740
+!MESSAGE Error calling TCF service provider
+!STACK 0
+java.lang.Error: Only one command server per service is allowed
+	at org.eclipse.tcf.core.AbstractChannel.addCommandServer(AbstractChannel.java:743)
+	at com.xilinx.sdx.xsdb.tcfservice.SdxTcfService.<init>(SdxTcfService.java:45)
+	at com.xilinx.sdx.xsdb.tcfservice.SDxServiceUtils$1.getLocalService(SDxServiceUtils.java:34)
+	at org.eclipse.tcf.internal.core.ServiceManager.onChannelCreated(ServiceManager.java:83)
+	at org.eclipse.tcf.core.AbstractChannel$3.run(AbstractChannel.java:554)
+	at org.eclipse.tcf.EventQueue.run(EventQueue.java:95)
+	at java.lang.Thread.run(Thread.java:745)
+
+!ENTRY org.eclipse.tcf 4 0 2018-11-12 22:42:30.791
+!MESSAGE Error calling TCF service provider
+!STACK 0
+java.lang.Error: Only one command server per service is allowed
+	at org.eclipse.tcf.core.AbstractChannel.addCommandServer(AbstractChannel.java:743)
+	at com.xilinx.sdk.xsdb.tcfservice.SdkTcfService.<init>(SdkTcfService.java:45)
+	at com.xilinx.sdk.xsdb.tcfservice.ServiceUtils$1.getLocalService(ServiceUtils.java:34)
+	at org.eclipse.tcf.internal.core.ServiceManager.onChannelCreated(ServiceManager.java:83)
+	at org.eclipse.tcf.core.AbstractChannel$3.run(AbstractChannel.java:554)
+	at org.eclipse.tcf.EventQueue.run(EventQueue.java:95)
+	at java.lang.Thread.run(Thread.java:745)
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 22:42:31.211
+!MESSAGE XSCT Command: [plnx-install-path  ; ::scw::scw_mode gui], Thread: Thread-17
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 22:42:31.250
+!MESSAGE XSCT Command: [set sdk::sdk_chan tcfchan#0], Thread: Thread-26
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 22:42:31.280
+!MESSAGE XSCT Command: [::hsi::utils::init_repo], Thread: Worker-5
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 22:42:31.299
+!MESSAGE XSCT command with result: [plnx-install-path  ; ::scw::scw_mode gui], Result: [null, ]. Thread: Thread-17
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 22:42:31.374
+!MESSAGE XSCT command with result: [set sdk::sdk_chan tcfchan#0], Result: [null, tcfchan#0]. Thread: Thread-26
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 22:42:31.416
+!MESSAGE XSCT Command: [setws /home/centos/src/project_data/workshop/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D/workspace], Thread: Thread-26
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 22:42:31.531
+!MESSAGE XSCT command with result: [::hsi::utils::init_repo], Result: [null, ]. Thread: Worker-5
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 22:42:31.548
+!MESSAGE XSCT command with result: [setws /home/centos/src/project_data/workshop/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D/workspace], Result: [null, ]. Thread: Thread-26
+!SESSION 2018-11-12 23:57:23.725 -----------------------------------------------
+eclipse.buildId=2016.1
+java.version=1.8.0_112
+java.vendor=Oracle Corporation
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86_64 -data workspace
+
+!ENTRY org.eclipse.emf.ecore 2 0 2018-11-12 23:57:25.541
+!MESSAGE Both 'com.autoesl.autopilot.ui.models' and 'com.autoesl.autopilot.ui.models' register a package for 'com.autoesl.autopilot.solution'
+
+!ENTRY org.eclipse.ui 2 0 2018-11-12 23:57:25.949
+!MESSAGE Warnings while parsing the commands from the 'org.eclipse.ui.commands' and 'org.eclipse.ui.actionDefinitions' extension points.
+!SUBENTRY 1 org.eclipse.ui 2 0 2018-11-12 23:57:25.949
+!MESSAGE Commands should really have a category: plug-in='com.xilinx.sdk.appwiz', id='com.xilinx.sdk.app.commands.ChangeAtfBuiltReferences', categoryId='com.xilinx.sdk.app.commands.category'
+
+!ENTRY org.eclipse.ui 2 0 2018-11-12 23:57:27.087
+!MESSAGE Warnings while parsing the commands from the 'org.eclipse.ui.commands' and 'org.eclipse.ui.actionDefinitions' extension points.
+!SUBENTRY 1 org.eclipse.ui 2 0 2018-11-12 23:57:27.087
+!MESSAGE Commands should really have a category: plug-in='com.xilinx.sdk.appwiz', id='com.xilinx.sdk.app.commands.ChangeAtfBuiltReferences', categoryId='com.xilinx.sdk.app.commands.category'
+
+!ENTRY org.eclipse.ui 4 0 2018-11-12 23:57:40.020
+!MESSAGE The org.eclipse.ui.IStartup extension from 'com.xilinx.sdk.cmdline' does not provide a valid 'startup' element.
+
+!ENTRY org.eclipse.tcf 4 0 2018-11-12 23:57:41.967
+!MESSAGE Error calling TCF service provider
+!STACK 0
+java.lang.Error: Only one command server per service is allowed
+	at org.eclipse.tcf.core.AbstractChannel.addCommandServer(AbstractChannel.java:743)
+	at com.xilinx.sdx.xsdb.tcfservice.SdxTcfService.<init>(SdxTcfService.java:45)
+	at com.xilinx.sdx.xsdb.tcfservice.SDxServiceUtils$1.getLocalService(SDxServiceUtils.java:34)
+	at org.eclipse.tcf.internal.core.ServiceManager.onChannelCreated(ServiceManager.java:83)
+	at org.eclipse.tcf.core.AbstractChannel$3.run(AbstractChannel.java:554)
+	at org.eclipse.tcf.EventQueue.run(EventQueue.java:95)
+	at java.lang.Thread.run(Thread.java:745)
+
+!ENTRY org.eclipse.tcf 4 0 2018-11-12 23:57:41.991
+!MESSAGE Error calling TCF service provider
+!STACK 0
+java.lang.Error: Only one command server per service is allowed
+	at org.eclipse.tcf.core.AbstractChannel.addCommandServer(AbstractChannel.java:743)
+	at com.xilinx.sdk.xsdb.tcfservice.SdkTcfService.<init>(SdkTcfService.java:45)
+	at com.xilinx.sdk.xsdb.tcfservice.ServiceUtils$1.getLocalService(ServiceUtils.java:34)
+	at org.eclipse.tcf.internal.core.ServiceManager.onChannelCreated(ServiceManager.java:83)
+	at org.eclipse.tcf.core.AbstractChannel$3.run(AbstractChannel.java:554)
+	at org.eclipse.tcf.EventQueue.run(EventQueue.java:95)
+	at java.lang.Thread.run(Thread.java:745)
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 23:57:42.380
+!MESSAGE XSCT Command: [::hsi::utils::init_repo], Thread: Worker-9
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 23:57:42.407
+!MESSAGE XSCT Command: [set sdk::sdk_chan tcfchan#0], Thread: Thread-19
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 23:57:42.478
+!MESSAGE XSCT Command: [plnx-install-path  ; ::scw::scw_mode gui], Thread: Thread-20
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 23:57:42.585
+!MESSAGE XSCT command with result: [::hsi::utils::init_repo], Result: [null, ]. Thread: Worker-9
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 23:57:42.604
+!MESSAGE XSCT command with result: [set sdk::sdk_chan tcfchan#0], Result: [null, tcfchan#0]. Thread: Thread-19
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 23:57:42.637
+!MESSAGE XSCT command with result: [plnx-install-path  ; ::scw::scw_mode gui], Result: [null, ]. Thread: Thread-20
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 23:57:42.659
+!MESSAGE XSCT Command: [setws /home/centos/src/project_data/workshop/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D/workspace], Thread: Thread-19
+
+!ENTRY com.xilinx.sdk.utils 0 0 2018-11-12 23:57:42.684
+!MESSAGE XSCT command with result: [setws /home/centos/src/project_data/workshop/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D/workspace], Result: [null, ]. Thread: Thread-19
