@@ -3,11 +3,11 @@
      <th width="100%" colspan="5"><h2>re:Invent 2018 Developer Workshop</h2></th>
   </tr>
   <tr>
-    <td width="20%" align="center"><a href="README.md">Introduction</a></td>
-    <td width="20%" align="center"><a href="SETUP.md">1. Connecting to your F1 instance</a></td>
-    <td width="20%" align="center"><a href="FILTER2D_Lab.md">2. Developing F1 applications</a></td>
+    <td width="20%" align="center"><a href="../README.md">Introduction</a></td>
+    <td width="20%" align="center"><a href="../SETUP.md">1. Connecting to your F1 instance</a></td>
+    <td width="20%" align="center"><a href="../FILTER2D_Lab.md">2. Developing F1 applications</a></td>
     <td width="20%" align="center"><b>3. Host Code Optimization</b></td>
-    <td width="20%" align="center"><a href="WRAP_UP.md">4. Wrapping-up</td>
+    <td width="20%" align="center"><a href="../WRAP_UP.md">4. Wrapping-up</td>
   </tr>
 </table>
 
