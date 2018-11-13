@@ -51,7 +51,11 @@ make TARGET=hw DEVICE=$AWS_PLATFORM kernel
 
 *$AWS_PLATFORM* is F1 device Platform (.xpfm) in which the kernel runs.
 
-**NOTE:** This build process will take several hours and you will need to wait for completion of the kernel compilation before actually analysing the host code impact.
+**NOTE:** This build process will take several hours and you will need to wait for completion of the kernel compilation before actually analysing the host code impact. For this workshop we have precompiled the kernel for you. precompiled kernels awsxclbin file can be found in *xclbin* directory.
+
+``` bash
+  ./xclbin/pass.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
+```  
 
 ### Host Code
 
@@ -115,10 +119,20 @@ Look at the execution loop in the host code:
 
 In this case the code simply schedules all the buffers and lets them execute. Only at the end does it actually synchronize and wait for completion.
 
-Once the build has completed, you can run the host executable via the following command:
+Once the build has completed, you can run the host executable via the following commands in sequence:
 
 ``` bash
-make TARGET=hw DEVICE=$AWS_PLATFORM pipelineRun
+cp auxFiles/sdaccel.ini runPipeline
+cd runPipeline
+sudo sh
+sh-4.2# source /opt/xilinx/xrt/setup.sh
+sh-4.2# ./pass ../xclbin/pass.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
+sh-4.2# exit
+cd runPipeline
+sdx_analyze profile -i sdaccel_profile_summary.csv -f html
+sdx_analyze trace sdaccel_timeline_trace.csv -f wdb
+sdx -workspace workspace -report *.wdb
+
 ```
 
 This script is setup to run the application and then spawn the SDaccel GUI. The GUI will automatically be populated with the collected runtime data.
@@ -158,8 +172,19 @@ You can break this dependency simply by changing the out of order parameter to t
 Recompile and execute:
 
 ``` bash
+
 make TARGET=hw DEVICE=$AWS_PLATFORM pipeline
-make TARGET=hw DEVICE=$AWS_PLATFORM pipelineRun
+cp auxFiles/sdaccel.ini runPipeline
+cd runPipeline
+sudo sh
+sh-4.2# source /opt/xilinx/xrt/setup.sh
+sh-4.2# ./pass ../xclbin/pass.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
+sh-4.2# exit
+cd runPipeline  #run this if you are not already in the runPipeline directory
+sdx_analyze profile -i sdaccel_profile_summary.csv -f html
+sdx_analyze trace sdaccel_timeline_trace.csv -f wdb
+sdx -workspace workspace -report *.wdb
+
 ```
 
 Zooming into the Application Timeline and clicking any kernel enqueue, will result in a figure very similar to the following:
@@ -211,7 +236,17 @@ Recompile and execute:
 
 ``` bash
 make TARGET=hw DEVICE=$AWS_PLATFORM sync
-make TARGET=hw DEVICE=$AWS_PLATFORM syncRun
+cp auxFiles/sdaccel.ini runSync
+cd runSync
+sudo sh
+sh-4.2# source /opt/xilinx/xrt/setup.sh
+sh-4.2# ./pass ../xclbin/pass.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
+sh-4.2# exit
+cd runSync  #run this if you are not already in the runPipeline directory
+sdx_analyze profile -i sdaccel_profile_summary.csv -f html
+sdx_analyze trace sdaccel_timeline_trace.csv -f wdb
+sdx -workspace workspace -report *.wdb
+
 ```
 
 Then if you zoom into the Application Timeline, a figure quite similar to the one below should be observable.
@@ -242,8 +277,19 @@ Now look at an alternative synchonization scheme, where the synchonization is pe
 Recompile and execute:
 
 ``` bash
+
 make TARGET=hw DEVICE=$AWS_PLATFORM sync
-make TARGET=hw DEVICE=$AWS_PLATFORM syncRun
+cp auxFiles/sdaccel.ini runSync
+cd runSync
+sudo sh
+sh-4.2# source /opt/xilinx/xrt/setup.sh
+sh-4.2# ./pass ../xclbin/pass.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
+sh-4.2# exit
+cd runSync  #run this if you are not already in the runPipeline directory
+sdx_analyze profile -i sdaccel_profile_summary.csv -f html
+sdx_analyze trace sdaccel_timeline_trace.csv -f wdb
+sdx -workspace workspace -report *.wdb
+
 ```
 
 Then if you zoom into the Application Timeline, a figure should now be similar to the one below.
@@ -287,18 +333,36 @@ You can compile the host code by calling:
 make TARGET=hw DEVICE=$AWS_PLATFORM buf
 ```
 
-and run the executable with the following command:
+and run the executable with the following command sequence:
 
 ``` bash
-make TARGET=hw DEVICE=$AWS_PLATFORM SIZE=14 bufRun
+cp auxFiles/sdaccel.ini runBuf
+cd runBuf
+sudo sh
+sh-4.2# source /opt/xilinx/xrt/setup.sh
+sh-4.2# ./pass ../xclbin/pass.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin 14
+sh-4.2# exit
+
 ```
 
-The argument SIZE is used as second argument to the host code executable pass. Note, if SIZE is left off it is set to SIZE=14 by default. This allows the code to execute the implementation with different buffer sizes and measure throughput by monitoring the total compute time. This number is calculated in the Testbench and reported via the FPGA Throughput output.
+14 is used as second argument to the host code executable pass. This allows the code to execute the implementation with different buffer sizes and measure throughput by monitoring the total compute time. This number is calculated in the Testbench and reported via the FPGA Throughput output.
 
-To ease this sweeping of the different buffer sizes, an additional Makefile goal was created and can be executed via the following command:
+To ease this sweeping of the different buffer sizes, a python script called run.py was created and can be executed via the following command sequence:
 
 ``` bash
-make TARGET=hw DEVICE=$AWS_PLATFORM bufRunSweep
+
+cp auxFiles/sdaccel.ini runBuf
+cp auxFiles/run.py runBuf
+cd runBuf
+sudo sh
+sh-4.2# source /opt/xilinx/xrt/setup.sh
+sh-4.2# ./run.py
+sh-4.2# exit
+more results.csv
+
+# if you have gnuplot installed you could plot this data
+gnuplot -p -c auxFiles/plot.txt
+
 ```
 
 Note, the sweeping script, [hostcode_opt/auxFiles/run.py](hostcode_opt/auxFiles/run.py) requires a python installation which is available in most systems. Executing the sweep, will run and record the FPGA Throughput for buffer size arguments of 8 to 19. The measured throughput values are recorded together with the actual number of bytes per transfer in the runBuf/results.csv file which is printed at the end of the makefile execution. When analyzing these numbers, a step function similar to the the following image should be observable:
