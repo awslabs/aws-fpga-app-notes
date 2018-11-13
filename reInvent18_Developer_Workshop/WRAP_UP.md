@@ -6,6 +6,7 @@
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
     <td width="20%" align="center"><a href="SETUP.md">1. Connecting to your F1 instance</a></td> 
     <td width="20%" align="center"><a href="FILTER2D_Lab.md">3. Developing F1 applications</a></td>
+    <td width="20%" align="center"><a href="HOSTCODE_OPT.md">3. Host Code Optimization</a></td>
     <td width="20%" align="center"><b>4. Wrapping-up</b></td>
   </tr>
 </table>
