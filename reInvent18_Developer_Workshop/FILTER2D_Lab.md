@@ -48,7 +48,7 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 	
 1. Launch the SDAccel GUI and and create a new workspace in the current directory: 
     ```bash
-    cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2d
+    cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D
     sdx -workspace workspace
     ```
 	*Note: a warning message may appear if loading Eclipse takes longer than expected. Click **Wait** to dismiss it.*
