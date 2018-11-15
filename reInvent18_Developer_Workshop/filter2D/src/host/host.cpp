@@ -279,9 +279,9 @@ auto fpga_begin = std::chrono::high_resolution_clock::now();
     request[xx*3+0] = Filter(coeff.data(), y_src.data(), width, height, stride, y_dst.data());
     request[xx*3+1] = Filter(coeff.data(), u_src.data(), width, height, stride, u_dst.data());
     request[xx*3+2] = Filter(coeff.data(), v_src.data(), width, height, stride, v_dst.data());
-  }
-  for(int xx=0; xx<numRuns; xx++) 
-  {
+	//}
+	//for(int xx=0; xx<numRuns; xx++) 
+	//{
     // Wait for completion of the outstanding requests
     request[xx*3+0]->finish();
     request[xx*3+1]->finish();
