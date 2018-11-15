@@ -114,14 +114,14 @@ The kernel code is comprised of the following files:
 1. Using the **Outline** viewer, quickly look-up and inspect the other important functions of the accelerator:
 	* The **Filter2D** function is the heart of the custom hardware accelerator that peforms the filter computations.
 	* It uses the **Window2D** class that provides an abstraction for getting a two-dimensional pixel window, then performs a simple convolution of the pixels in this window with a programmable filter.
-	* Note the ```#pragma HLS PIPELINE II=1``` statement on line 29. This pragma tells the compiler that a new iteration of the for loop should be started exactly one clock cycle after the previous one.  As a result, the SDAccel compiler builds an accelerator with 15*15=225 multipliers. Where the 225 multiply-add operations of the 2D convolution would be executed sequentially on a conventional CPU architecture, they are executed in parallel in the purpose-built FPGA accelerator. This results in a significant performance improvement.  
+	* Note the ```#pragma HLS PIPELINE II=1``` statement on line 26. This pragma tells the compiler that a new iteration of the for loop should be started exactly one clock cycle after the previous one.  As a result, the SDAccel compiler builds an accelerator with 15*15=225 multipliers. Where the 225 multiply-add operations of the 2D convolution would be executed sequentially on a conventional CPU architecture, they are executed in parallel in the purpose-built FPGA accelerator. This results in a significant performance improvement.  
 	
 ### Overview of the host application code
 	
 1. Open file **host.cpp** from the **src/host** folder of the **Project Explorer** view.  
 	* This C++ program initializes the test vectors, sets-up OpenCL, runs the reference model, runs the hardware accelerator, releases the OpenCL resources, and compares the results of the reference Filter2D model with the accelerator implementation.
 	
-1. Go to line 203 of the **host.cpp** file by pressing **Ctrl+L** and entering **203**. The **load_xclbin_file** function is where the OpenCL environment is setup in the host application. 
+1. Go to line 215 of the **host.cpp** file by pressing **Ctrl+L** and entering **215**. The **load_xclbin_file** function is where the OpenCL environment is setup in the host application. 
 
 1. Using the right mouse button, click on the **load_xclbin_file** function and chose **Open Declaration** to jump to the declaration of the function located in the **xclbin_helper.cpp** file.
 	* This function takes care of retrieving the OpenCL platform, device ID, creating the OpenCL context and create the OpenCL program. These four steps are typical of all SDAccel application.
@@ -129,22 +129,22 @@ The kernel code is comprised of the following files:
 	* Of particular note is the call to **clCreateProgramWithBinary** (line 87). This function loads contents of the specified FPGA binary file (.xclbin or .awsxclbin file) into the FPGA device of the AWS EC2 F1 instance. 
 	* All objects accessed through a **clCreate...** function call are to be released before terminating the program by calling **clRelease...**. This avoids memory leakage and clears the lock on the device.
 
-1. Now go back to the **host.cpp** file and go to line 304. This where the image is processed using a conventional software implementation.
-	* Line 308-310, the **Filter2D** function is called 3 times to process the Y, U and V color planes of the image, respectively.
-	* Line 304, the OpenMP ```#pragma omp parallel for``` pragma is used to multi-thread the calls to the **Filter2D** function. This ensures a fair benchmark comparison betweem the CPU and FPGA executions.
+1. Now go back to the **host.cpp** file and go to line 309. This where the image is processed using a conventional software implementation.
+	* Line 322-324, the **Filter2D** function is called 3 times to process the Y, U and V color planes of the image, respectively.
+	* Line 318, the OpenMP ```#pragma omp parallel for``` pragma is used to multi-thread the calls to the **Filter2D** function. This ensures a fair benchmark comparison betweem the CPU and FPGA executions.
 
-1. Scroll upwards to line 255. This is where the image is processed using the FPGA accelerator.
+1. Scroll upwards to line 263. This is where the image is processed using the FPGA accelerator.
 	* Notice how this code looks very similar to the software implementation you just inspected. 
-	* Line 265-267, the **Filter()** operator is used to issue independent requests to process the Y, U and V color planes using the FPGA accelerator.
-	* **Filter** is declared line 255 as an object of type **Filter2DDispatcher**. The **Filter2DDispatcher** class encapsulates the necessary OpenCL API calls used to send requests to the hardware accelerated Filter2DKernel.
+	* Line 279-281, the **Filter()** operator is used to issue independent requests to process the Y, U and V color planes using the FPGA accelerator.
+	* **Filter** is declared line 269 as an object of type **Filter2DDispatcher**. The **Filter2DDispatcher** class encapsulates the necessary OpenCL API calls used to send requests to the hardware accelerated Filter2DKernel.
 
 1. Click on **Filter2DDispatcher** and press **F3** to go to the declaration of the class.
 
-	The class constructor (line 69) creates the OpenCL objects required to communicate with the FPGA accelerator: 
+	The class constructor (line 85) creates the OpenCL objects required to communicate with the FPGA accelerator: 
 	* **clCreateKernel** is used to create the kernel object.
 	* **clCreateCommandQueue** is used to create the command-queue used to send commands to the FPGA device.  
 
-	The overloaded ```()``` operator (line 80) is used to form and send requests to the accelerator.
+	The overloaded ```()``` operator (line 96) is used to form and send requests to the accelerator.
 	* **clCreateBuffer** calls are used to create the input and output memory buffers.
 	* **clEnqueueMigrateMemObjects** calls are used to schedule the transfer of the input buffers to the FPGA device and then transfer the output buffer back to the host.
 	* **clSetKernelArg** calls are used to set the arguments of the kernel.
@@ -261,7 +261,7 @@ The first hardware emulation run helped establish a performance baseline. The ne
 
 #### Adding More Kernels  
 
-As we saw earlier, lines 265, 266 and 267 of **host.cpp** is where the host application issues requests to the FPGA accelerator. The three requests are indepedent of each other and could be therefore be executed in parallel. But since there is a single kernel in the FPGA device, the three requests need to be processed sequentially on that single kernel.
+As we saw earlier, lines 279, 280 and 281 of **host.cpp** is where the host application issues requests to the FPGA accelerator. The three requests are indepedent of each other and could be therefore be executed in parallel. But since there is a single kernel in the FPGA device, the three requests need to be processed sequentially on that single kernel.
 
 This is exactly what we observed earlier in the **Application Timeline**: one kernel executing three requests back-to-back . 
 
@@ -300,7 +300,7 @@ Notice that we didn't have to modify the host application to take advantage of t
 
 In the previous run, the application processed a single image. In a real life scenario, the application would most likely need to process multiple images or video frames. It is therefore important to profile the performance of the application when processing multiple images. 
 
-As can be seen line 164 of **host.cpp**, the application already supports a command line argument to specify the number of times the input image should be processed. We will use this argument to easily generate a new timeline trace, this time making two processing passes on the input image.
+As can be seen line 177 of **host.cpp**, the application already supports a command line argument to specify the number of times the input image should be processed. We will use this argument to easily generate a new timeline trace, this time making two processing passes on the input image.
 
 1. From the **main menu** bar of the SDx GUI, choose the **Run** menu and open the **Run Configurations** window.
 
@@ -338,7 +338,7 @@ We can improve the latency of our application by removing the idle time between 
 
 #### Host Code Optimization
 
-1. Go to line 260 of **host.cpp**.
+1. Go to line 274 of **host.cpp**.
 
 	```C
 	for(int xx=0; xx<numRuns; xx++) 
