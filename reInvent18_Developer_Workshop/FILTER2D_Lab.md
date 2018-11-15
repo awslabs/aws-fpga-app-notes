@@ -25,9 +25,9 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 
 ### Starting SDAccel
 
-1.  Open a new terminal by right-clicking anywhere in the Desktop area and selecting **Open Terminal**. 
+1. Open a new terminal by right-clicking anywhere in the Desktop area and selecting **Open Terminal**. 
 
-1.  Source the SDAccel environment  
+1. Source the SDAccel environment   
 
     ```bash
     cd ~/aws-fpga
@@ -36,16 +36,6 @@ Please also note that although the entire tutorial is performed on an F1 instanc
     ```
 	*Note: the sdaccel_setup.sh script might generate warning messages, but these can be safely ignored.*
 
-1. Now you will create a workspace that includes the following setup steps:
-	* Creating a new project called **Filter2D**
-	* Adding the AWS-VU9P-F1 platform to the project and selecting it as the target for this project 
-	* Importing the host and kernel source files
-	* Setting GCC compile and link options
-	* Setting the name of the FPGA binary container as **binary_container_1**
-	* Setting the **Filter2DKernel** function to be a custom hardware function (also referred to as kernel).
-	* Setting command line arguments to be passed to the application when it is executed.	
-
-	
 1. Launch the SDAccel GUI and and create a new workspace in the current directory: 
     ```bash
     cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D
@@ -53,25 +43,29 @@ Please also note that although the entire tutorial is performed on an F1 instanc
     ```
 	*Note: a warning message may appear if loading Eclipse takes longer than expected. Click **Wait** to dismiss it.*
 
+	![](./images/filter2d_lab/SDxWelcome.PNG)
+
 1. The SDAccel GUI comes up and displays the Welcome screen. Click **Create SDx Project**, then select **Application** as the new project type and click **Next**.
+        ![](./images/filter2d_lab/SDxProjectCreateApplication.PNG)
 
 1. Name your project **Filter2D** and click **Next**.
+        ![](./images/filter2d_lab/SDxProjectCreateName.PNG)
 
 1. In the **Platform** window click **Add Custom Platform...** then browse into the ```~/aws-fpga/SDAccel/aws_platform``` directory and then click **OK**.
+        ![](./images/filter2d_lab/SDxProjectCreateCustomPlatform.PNG)
 
 1. Back in the **Platform** window choose the newly added AWS VU9P F1 custom platform and click **Next**.
 
 1. In the **System configuration** window, keep the default settings and click **Next**.
+	 ![](./images/filter2d_lab/SDxProjectCreateSystemConfiguration.PNG)
 
 1. The **Templates** window has a list of possible templates that you can use to get started in building an SDAccel project. For this tutorial, select **Empty Application** and click **Finish**.
+	  ![](./images/filter2d_lab/SDxProjectCreateTemplates.PNG)
 
-
-1. Most of this information will be displayed in the **SDX Project Settings** window which is prominently displayed in the center of the GUI. It indicates the project name (**Filter2D**), the selected platform (**AWS-VU9-F1**) and the FPGA binary container (**binary_container_1**) with the hardware function (**Filter2DKernel**).  
- 
-    ![](./images/filter2d_lab/SDxWindows.PNG)
+1. Most of the configured information will be displayed in the **SDX Project Settings** window which is prominently displayed in the center of the GUI. It indicates the project name (**Filter2D**), the selected platform (**AWS-VU9-F1**) and the FPGA binary container (**binary_container_1**) with the hardware function (**Filter2DKernel**).  
+	   ![](./images/filter2d_lab/SDxProjectDefault.PNG)
 
 You have now successfully created a new SDAccel project called **Filter2D** for the AWS F1 platform. This is prominently displayed in the SDx Project Settings window in the center of the GUI.
-
 
 
 1. Familiarize yourself with the different sections of the GUI layout:
@@ -85,20 +79,22 @@ You have now successfully created a new SDAccel project called **Filter2D** for 
 
 ### Importing Design Files
 
-1. In the **Project Explorer** window, click the **Import Sources** button ![](images/ImportSRC.png).
+1. In the **Project Explorer** window, click the **Import Sources** button
+	
 
-1. In the **Import Sources** dialog box, click **Browse** and navigate to the ```/home/centos/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D/src``` directory. Click **OK**.
-
+1. In the **Import Sources** dialog box, click **Browse** and navigate to the ```~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D/src``` directory. Click **OK**.
+	![](images/filter2d_lab/SDxProjectCreateImportSrc.PNG).
+	
 1. Click **Select All** and then **Finish**.
-
+        
 1. You can now expand the **src** directory in the **Project Explorer** to see that all the files are now populated in the project.
 
 ### Selecting Functions for HW Acceleration
 
 Now that you have imported all the necessary source files, you need specify which function(s) should be mapped to hardware for FPGA acceleration.
 
-1. In the **Hardware Functions** section of the **SDx Project Settings** window, click the **Add Hardware** button ![](images/AddHW.png). 
-
+1. In the **Hardware Functions** section of the **SDx Project Settings** window, click the **Add Hardware** button 
+	
 1. SDAccel analyzes the design for all possible kernels in the design, as well as the ability to filter the list if there are multiple kernels. Select the **Filter2DKernel** function and click **OK**. 
 
 1. Notice that a binary container (named **binary_container_1** by default) is added to the project and the **Filter2DKernel** kernel is added to this container. 
@@ -106,7 +102,8 @@ Now that you have imported all the necessary source files, you need specify whic
 1. The code for the kernel used in this example is distributed across different files. SDAccel must be told what those files are. In the **Hardware Functions** section of the GUI, right click on the **Filter2DKernel** and select **Select Extra Source Files...**.
 
 1. Click on the **Filter2D > src > kernel** directory and select the three .cpp files (axi2stream.cpp, filter2d.cpp and readcoeffs.cpp) then click **OK**.
-
+	![](images/filter2d_lab/SDxProjectCreateMapKernelFunctions.PNG).
+	
 ### Defining GCC Compilation Options
 
 The host application created in this project leverages OpenCV and OpenMP. Therefore special compilation and linking options must be provided.
@@ -117,21 +114,23 @@ The host application created in this project leverages OpenCV and OpenMP. Theref
 
 1. In the **Configuration** pull down, select **[All Configurations]**.
 
-1. In the **SDx GCC Host Compiler** options, add ```-fopenmp``` to the **Expert settings** dialog and click **Apply**.
+1. In the **SDx GCC Host Compiler** options, add ```-fopenmp``` to the **Expert settings:Command line Pattern** dialog and click **Apply**.
+     ![](images/filter2d_lab/SDxProjectCreateGccHostCompilerExpertSettings.PNG).
 
-1. In the **SDx GCC Host Linker** options, add ```-fopenmp -Wl,--as-needed -Wl,-rpath,${XILINX_SDX}/lnx64/tools/opencv -L${XILINX_SDX}/lnx64/tools/opencv -lopencv_core -lopencv_highgui``` to the **Expert settings** dialog and click **Apply**.
-
+1. In the **SDx GCC Host Linker** options, add ```-fopenmp -Wl,--as-needed -Wl,-rpath,${XILINX_SDX}/lnx64/tools/opencv -L${XILINX_SDX}/lnx64/tools/opencv -lopencv_core -lopencv_highgui``` to the **Expert settings:Command line Pattern** dialog and click **Apply**.
+     ![](images/filter2d_lab/SDxProjectCreateGccHostLinkerExpertSettings.PNG).
+     
 1. Click **OK** to save and close the custom GCC options.
 
 ### Defining Run Configuration options
 
 The host application created in this project takes in various command line arguments. In this step, you will define what flags SDAccel pass to the application when it executes it.
 
-1. Go to the **Run** menu and select **Run Configurations...** .
+1. Go to the **Run** ![](images/filter2d_lab/RunButton.PNG) menu dropdown and select **Run Configurations...** .
 
 1. Select the **Arguments** tab 
 
-1. Add ```-x ../binary_container_1.xclbin -i ../../../../img/test.bmp -n 1``` in the **Program Arguments** box and click **Close**.
+1. Add ```-x ../binary_container_1.xclbin -i ../../../../img/test.bmp -n 1``` in the **Program Arguments** box and click **Apply** and then click **Close**.
 
 
 ### Source code files used in this example
@@ -238,12 +237,12 @@ In this lab, we will only run the hardware emulation flow.
 
 1. Return to the **SDx Project Settings** window by clicking on **Filter2D** tab in the central window of the SDx the GUI.
 
-1. Uncheck the **Host debug** check box located in the right side of the **SDx Project Settings** window. 
-
 1. In the upper right corner of the **SDx Project Settings** window, the **Active build configuration** is shown. Ensure that **Emulation-HW** is selected.
 
+1. Uncheck the **Host debug** check box located in the right side of the **SDx Project Settings** window. 
+
 1. Click the **Run** button ![](./images/filter2d_lab/RunButton.PNG) to run hardware emulation.
-	* Compiling the entire project takes about 5 minutes.
+	* Compiling the entire project takes about ~10 to 15 minutes.
 	* The **Console** provides the detailed build log during the compilation of the kernel and the host code. 
 	* It then displays the standard output produced by the application during the actual emulation run.  
 	* The hardware emulation is complete when the following messages are displayed at the bottom of the **Console**:	
@@ -280,7 +279,7 @@ In this lab, we will only run the hardware emulation flow.
 
 This section covers how to locate and read the various reports generated by the emulation runs. 
 
-1. Locate the **Reports** window in the bottom-left corner of the GUI. 
+1. Locate the Report **Assistant** window in the bottom-left corner of the GUI. 
 	* This window displays a tree layout of folders and reports for all runs and open projects. 
 	* The top level shows the **Filter2D** project for which we have executed the **Emulation-HW** run.
 	* The **Filter2D-Default** run configuration folder contains the **Profile Summary** and **Application Timeline** report generated during the hardware emulation run.
@@ -483,7 +482,7 @@ The **create_sdaccel_afi.sh** script does the following:
 * Generates a \<timestamp\>_afi_id.txt which contains the FPGA Image Identifier (or AFI ID) and Global FPGA Image Identifier (or AGFI ID) of the generated AFI
 * Creates the *.awsxclbin AWS FPGA binary file which is read by the host application to determine which AFI should be loaded in the FPGA.
 
-These steps would take too long to complete during this tutorial, therefore precompiled FPGA binaries are used to continue this lab and execute on F1.
+These steps would take too long (~6 to 8 hours for all kernels) to complete during this tutorial, therefore precompiled FPGA binaries are used to continue this lab and execute on F1.
 
 ### Executing on F1 
 
@@ -491,7 +490,7 @@ These steps would take too long to complete during this tutorial, therefore prec
 
 1. Make sure you are in the correct directory
 	```bash
-	cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2d
+	cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D
 	```
 
 1. List the content of the xclbin directory:
@@ -504,18 +503,18 @@ These steps would take too long to complete during this tutorial, therefore prec
 
 1. Copy the host application executable built in the SDAccel workspace to the local directory.
 	```bash
-    cp ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2d/workspace/Filter2D/Emulation-HW/Filter2D.exe .
+    cp ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D/workspace/Filter2D/Emulation-HW/Filter2D.exe .
 	```
-
+	
 1. Setup the SDAccel runtime environment and F1 drivers.
-	```sh
+    ```sh
     sudo sh
     source /opt/xilinx/xrt/setup.sh
     ```
 
 1. Execute on F1 using the FPGA binary with 1 kernel instance.    
 	```sh
-	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga1k.awsxclbin
+	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga1k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
 
 	- The application loads a 1080p image (```-i``` argument)
@@ -526,14 +525,13 @@ These steps would take too long to complete during this tutorial, therefore prec
 
 1. Now perform the same run using the FPGA binary with 3 kernel instances.
 	```sh 
-	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga3k.awsxclbin
+	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga3k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
-
 1. Compare the new performance numbers: the version with 3 kernels is nearly 3x faster than the version with a single kernel.
 
 1. Now perform the same run using the FPGA binary with 6 kernel instances.
 	```sh 
-	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga6k.awsxclbin
+	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga6k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
 
 1. This version is more than 112x faster than the multi-threaded CPU version (!).
