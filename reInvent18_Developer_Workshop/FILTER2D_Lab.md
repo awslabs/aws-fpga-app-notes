@@ -62,7 +62,7 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 1. The **Templates** window has a list of possible templates that you can use to get started in building an SDAccel project. For this tutorial, select **Empty Application** and click **Finish**.
 	  ![](./images/filter2d_lab/SDxProjectCreateTemplates.PNG)
 
-1. Most of the configured information will be displayed in the **SDX Project Settings** window which is prominently displayed in the center of the GUI. It indicates the project name (**Filter2D**), the selected platform (**AWS-VU9-F1**) and the FPGA binary container (**binary_container_1**) with the hardware function (**Filter2DKernel**).  
+1. Most of the configured information will be displayed in the **SDX Project Settings** window which is prominently displayed in the center of the GUI. It indicates the project name (**Filter2D**), the selected platform (**AWS-VU9-F1**).
 	   ![](./images/filter2d_lab/SDxProjectDefault.PNG)
 
 You have now successfully created a new SDAccel project called **Filter2D** for the AWS F1 platform. This is prominently displayed in the SDx Project Settings window in the center of the GUI.
@@ -134,6 +134,9 @@ The host application created in this project takes in various command line argum
 
 
 ### Source code files used in this example
+
+ Worspace configuration will be displayed in the **SDX Project Settings** window which is prominently displayed in the center of the GUI. It indicates the project name (**Filter2D**), the selected platform (**AWS-VU9-F1**) and the FPGA binary container (**binary_container_1**) with the hardware function (**Filter2DKernel**). 
+	   ![](./images/filter2d_lab/SDxWindows.PNG)
 
 1. Expand the **src** directory in the **Project Explorer**. 
 The project is comprised of two directories:
