@@ -6,8 +6,9 @@
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
     <td width="20%" align="center"><a href="SETUP.md">1. Connecting to your F1 instance</a></td>
     <td width="20%" align="center"><a href="FILTER2D_Lab.md">2. Developing F1 applications</a></td>
-    <td width="20%" align="center"><b>3. Host Code Optimization</b></td>
-    <td width="20%" align="center"><a href="WRAP_UP.md">4. Wrapping-up</td>
+	<td width="20%" align="center"><a href="SDAccelGUI_INTRO.md">3. Introduction to SDAccel GUI</a></td>
+    <td width="20%" align="center"><b>4. Host Code Optimization</b></td>
+    <td width="20%" align="center"><a href="WRAP_UP.md">5. Wrapping-up</td>
   </tr>
 </table>
 
@@ -389,7 +390,4 @@ Please have a closer look at SDAccel Profiling and Optimization Guide (UG1207) w
 
 <p align="center"><b>
 Start the next module: <a href="WRAP_UP.md">4. Wrap-up and Next Steps</a>
-</b></p>  
-
-<hr/>
-<p align="center"><sup>Copyright&copy; 2018 Xilinx</sup></p>
+</b></p>

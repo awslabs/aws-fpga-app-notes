@@ -6,8 +6,9 @@
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
     <td width="20%" align="center"><b>1. Connecting to your F1 instance</b></td> 
     <td width="20%" align="center"><a href="FILTER2D_Lab.md">2. Developing F1 applications</a></td>
-    <td width="20%" align="center"><a href="HOSTCODE_OPT.md">3. Host Code Optimization</a></td>
-    <td width="20%" align="center"><a href="WRAP_UP.md">4. Wrapping-up</td>
+	<td width="20%" align="center"><a href="SDAccelGUI_INTRO.md">3. Introduction to SDAccel GUI</a></td>
+    <td width="20%" align="center"><a href="HOSTCODE_OPT.md">4. Host Code Optimization</a></td>
+    <td width="20%" align="center"><a href="WRAP_UP.md">5. Wrapping-up</td>
   </tr>
 </table>
 

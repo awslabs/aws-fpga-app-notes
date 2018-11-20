@@ -6,8 +6,9 @@
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
     <td width="20%" align="center"><a href="SETUP.md">1. Connecting to your F1 instance</a></td> 
     <td width="20%" align="center"><a href="FILTER2D_Lab.md">3. Developing F1 applications</a></td>
-    <td width="20%" align="center"><a href="HOSTCODE_OPT.md">3. Host Code Optimization</a></td>
-    <td width="20%" align="center"><b>4. Wrapping-up</b></td>
+	<td width="20%" align="center"><a href="SDAccelGUI_INTRO.md">3. Introduction to SDAccel GUI</a></td>
+    <td width="20%" align="center"><a href="HOSTCODE_OPT.md">4. Host Code Optimization</a></td>
+    <td width="20%" align="center"><b>5. Wrapping-up</b></td>
   </tr>
 </table>
 
@@ -29,7 +30,9 @@ It is now time to wrap-up this workshop. Please follow these steps to close your
 ### Congratulations!
 You have successfully completed all the modules of re:Invent 2018 Developer Workshop. 
 1. You started a pre-configured EC2 F1 instance and connected to it using a remote desktop client. 
-1. You used SDAccel to create, profile and optimize an  video 2D Filter F1 accelerator. 
+1. You used SDAccel to create and optimize an  video 2D Filter F1 accelerator. You experienced application acceleration on F1.
+1. You learned how to create a project and debug an example application using SDAccel GUI.
+1. You Learned techniques to profile & optimize application host code.
 1. You closed your RDP session and properly stopped your F1 instance.
 
 ### Next steps
