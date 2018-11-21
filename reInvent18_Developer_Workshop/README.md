@@ -24,7 +24,7 @@ The architecture of the AWS F1 platform and the SDAccel development flow are pic
 ![](./images/introduction/f1_platform.png)
 
 1. Amazon EC2 F1 is a compute instance combining Intel CPUs with Xilinx FPGAs. The FPGAs are programmed with custom accelerators which can accelerate complex workloads up to 100x when compared with servers that use CPUs alone. 
-2. An F1 application consists of an x86 executable for the host application and an FPGA binary (also referred to as Amazon FPGA Image or AFI) for the custom hardware accelerators. Communication and data movement between the host application and the accelerators are automatically managed by the [XRT runtime](https://github.com/Xilinx/XRT).
+2. An F1 application consists of an x86 executable for the host application and an FPGA binary (also referred to as Amazon FPGA Image or AFI) for the custom hardware accelerators. Communication and data movement between the host application and the accelerators are automatically managed by the [XRT runtime](https://xilinx.github.io/XRT/).
 3. Software Defined Accelerator Development- SDAccel is the development environment used to create applications accelerated on the F1 instance. It comes with a fully fledged IDE, x86 and FPGA compilers, profiling and debugging tools.
 4. The host application is written in C or C++ and uses the OpenCL APIs to interact with the accelerated functions on the FGPA. The accelerated functions (also referred to as kernels) can be written in C, C++, OpenCL or even RTL.
 
