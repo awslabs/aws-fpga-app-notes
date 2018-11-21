@@ -1,12 +1,12 @@
 <table style="width:100%">
   <tr>
-    <th width="100%" colspan="5"><h2>re:Invent 2018 Developer Workshop</h2></th>
+    <th width="100%" colspan="6"><h2>re:Invent 2018 Developer Workshop</h2></th>
   </tr>
   <tr>
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
     <td width="20%" align="center"><a href="SETUP.md">1. Connecting to your F1 instance</a></td> 
     <td width="20%" align="center"><b>2. Developing F1 applications</b></td>
-	<td width="20%" align="center"><a href="SDAccelGUI_INTRO.md">3. Introduction to SDAccel GUI</a></td>
+    <td width="20%" align="center"><a href="SDAccelGUI_INTRO.md">3. Introduction to SDAccel GUI</a></td>
     <td width="20%" align="center"><a href="HOSTCODE_OPT.md">4. Host Code Optimization</a></td>
     <td width="20%" align="center"><a href="WRAP_UP.md">5. Wrapping-up</td>
   </tr>
