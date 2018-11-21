@@ -35,6 +35,8 @@ In this step, you will launch SDAccel, create a new workspace, load the custom A
     ```
     > Note that the first invocation of the SDx GUI on a given AWS instance will not be instantaneous but subsequent invocations will be much faster.
 
+* You will be greeted with welcome screen. In the welcome screen click on **Create a New SDx project**
+
 * In the **Project Type** window, select **Application** and click **Next**.
 
 * In the **Create a New SDx project** window in the **Project name** field, type **Test** and click **Next**.
