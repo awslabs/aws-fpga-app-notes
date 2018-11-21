@@ -18,19 +18,19 @@
 This lab uses an example from the Xilinx® SDAccel™ Example GitHub repository, which can be found [here](https://github.com/Xilinx/SDAccel_Examples). 
 
 #### Preparing to Run the Tutorial
-* Using a RDP client, connect to an AWS EC2 instance loaded with the FPGA Developer AMI. Instructions on how to accomplish this are covered in the [Create, configure and test an AWS F1 instance](STEP1.md) guide.
+* Using a RDP client, connect to an AWS EC2 instance loaded with the FPGA Developer AMI. Instructions on how to accomplish this are covered in the [Create, configure and test an AWS F1 instance](SETUP.md) guide.
 
 * In a terminal on your AWS instance, execute the following commands to configure the SDAccel environment:   
     ```bash
-    cd $AWS_FPGA_REPO_DIR  
+    cd ~/aws-fpga
     source sdaccel_setup.sh
     ```
-* Create a new directory and copy over the source files needed for this tutorial:
+* Change to a "helloworld_c" directory and copy over the source files needed for this tutorial:
     ```bash
-    cd /home/centos
-    cp -rp $AWS_FPGA_REPO_DIR/SDAccel/examples/xilinx_2018.2/getting_started/host/helloworld_c .
-    cp $AWS_FPGA_REPO_DIR/SDAccel/examples/xilinx_2018.2/libs/xcl2/xcl2.cpp ./helloworld_c/src 
-    cp $AWS_FPGA_REPO_DIR/SDAccel/examples/xilinx_2018.2/libs/xcl2/xcl2.hpp ./helloworld_c/src 
+    cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c
+    cp -rp ~/aws-fpga/SDAccel/examples/xilinx_2018.2/getting_started/host/helloworld_c .
+    cp ~/aws-fpga/SDAccel/examples/xilinx_2018.2/libs/xcl2/xcl2.cpp ./src/.
+    cp ~/aws-fpga/SDAccel/examples/xilinx_2018.2/libs/xcl2/xcl2.hpp ./src/.
     cd helloworld_c
     ```   
 
@@ -47,7 +47,7 @@ In this step, you will launch SDAccel, create a new workspace, load the custom A
 
 * In the **Create a New SDx project** window in the **Project name** field, type **Test** and click **Next**.
 
-* In the **Platform** window click **Add Custom Platform...** then browse into the ```/home/centos/src/project_data/aws-fpga/SDAccel/aws_platform``` directory and then click **OK**.
+* In the **Platform** window click **Add Custom Platform...** then browse into the ```~/aws-fpga/SDAccel/aws_platform``` directory and then click **OK**.
 
 * Back in the **Platform** window choose the newly added AWS VU9P F1 custom platform and click **Next**.
 
@@ -73,7 +73,7 @@ The default GUI perspective includes the following sections:
 
 * In the **Project Explorer** window, right click on the **src** folder and select **Import Sources**.
 
-* In the **Import Sources** dialog box, click **Browse** and navigate to the ```/home/centos/helloworld_c/src``` directory. Click **OK**.
+* In the **Import Sources** dialog box, click **Browse** and navigate to the ```~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/src``` directory. Click **OK**.
 
 * Click **Select All** and click **Finish**.
 
@@ -89,7 +89,7 @@ The default GUI perspective includes the following sections:
 
 Now that you have imported all the necessary source files, you need specify which function(s) should be mapped to hardware for FPGA acceleration.
 
-* In the **Hardware Functions** section of the **SDx Project Settings** window, click the **Add Hardware** button ![](images/AddHW.png).
+* In the **Hardware Functions** section of the **SDx Project Settings** window, click the **Add Hardware** button ![](images/SDAccelGUI_INTRO/AddHW.png).
 
 * SDAccel analyzes the design for all possible kernels in the design, as well as the ability to filter the list if there are multiple kernels. For this design, only the **vadd** qualified function exists.
 
@@ -104,9 +104,9 @@ Software Emulation is used for checking the functional correctness when the host
 
 * Go to **Application Project Settings**, and ensure that the **Active build configuration** is set to **Emulation-SW**.  
 
-* In the **SDAccel toolbar**, click the **Build** button ![](images/Build.png). This builds the project for Software Emulation and takes a short minute to complete. 
+* In the **SDAccel toolbar**, click the **Build** button ![](images/SDAccelGUI_INTRO/Build.png). This builds the project for Software Emulation and takes a short minute to complete. 
 
-* After the design is built, click the **Run** button ![](images/Run.png). This runs Software Emulation. The host application executes and interacts with the C version of the kernel. You will see messages being displayed in the **Console** window. The run ends with a message saying the test has passed:
+* After the design is built, click the **Run** button ![](images/SDAccelGUI_INTRO/Run.png). This runs Software Emulation. The host application executes and interacts with the C version of the kernel. You will see messages being displayed in the **Console** window. The run ends with a message saying the test has passed:
     ```
     Found Platform
     Platform Name: Xilinx
@@ -124,17 +124,17 @@ SDAccel features a built-in debugger which you can use to step through the appli
 
 * Set a breakpoint on line 73 by right-clicking on the line number and selecting **Toggle Breakpoint**. 
 
-* To run in **Debug** mode, click on the **Debug** button ![](images/Debug.png). A dialog box opens up asking you to switch to that perspective. Click **Yes**.
+* To run in **Debug** mode, click on the **Debug** button ![](images/SDAccelGUI_INTRO/Debug.png). A dialog box opens up asking you to switch to that perspective. Click **Yes**.
 
 * Using the Eclipse debug perspective, the host and kernel code can be examined in more detail. All the controls with which to do step-by-step debugging are in the **main menu** bar or in the **Run** menu.
 
 * After you start, the program stops at the first line of the **main** function.
 
-* Click on the **Resume** button (F8) ![](images/Resume.png) to advance to the next breakpoint.
+* Click on the **Resume** button (F8) ![](images/SDAccelGUI_INTRO/Resume.png) to advance to the next breakpoint.
 
 * The debugger now reaches your breakpoint at line 73 of the **host.cpp** file. 
 
-* Use the **Step Over** button (F6) ![](images/StepOver.png) to step through the code and study the API call sequence in the host application. Notice in particular:
+* Use the **Step Over** button (F6) ![](images/SDAccelGUI_INTRO/StepOver.png) to step through the code and study the API call sequence in the host application. Notice in particular:
     * Line 73: the application loads the FPGA binary file in the device.
     * Lines 81-83: the application creates the buffers to exchange data with the device. The **vadd** takes two input arrays and generates one output array. Therefore 3 buffers are created: one for each array.
     * Line 89: the application schedules the migration the two input buffers to the device.
@@ -145,7 +145,7 @@ SDAccel features a built-in debugger which you can use to step through the appli
 
     > Note: This simple sequence is representative of how communications between host and device are typically managed in an SDAccel application.
 
-* Close the **Debug Perspective** by going to the upper-right of the window where it shows the ![](images/Debug.png) button, right-click on it and select **Close**.
+* Close the **Debug Perspective** by going to the upper-right of the window where it shows the ![](images/SDAccelGUI_INTRO/Debug.png) button, right-click on it and select **Close**.
 
 
 #### Using the Application Timeline
@@ -154,7 +154,7 @@ SDAccel features a built-in debugger which you can use to step through the appli
 
 * Zoom-in in the far right section of the timeline. Here you will find the sequence where the host application transfers data to the device, programs the kernel, executes it and migrates the results back. It should look similar to the image below:
 
-![](images/TimelineSW.png)
+![](images/SDAccelGUI_INTRO/TimelineSW.png)
 
 * Notice how the timeline provides a visual representation of the API call sequence that you just stepped through during the debug step. Let's do a simple experiment to confirm this.
 
@@ -184,7 +184,7 @@ SDAccel features a built-in debugger which you can use to step through the appli
     q.finish();
     ```
 
-* Save the changes and click the **Run** button ![](images/Run.png). Since the kernel code wasn't modified, the incremental build flow only recompiles the host program before running Software Emulation.
+* Save the changes and click the **Run** button ![](images/SDAccelGUI_INTRO/Run.png). Since the kernel code wasn't modified, the incremental build flow only recompiles the host program before running Software Emulation.
 
 * Wait for the **TEST PASSED** message to appear in the **Console** and reopen the **Application Timeline**. 
 
@@ -192,7 +192,7 @@ SDAccel features a built-in debugger which you can use to step through the appli
 
 * Click one of the blue **vadd** boxes in the **Kernel Enqueues** section of the timeline. Notice how the read/execute/write dependencies are highlights and how you now have 4 consecutive invocations of the **vadd** kernel
 
-![](images/TimelineSW_4.png)
+![](images/SDAccelGUI_INTRO/TimelineSW_4.png)
 
 #### Running Hardware Emulation
 
@@ -202,7 +202,7 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
 
 * Go to **Application Project Settings** window, and set the **Active build configuration** to **Emulation-HW**.  
 
-* In the **SDAccel toolbar**, click the **Run** button ![](images/Run.png). This builds and runs the application in Hardware Emulation mode. 
+* In the **SDAccel toolbar**, click the **Run** button ![](images/SDAccelGUI_INTRO/Run.png). This builds and runs the application in Hardware Emulation mode. 
     > Note: During the build step, the kernel is compiled into a detailed hardware representation (also known as Register Transfer Level) and linked with a model the selected platform (AWS VU9P V1). Building the design for Hardware Emulation can take a little more than 5 minutes, based on your machine configuration.
 
 * When runs finishes, you will see in the **Console** window a summary of data transfer between kernel(s) and global memory(s).
