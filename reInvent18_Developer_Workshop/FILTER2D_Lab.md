@@ -231,7 +231,7 @@ The kernel code is comprised of the following files:
 	* **clEnqueueMigrateMemObjects** calls are used to schedule the transfer of the input buffers to the FPGA device and then transfer the output buffer back to the host.
 	* **clSetKernelArg** calls are used to set the arguments of the kernel.
 	* **clEnqueueTask** is used to schedule the execution of the kernel.
-	* **clSetEventCallback** is used to registers a user callback function, which in this case, simply prints a message when transfer of the output buffer back to the host is complete.
+	* **clSetEventCallback** is used to register a user callback function, which in this case, simply prints a message when transfer of the output buffer back to the host is complete.
 
 	All of the above API functions are documented by the [Khronos Group](https://www.khronos.org), the maintainers of OpenCL, the open standard for parallel programming of heterogeneous systems
 
