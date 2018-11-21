@@ -100,7 +100,7 @@ Software Emulation is used for checking the functional correctness when the host
 
 * Go to drop down menu beside  **Debug** button ![](images/SDAccelGUI_INTRO/Debug.png) and select **debug configuration**. Then select **Profile** tab and set **Generate timeline trace report** option to **Yes**
 
-   ![](images/SDAccelGUI_INTRO/DebugConfig_EnableAppTimeline.png)
+   ![](images/SDAccelGUI_INTRO/DebugConfig_EnableAppTimeline.PNG)
    
 * In the **SDAccel toolbar**, click the **Build** button ![](images/SDAccelGUI_INTRO/Build.png). This builds the project for Software Emulation and takes a short minute to complete. 
 
