@@ -25,20 +25,12 @@ This lab uses an example from the Xilinx® SDAccel™ Example GitHub repository,
     cd ~/aws-fpga
     source sdaccel_setup.sh
     ```
-* Change to a "helloworld_c" directory and copy over the source files needed for this tutorial:
-    ```bash
-    cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c
-    cp -rp ~/aws-fpga/SDAccel/examples/xilinx_2018.2/getting_started/host/helloworld_c .
-    cp ~/aws-fpga/SDAccel/examples/xilinx_2018.2/libs/xcl2/xcl2.cpp ./src/.
-    cp ~/aws-fpga/SDAccel/examples/xilinx_2018.2/libs/xcl2/xcl2.hpp ./src/.
-    cd helloworld_c
-    ```   
-
 #### Creating an SDAccel Project
 In this step, you will launch SDAccel, create a new workspace, load the custom AWS F1 platform file and create a new project.
 
-* Launch the SDx GUI with the command below. 
+*  Change to a "helloworld_c" directory and Launch the SDx GUI with the command below. 
     ```bash
+     cd helloworld_c
     sdx -workspace ./workspace
     ```
     > Note that the first invocation of the SDx GUI on a given AWS instance will not be instantaneous but subsequent invocations will be much faster.
