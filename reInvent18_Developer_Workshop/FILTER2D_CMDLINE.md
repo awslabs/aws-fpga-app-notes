@@ -137,7 +137,7 @@ SDAccel provides two emulation flows which allow testing the application before 
 	* The more detailed hardware simulation allows more accurate reporting of kernel and system performance.
 	* This flow is also useful for testing the functionality of the logic that will go in the FPGA.
 
-Host and Kernel code can be profiles & optimized by running emulation flows and analyzing the reports.
+Host and Kernel code can be profiled & optimized by running emulation flows and analyzing the reports.
 
 ### Building the FPGA binary to execute on F1 
 

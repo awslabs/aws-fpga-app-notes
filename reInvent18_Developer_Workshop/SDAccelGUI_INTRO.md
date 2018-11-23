@@ -217,57 +217,57 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
 
     * The **Application Timeline** (under Emulation-HW > Test-Default) shows a visual timeline of the OpenCL API calls, data transfers and kernel executions. Notice how the Hardware Emulation timelime looks different from the Software Emulation one. The sequence of API calls and kernel invocations is actually the same, but because the Hardware Emulation operates with more accurate performance estimates, the timeline shows more realistic durations for the kernel enqueues.
 
-* In addition to these reports, SDAccel provides interpreted analysis in the **Guidance** window located next to the **Console** .
+* In addition to these reports, SDAccel usually provides interpreted analysis in the **Guidance** window located next to the **Console**. For the simple applications such as the one you are running now you might not see any guidance report. 
 
-* Click on the **Guidance** tab and then click the **Maximize** icon to visualize the full report. For simple application you are running now you might not see any guidance. 
-    * SDAccel mines the compilation and run logs for key performance criteria, reports whether these criteria are met or not and suggests ways to improve the application when necessary.
-    * At the top of the report, in the **Host Data Transfer** section, you can see if the application is effective at reading and writing data between host and device.
-    * you can see in the **Kernel Data Transfer** section if the application is not taking advantage of all the DDR banks and if the kernel port data width is suboptimal (recommended 512 bits).
-    * You can Select the **KERNEL_PORT_DATA_WIDTH #1** row, look to the right in the **Resolution** column and click the guidance message to see the recommendations.
+   > When optimizing complex application **Guidance** report can be quite useful. Click on the **Guidance** tab and then click the **Maximize** icon to visualize the full report. 
+   > * SDAccel mines the compilation and run logs for key performance criteria, reports whether these criteria are met or not and suggests ways to improve the application when necessary.
+   > * At the top of the report, in the **Host Data Transfer** section, you can see if the application is effective at reading and writing data between host and device.
+   > * you can see in the **Kernel Data Transfer** section if the application is not taking advantage of all the DDR banks and if the kernel port data width is suboptimal (recommended 512 bits).
+   > * You can Select the **KERNEL_PORT_DATA_WIDTH #1** row, look to the right in the **Resolution** column and click the guidance message to see the recommendations.
+   > * **Restore** the **Guidance** window to its normal size by clicking the icon in the upper right corner.
 
-* **Restore** the **Guidance** window to its normal size by clicking the icon in the upper right corner.
-
+* When the application profile looks good, you can compile it to run on the hardware platform.
 
 #### Building the FPGA Binary and the Amazon FPGA Image (AFI)
 
-When the application profile looks good, you can compile it to run on the hardware platform.
+*  Building FPGA Binaries & AFI images takes a few hours (3 to 4 hours for this Lab). For the purpose of this workshop kernel binaries & AFIs  have been pre-built for you and placed in **kernel_afi_files** directory within this lab's directory. You can directly skip to **[Executing the Application on F1](SDAccelGUI_INTRO.md#executing-the-application-on-f1)**.
 
-* Go to **Application Project Settings** and set **Active build configuration** to **System**.
-
-* Click the **Build** button to initiate the hardware build process.
-    > IMPORTANT: It generally takes a few hours to complete the hardware build. The kernel files have been pregenerated for you and placed in **kernel_afi_files** directory. You can directly skip to **[Executing the Application on F1](SDAccelGUI_INTRO.md#executing-the-application-on-f1)** section below.
-
-* Once the build process completes, you will find the host executable (```Test.exe```) and the FPGA binary (```binary_container_1.xclbin```) in the ```/home/centos/helloworld_c/workspace/Test/System``` directory.
-
-* Exit the SDAccel GUI.
-
-* Create the AFI from the FPGA binary using the AWS **create_sdaccel_afi.sh** script:
-
+	>This section describes the steps of running through through hardware build flow.
+	> * Go to **Application Project Settings** and set **Active build configuration** to **System**.
+	>
+	> * Click the **Build** button to initiate the hardware build process.
+    > IMPORTANT: It generally takes a few hours to complete the hardware build. 
+	> * Once the build process completes, you will find the host executable (```Test.exe```) and the FPGA binary (```binary_container_1.xclbin```) in the ```/home/centos/helloworld_c/workspace/Test/System``` directory.
+	> * Exit the SDAccel GUI.
+	>
+	> * Create the AFI from the FPGA binary using the AWS **create_sdaccel_afi.sh** script:
+	>
   ```bash
   cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/workspace/Test/System
   $SDACCEL_DIR/tools/create_sdaccel_afi.sh
       -xclbin=binary_container_1.xclbin
+	  -o=vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0
       -s3_bucket=<bucket-name>
       -s3_dcp_key=<dcp-folder-name>
       -s3_logs_key=<logs-folder-name>
   ```
-
-* The **create_sdaccel_afi.sh script** does the following:
-   * Starts a background process to create the AFI
-   * Generates a \<timestamp\>_afi_id.txt which contains the FPGA Image Identifier (or AFI ID) and Global FPGA Image Identifier (or AGFI ID) of the generated AFI
-   * Creates the \*.awsxclbin AWS FPGA binary file which will need to be read by the host application to determine which AFI should be loaded in the FPGA.
-
-* Note the values of the AFI IDs by opening the \<timestamp\>_afi_id.txt  file
+	>
+	> * The **create_sdaccel_afi.sh script** does the following:
+    > * Starts a background process to create the AFI
+    > * Generates a \<timestamp\>_afi_id.txt which contains the FPGA Image Identifier (or AFI ID) and Global FPGA Image Identifier (or AGFI ID) of the generated AFI
+    > * Creates the \*.awsxclbin AWS FPGA binary file which will need to be read by the host application to determine which AFI should be loaded in the FPGA.
+	>
+	> * Note the values of the AFI IDs by opening the \<timestamp\>_afi_id.txt  file
   ```bash
   cat *.afi_id.txt
   ```
-
-* Use the **describe-fpga-images** API to check the status AFI generation process
+	>
+	> * Use the **describe-fpga-images** API to check the status AFI generation process
   ```bash
   aws ec2 describe-fpga-images --fpga-image-ids <AFI ID>
   ```
-
-* The AFI creation process started in the background is not instantaneous. You need to make sure that the process completes successfully before being able to run on the F1 instance. When AFI creation completes successfully, the output should contain:
+	>
+	> * The AFI creation process started in the background is not instantaneous. You need to make sure that the process completes successfully before being able to run on the F1 instance. When AFI creation completes successfully, the output should contain:
   ```json
   ...
   "State": {
@@ -275,25 +275,29 @@ When the application profile looks good, you can compile it to run on the hardwa
   },
   ...
   ```
-* Wait until the AFI becomes available before proceeding to execute the application on the F1 instance.
-
+	> * Wait until the AFI becomes available before proceeding to execute the application on the F1 instance.
+	> * Once AFI is available copy over the awsxclbin & exe file to the Lab directory as below.
+  
+  ```bash
+    cp vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin  ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/
+	cp Test.exe ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/Test
+  ```	
+  
 #### Executing the Application on F1
 
-* If you skipped directly to this section without building the Kernel AFIs copy the pregenerated  kernel afi files  to the target directory.
+* If you skipped directly to this section without building the Kernel AFIs copy the pre-generated  kernel afi files  to the target directory.
   ```bash
   cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c
-  make TARGETS=hw DEVICES=$AWS_PLATFOTM exe
-  cp Test ./workspace/Test/System/.
-  cp ./kernel_afi_files/vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin  ./workspace/Test/System/.
+  make TARGETS=hw DEVICES=$AWS_PLATFORM exe
+  cp ./kernel_afi_files/vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin  .
   ```
 
 * Execute the following commands in the instance terminal:
 
   ```bash
-  cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/workspace/Test/System
   sudo sh
   source /opt/xilinx/xrt/setup.sh   
-  ./Test.exe
+  ./Test
   ```
 
 #### Summary

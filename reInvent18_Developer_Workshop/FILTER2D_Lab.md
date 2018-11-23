@@ -246,7 +246,7 @@ SDAccel provides two emulation flows which allow testing the application before 
 	* The more detailed hardware simulation allows more accurate reporting of kernel and system performance.
 	* This flow is also useful for testing the functionality of the logic that will go in the FPGA.
 
-Host and Kernel code can be optimized by running emulation flows and analyzing the reports.
+Host and Kernel code can be profiled & optimized by running emulation flows and analyzing the reports.
 
 ### Building the FPGA binary to execute on F1 
 
@@ -261,7 +261,7 @@ The **create_sdaccel_afi.sh** script does the following:
 * Generates a \<timestamp\>_afi_id.txt which contains the FPGA Image Identifier (or AFI ID) and Global FPGA Image Identifier (or AGFI ID) of the generated AFI
 * Creates the *.awsxclbin AWS FPGA binary file which is read by the host application to determine which AFI should be loaded in the FPGA.
 
-These steps would take too long (~6 to 8 hours for all kernels) to complete during this tutorial, therefore precompiled FPGA binaries are used to continue this lab and execute on F1.
+These steps would take too long (~6 to 8 hours for all kernels) to complete during this tutorial, therefore pre-compiled FPGA binaries are used to continue this lab and execute on F1.
 
 ### Executing on F1 
 
@@ -301,9 +301,101 @@ These steps would take too long (~6 to 8 hours for all kernels) to complete duri
 	- It processes this image 10 times (```-n``` argument)
 	- It uses a FPGA binary with 1 kernel (```-x``` argument)
 
-1. Note the performance difference between the FPGA-accelerated and CPU-only executions of the 2D image filtering function. With a single kernel, the accelerated version is more than 19x faster than the multi-threaded CPU version.
+1. Note the performance difference between the FPGA-accelerated and CPU-only executions of the 2D image filtering function. With a single kernel, the accelerated version is more than 30x faster than the multi-threaded CPU version.
 
-1. Now perform the same run using the FPGA binary with 3 kernel instances.
+### Optimization   
+
+The first hardware run helped establish a performance baseline. The next step is to optimize the application to improve overall performance. This tutorial illustrates two optimization techniques: 1) improving throughput by executing multiple kernels in parallel and 2) improving latency by optimally scheduling execution of kernels within the host application.
+
+
+#### Adding More Kernels  
+
+1. Now perform the above run using the FPGA binary with 3 kernel instances.
+	```sh 
+	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga3k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
+	```
+1. Compare the new performance numbers: the FPGA version with 3 kernels is nearly 3x faster than the version with a single kernel and 90X when compared to Software version.
+
+1. Now perform the same run using the FPGA binary with 6 kernel instances.
+	```sh 
+	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga6k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
+	```
+
+1. This version is more than 112x faster than the multi-threaded CPU version (!).
+
+	Additional kernels can easily be added (either more 2D filter kernels or different types of kernels) until all FPGA resources are utilized or until the global memory bandwidth is saturated.
+
+	
+#### Host Code Optimization
+
+1. Go to line 274 of **./src/host.cpp** file.
+
+	```C
+	for(int xx=0; xx<numRuns; xx++) 
+	{
+		// Make independent requests to Blur Y, U and V planes
+		// Requests will run sequentially if there is a single kernel
+		// Requests will run in parallel is there are two or more kernels
+		request[xx*3+0] = Filter(coeff.data(), y_src.data(), width, height, stride, y_dst.data());
+		request[xx*3+1] = Filter(coeff.data(), u_src.data(), width, height, stride, u_dst.data());
+		request[xx*3+2] = Filter(coeff.data(), v_src.data(), width, height, stride, v_dst.data());
+
+		// Wait for completion of the outstanding requests
+		request[xx*3+0]->sync();
+		request[xx*3+1]->sync();
+		request[xx*3+2]->sync();
+	}
+	```
+
+	This is the section of the code where the application issues requests to the kernels.
+	- Notice how after issuing the three requests, the application synchronizes by waiting for the completion of the outstanding requests
+	- The second iteration of the ```for xx``` loop will only start after the completion of the previous three request
+	- This corresponds to what we observed in the **Application Timeline**
+
+	To remove the gap between two kernel invocation, we need to change the sequence of requests and synchronizations. 
+
+1. Modify the source code as shown below
+	```C
+	for(int xx=0; xx<numRuns; xx++) 
+	{
+		// Make independent requests to Blur Y, U and V planes
+		// Requests will run sequentially if there is a single kernel
+		// Requests will run in parallel is there are two or more kernels
+		request[xx*3+0] = Filter(coeff.data(), y_src.data(), width, height, stride, y_dst.data());
+		request[xx*3+1] = Filter(coeff.data(), u_src.data(), width, height, stride, u_dst.data());
+		request[xx*3+2] = Filter(coeff.data(), v_src.data(), width, height, stride, v_dst.data());
+	}
+	for(int xx=0; xx<numRuns; xx++) 
+	{
+		// Wait for completion of the outstanding requests
+		request[xx*3+0]->sync();
+		request[xx*3+1]->sync();
+		request[xx*3+2]->sync();
+	}
+	```
+
+	With this change, the application first issues all the necessary requests and then waits until all the tasks have completed.
+
+1. Save the file and rerun host code compile.
+    
+	```bash
+	rm Filter2D.exe
+    make TARGETS=hw DEVICES=$AWS_PLATFORM app
+	```    
+	- Since only the **host.cpp** file was changed, you will only need to recompile the host code before running again.
+    - The previous sequence was: send 3 requests, wait for their completion, send 3 new requests, wait for their completion
+    - The new sequence is: send 6 requests, wait for their completion
+    - The result is less idle time and reduced latency
+
+By paying careful attention to how the code submits requests and waits for their completion, we can noticeably improve the performance of the application.
+
+1. Now repeat application execution using 1,3 & 6 kernels and observe the improvement in performance.
+
+1. Execute on F1 using the FPGA binary with 1 kernel instance.    
+	```sh
+	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga1k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
+
+1. Now perform the above run using the FPGA binary with 3 kernel instances.
 	```sh 
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga3k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
@@ -314,9 +406,7 @@ These steps would take too long (~6 to 8 hours for all kernels) to complete duri
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga6k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
 
-1. This version is more than 112x faster than the multi-threaded CPU version (!).
-
-	Additional kernels can easily be added (either more 2D filter kernels or different types of kernels) until all FPGA resources are utilized or until the global memory bandwidth is saturated.
+1. This final version with 6 kernels and optmized synchronization is more than 130x faster than the multi-threaded CPU version (!).
 	
 1. Close your terminal to conclude this module.
 
