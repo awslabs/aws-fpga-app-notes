@@ -127,7 +127,7 @@ You should now be connected to the remote F1 instance running Centos 7.
 
 1. Open a new terminal by right-clicking anywhere in the Desktop area and selecting **Open Terminal**.
 
-1. In the terminal, verify that the reInvent17_Developer_Workshop within the aws-fpga-apps-notes repository exists and that the aws-fpga repository exists.
+1. In the terminal, verify that the reInvent18_Developer_Workshop within the aws-fpga-apps-notes repository exists and that the aws-fpga repository exists.
 
     ```bash
     ls -lrtha ~/aws-fpga-app-notes

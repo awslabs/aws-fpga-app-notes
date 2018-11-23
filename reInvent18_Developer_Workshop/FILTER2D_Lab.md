@@ -338,6 +338,5 @@ In this lab, you learned:
 ---------------------------------------
 
 <p align="center"><b>
-Start the next module: <a href="FILTER2D_Lab.md">2. Developing F1 applications</a>
+Start the next module: <a href="HOSTCODE_OPT.md">NEXT: 4. Host Code Optimization</a>
 </b></p>
-

@@ -38,7 +38,7 @@ You will start an EC2 F1 instance based on the FPGA developer AMI and connect to
 1. **Developing an Application using SDAccel GUI** \
 You will learn about creating a project workspace using SDAccel GUI and its layout. You will learn how to run software & hardware emulation flow, profile and how to debug an example application using SDAccel GUI.  Finally you will build the application on hardware and execute it on AWS F1  Instance.
 1. **Developing and optimizing F1 applications with SDAccel** \
-You will use the SDAccel development environment to create and optimize an F1 accelerator. The workshop focuses on the 2D video frame Filter , a compute intensive function which is widely used in image processing.
+You will use the SDAccel development environment to create and optimize an F1 accelerator. The workshop focuses on the 2D video frame Filter, a compute intensive function which is widely used in image processing.
 1. **Optimizing host code** \
 You will experiment with profiling & debug tools to optimize host code to enhance your application.
 1. **Wrap-up and next steps** \
