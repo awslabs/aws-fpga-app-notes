@@ -5,8 +5,8 @@
   <tr>
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
     <td width="20%" align="center"><a href="SETUP.md">1. Connecting to your F1 instance</a></td>
-    <td width="20%" align="center"><a href="FILTER2D_Lab.md">2. Developing F1 applications</a></td>
-    <td width="20%" align="center"><b>3. Introduction to SDAccel GUI</b></td>
+    <td width="20%" align="center"><b>2. Developing an Application using SDAccel GUI</b></td>
+	<td width="20%" align="center"><a href="FILTER2D_Lab.md">3. Developing F1 applications</a></td>
     <td width="20%" align="center"><a href="HOSTCODE_OPT.md">4. Host Code Optimization</a></td>
     <td width="20%" align="center"><a href="WRAP_UP.md">5. Wrapping-up</td>
   </tr>
@@ -28,14 +28,14 @@ This lab uses an example from the Xilinx® SDAccel™ Example GitHub repository,
 #### Creating an SDAccel Project
 In this step, you will launch SDAccel, create a new workspace, load the custom AWS F1 platform file and create a new project.
 
-*  Change to a "helloworld_c" directory and Launch the SDx GUI with the command below. 
+*  Change to "helloworld_c" directory and Launch the SDx GUI with the command below. 
     ```bash
      cd helloworld_c
     sdx -workspace ./workspace
     ```
     > Note that the first invocation of the SDx GUI on a given AWS instance will not be instantaneous but subsequent invocations will be much faster.
 
-* You will be greeted with welcome screen. In the welcome screen click on **Create a New SDx project**
+* You will be greeted with welcome screen. In the welcome screen click on **Create New SDx project**
 
 * In the **Project Type** window, select **Application** and click **Next**.
 
@@ -98,7 +98,7 @@ Software Emulation is used for checking the functional correctness when the host
 
 * Go to **Application Project Settings**, and ensure that the **Active build configuration** is set to **Emulation-SW**.
 
-* Go to drop down menu beside  **Debug** button ![](images/SDAccelGUI_INTRO/Debug.png) and select **debug configuration**. Then select **Profile** tab and set **Generate timeline trace report** option to **Yes**. Click the **APPLY** button and then Click **Close* button to close the debug configurations window.
+* Go to drop down menu beside  **Debug** button ![](images/SDAccelGUI_INTRO/Debug.png) and select **debug configuration**. Then select **Profile** tab and set **Generate timeline trace report** option to **Yes**. Click the **Apply** button and then Click **Close** button to close the debug configurations window.
 
    ![](images/SDAccelGUI_INTRO/DebugConfig_EnableAppTimeline.PNG)
    
@@ -203,13 +203,13 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
 * In the **SDAccel toolbar**, click the **Run** button ![](images/SDAccelGUI_INTRO/Run.png). This builds and runs the application in Hardware Emulation mode. 
     > Note: During the build step, the kernel is compiled into a detailed hardware representation (also known as Register Transfer Level) and linked with a model the selected platform (AWS VU9P V1). Building the design for Hardware Emulation can take a little more than 5 minutes, based on your machine configuration.
 
-* When runs finishes, you will see in the **Console** window a summary of data transfer between kernel(s) and global memory(s).
+* When run finishes, you will see in the **Console** window a summary of data transfer between kernel(s) and global memory(s).
     * This summary shows how much data (KBytes) are read and written from each DDR bank and how much data is read and written by each of the kernel ports.
 
 * In addition to the data transfer summary, the Hardware Emulation run generates various other performance and profiling reports. 
     > Note: the simulation models used in Hardware Emulation are approximate. Profile numbers shown are estimates and might vary from results obtained in real hardware. 
 
-* In the **Assitant** window (located in the lower left section of the GUI), expand **Emulation-HW** and all the items underneath.
+* In the **Assistant** window (located in the lower left section of the GUI), expand **Emulation-HW** and all the items underneath.
 
     * The **HLS Report** (under Emulation-HW > binary_container_1 > vadd) provides detailed information about the SDAccel compiler implemented the kernel in hardware, including timing, performance and resource utilization.
 
@@ -219,11 +219,11 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
 
 * In addition to these reports, SDAccel provides interpreted analysis in the **Guidance** window located next to the **Console** .
 
-* Click on the **Guidance** tab and then click the **Maximize** icon to visualize the full report.
+* Click on the **Guidance** tab and then click the **Maximize** icon to visualize the full report. For simple application you are running now you might not see any guidance. 
     * SDAccel mines the compilation and run logs for key performance criteria, reports whether these criteria are met or not and suggests ways to improve the application when necessary.
-    * At the top of the report, in the **Host Data Transfer** section, you can see that the application is effective at reading and write data between host and device.
-    * However you can see in the **Kernel Data Transfer** section that the application is not taking advantage of all the DDR banks (only 1 out of 4) and that the kernel port data width is suboptimal (32 bits vs a recommended 512 bits).
-    * Select the **KERNEL_PORT_DATA_WIDTH #1** row, look to the right in the **Resolution** column and click the guidance message to see the recommendation.
+    * At the top of the report, in the **Host Data Transfer** section, you can see if the application is effective at reading and writing data between host and device.
+    * you can see in the **Kernel Data Transfer** section if the application is not taking advantage of all the DDR banks and if the kernel port data width is suboptimal (recommended 512 bits).
+    * You can Select the **KERNEL_PORT_DATA_WIDTH #1** row, look to the right in the **Resolution** column and click the guidance message to see the recommendations.
 
 * **Restore** the **Guidance** window to its normal size by clicking the icon in the upper right corner.
 
@@ -301,5 +301,5 @@ After completing this tutorial, you should be able to do the following:
 ---------------------------------------
 
 <p align="center"><b>
-<a href="HOSTCODE_OPT.md">NEXT: 4. Host Code Optimization</a>
+Start the next module: <a href="FILTER2D_Lab.md">3. Developing F1 applications</a>
 </b></p>
