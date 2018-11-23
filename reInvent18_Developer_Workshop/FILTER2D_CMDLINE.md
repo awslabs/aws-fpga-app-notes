@@ -5,8 +5,8 @@
   <tr>
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
     <td width="20%" align="center"><a href="SETUP.md">1. Connecting to your F1 instance</a></td> 
-    <td width="20%" align="center"><b>2. Developing F1 applications</b></td>
-    <td width="20%" align="center"><a href="SDAccelGUI_INTRO.md">3. Introduction to SDAccel GUI</a></td>
+    <td width="20%" align="center"><a href="SDAccelGUI_INTRO.md">2. Developing an Application using SDAccel GUI</a></td>
+	<td width="20%" align="center"><b>3. Developing F1 applications</b></td>
     <td width="20%" align="center"><a href="HOSTCODE_OPT.md">4. Host Code Optimization</a></td>
     <td width="20%" align="center"><a href="WRAP_UP.md">5. Wrapping-up</td>
   </tr>
@@ -19,8 +19,6 @@
 This tutorial is designed to teach the fundamentals of the SDAccel development environment and programming model. 
 
 The kernel used in this tutorial is a 2D video filter, a function widely used in video processing algorithms such as noise reduction, and image sharpening. 
-
-To simplify this tutorial, a workspace preloaded with the initial project configuration is provided in the lab repository.
 
 Please also note that although the entire tutorial is performed on an F1 instance, only the final step of this tutorial really needs to be run on F1. All the interactive development, profiling and optimization steps can be performed on a cost-effective AWS EC2 instance such as T3 or any other instance supported by AWS FPGA Developer AMI. Alternately, Development can also be done using on-premise systems that has Xilinx VIVADO & SDx Tools installed. However, to avoid switching instances during this tutorial, all the steps are performed on the F1 instance.
 
@@ -37,118 +35,12 @@ Please also note that although the entire tutorial is performed on an F1 instanc
     ```
 	*Note: the sdaccel_setup.sh script might generate warning messages, but these can be safely ignored.*
 
-1. Launch the SDAccel GUI and and create a new workspace in the current directory: 
+1. Navigate to the Lab directory: 
     ```bash
     cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D
-    sdx -workspace workspace
     ```
-	*Note: a warning message may appear if loading Eclipse takes longer than expected. Click **Wait** to dismiss it.*
-
-	![](./images/filter2d_lab/SDxWelcome.PNG)
-
-1. The SDAccel GUI comes up and displays the Welcome screen. Click **Create SDx Project**, then select **Application** as the new project type and click **Next**.
-
-	![](./images/filter2d_lab/SDxProjectCreateApplication.PNG)
-
-1. Name your project **Filter2D** and click **Next**.
-
-	![](./images/filter2d_lab/SDxProjectCreateName.PNG)
-
-1. In the **Platform** window click **Add Custom Platform...** then browse into the ```~/aws-fpga/SDAccel/aws_platform``` directory and then click **OK**.
-
-	![](./images/filter2d_lab/SDxProjectCreateCustomPlatform.PNG)
-
-1. Back in the **Platform** window choose the newly added AWS VU9P F1 custom platform and click **Next**.
-
-1. In the **System configuration** window, keep the default settings and click **Next**.
-
-	![](./images/filter2d_lab/SDxProjectCreateSystemConfiguration.PNG)
-
-1. The **Templates** window has a list of possible templates that you can use to get started in building an SDAccel project. For this tutorial, select **Empty Application** and click **Finish**.
-
-	![](./images/filter2d_lab/SDxProjectCreateTemplates.PNG)
-
-1. Most of the configured information will be displayed in the **SDX Project Settings** window which is prominently displayed in the center of the GUI. It indicates the project name (**Filter2D**), the selected platform (**AWS-VU9-F1**).
-
-	![](./images/filter2d_lab/SDxProjectDefault.PNG)
-
-You have now successfully created a new SDAccel project called **Filter2D** for the AWS F1 platform. This is prominently displayed in the SDx Project Settings window in the center of the GUI.
-
-
-1. Familiarize yourself with the different sections of the GUI layout:
-    * The **main menu** bar is located on the top. This menu bar allows direct access to all general project setup and GUI window management tasks. As most tasks are performed through the different setup windows, the main menu is mostly used to recover from accidently closed windows or to access the tool help.
-    * Directly below the main menu bar is the **SDAccel toolbar**.  This provides access to the most common tasks in a project. From left to right, these are: File Management functions (new, save, save all), Configuration Management, Build, Build All, Start Debug, and Run. Most buttons have a default behavior as well as pulldowns.
-    * The **Project Explorer** window occupies the top left hand side of the GUI. This window is used to manage and navigate through project files. In the expanded **src** folder you should be able to see the source files of the project. 
-    * In the middle is the **SDx Project Settings** window. This window is intended for project management and presents the key aspects of an SDx Project. 
-    * The **Outline** viewer on the right hand side provides a high-level, or outline view, of the contents of a selected file. The content of the outline varies depending on the file currently selected in the main window.
-    * In the bottom left section is the **Reports Assistant window**. This allows easy access to all reports generated by SDAccel. 
-    * The remaining windows along the bottom of the main window accommodate the various consoles and terminals which contain output information relating to individual SDAccel executables. Typical output examples are compilation errors or the tool output when running.  
-
-### Importing Design Files
-
-1. In the **Project Explorer** window, click the **Import Sources** button
-	
-
-1. In the **Import Sources** dialog box, click **Browse** and navigate to the ```~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D/src``` directory. Click **OK**.
-
-	![](images/filter2d_lab/SDxProjectCreateImportSrc.PNG).
-	
-1. Click **Select All** and then **Finish**.
-        
-1. You can now expand the **src** directory in the **Project Explorer** to see that all the files are now populated in the project.
-
-### Selecting Functions for HW Acceleration
-
-Now that you have imported all the necessary source files, you need specify which function(s) should be mapped to hardware for FPGA acceleration.
-
-1. In the **Hardware Functions** section of the **SDx Project Settings** window, click the **Add Hardware** button 
-	
-1. SDAccel analyzes the design for all possible kernels in the design, as well as the ability to filter the list if there are multiple kernels. Select the **Filter2DKernel** function and click **OK**. 
-
-1. Notice that a binary container (named **binary_container_1** by default) is added to the project and the **Filter2DKernel** kernel is added to this container. 
-
-1. The code for the kernel used in this example is distributed across different files. SDAccel must be told what those files are. In the **Hardware Functions** section of the GUI, right click on the **Filter2DKernel** and select **Select Extra Source Files...**.
-
-1. Click on the **Filter2D > src > kernel** directory and select the three .cpp files (axi2stream.cpp, filter2d.cpp and readcoeffs.cpp) then click **OK**.
-
-	![](images/filter2d_lab/SDxProjectCreateMapKernelFunctions.PNG).
-	
-### Defining GCC Compilation Options
-
-The host application created in this project leverages OpenCV and OpenMP. Therefore special compilation and linking options must be provided.
-
-1. In the **Project Explorer**, right click on the **Filter2D** project and select **Properties**
-
-1. In the **Properties** window, select **C/C++ Build > Settings**
-
-1. In the **Configuration** pull down, select **[All Configurations]**.
-
-1. In the **SDx GCC Host Compiler** options, add ```-fopenmp``` to the **Expert settings:Command line Pattern** dialog and click **Apply**.
-
-	![](images/filter2d_lab/SDxProjectCreateGccHostCompilerExpertSettings.PNG).
-
-1. In the **SDx GCC Host Linker** options, add ```-fopenmp -Wl,--as-needed -Wl,-rpath,${XILINX_SDX}/lnx64/tools/opencv -L${XILINX_SDX}/lnx64/tools/opencv -lopencv_core -lopencv_highgui``` to the **Expert settings:Command line Pattern** dialog and click **Apply**.
-
-	![](images/filter2d_lab/SDxProjectCreateGccHostLinkerExpertSettings.PNG).
-     
-1. Click **OK** to save and close the custom GCC options.
-
-### Defining Run Configuration options
-
-The host application created in this project takes in various command line arguments. In this step, you will define what flags SDAccel pass to the application when it executes it.
-
-1. Go to the **Run** ![](images/filter2d_lab/RunButton.PNG) menu dropdown and select **Run Configurations...** .
-
-1. Select the **Arguments** tab 
-
-1. Add ```-x ../binary_container_1.xclbin -i ../../../../img/test.bmp -n 1``` in the **Program Arguments** box and click **Apply** and then click **Close**.
-
-	![](images/filter2d_lab/SDxProjectCreateRunArguments.PNG).
-
 
 ### Overview of source code files used in this example
-
-   ![](./images/filter2d_lab/SDxWindows.PNG).
 
 1. Expand the **src** directory in the **Project Explorer**. 
 The project is comprised of two directories:
@@ -284,7 +176,7 @@ These steps would take too long (~6 to 8 hours for all kernels) to complete duri
 
 1. Compiling host code executable 
 	```bash
-    make TARGETS=hw DEVICES=$AWS_PLATFORM exe
+    make TARGETS=hw DEVICES=$AWS_PLATFORM app
 	```
 	 After this command completes you should see Filter2D.exe in the current folder.
 	
@@ -338,5 +230,5 @@ In this lab, you learned:
 ---------------------------------------
 
 <p align="center"><b>
-Start the next module: <a href="SDAccelGUI_INTRO.md">3. Introduction to SDAccel GUI</a>
-</b></p>  
+Start the next module: <a href="HOSTCODE_OPT.md">NEXT: 4. Host Code Optimization</a>
+</b></p>
