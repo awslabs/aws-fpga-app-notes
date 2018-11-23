@@ -42,36 +42,33 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 
 ### Overview of source code files used in this example
 
-1. Expand the **src** directory in the **Project Explorer**. 
+1. list contents in the  **src** directory in terminal.
+
+    ```bash
+    ls -lrt src/
+    ```
+    
 The project is comprised of two directories:
 	* **host** contains the code for the host application running on the CPU.
 	* **kernel** contains the code for the kernel (custom accelerator) running on the FPGA.
 
-1. Expand the **host** directory in the **Project Explorer**. 
-The host code is comprised of the following files:
+1. The **host** directory has files used in host code. The host code is comprised of the following files:
 	* **host.cpp** - main application code.
 	* **filter2d.cpp**, **filter2d.h**, **coefficients.h** and **window2d.h** - code for the filter function running on the CPU.
 	* **xclbin_helper.cpp** and **xclbin_helper.h** - helper code for downloading accelerators to the FPGA.
 	* **cmdlineparser.cpp** and **cmdlineparser.h** - code for parsing command line arguments.
 	* **logger.cpp** and **logger.h** - code for logging information.
 
-1. Expand the **kernel** directory in the **Project Explorer**. 
-The kernel code is comprised of the following files:
+1. The **kernel** directory has files used in fpga accelerator for this project. The kernel code is comprised of the following files:
 	* **filter2d.cpp** and **filter2d.h** - code for the filter function running on the FPGA.
 	* **axi2stream.cpp** and **axi2stream.h** - code for efficiently reading from and writing to memory.
 	* **window_2d.h** and **hls_video_mem.h** - code for handling video line buffers and pixel windows.
 
 ### Overview of the kernel code
 
-1. Now double-click on the **filter2d.cpp** file in the **src/kernel** folder to open it.
+1. Now open the **filter2d.cpp** file in the **src/kernel** folder using a text file editor.
 
-1. Locate the **Outline** viewer located on the right side of the GUI. 
-	* This view provides a convenient way of looking-up and navigating the code hierarchy. 
-	* Each green dot in the **Outline** viewer corresponds to a function in the selected source file. 
-
-	![](./images/filter2d_lab/Outline.PNG)
-
-1. In the **Outline** viewer, click **Filter2DKernel** to look-up this function. 
+1. search for **Filter2DKernel** to look-up this function in the filter2d.cpp file. 
 	* The **Filter2DKernel** function is the top-level of the filter kernel implemented in the custom hardware accelerator. Interface properties for the accelerator are specified in this function. This computationally heavy function can be highly parallelized on the FPGA, providing significant acceleration over a CPU-based implementation.
 	* The kernel encapsulates the three main functions of the accelerator: **AXIBursts2PixelStream**, **Filter2D**, and **PixelStream2AXIBursts**.
 		* The **AXIBursts2PixelStream** function reads from global memory values sent by the host application and streams them to the **Filter2D** function.
@@ -85,22 +82,22 @@ The kernel code is comprised of the following files:
 		- When there is only 1 kernel in the FPGA, a planar formatted YUV 4:4:4 image will have its luma and chroma planes procesed sequentially. 
 		- When there are 3 kernels in the FPGA, the luma and both chroma planes can be processed in parallel, therefore having a higher performance, at the cost of more FPGA resources. We will get back to this later in the lab.
 
-1. Using the **Outline** viewer, quickly look-up and inspect the other important functions of the accelerator:
+1. Quickly look-up and inspect the other important functions of the accelerator in this file :
 	* The **Filter2D** function is the heart of the custom hardware accelerator that peforms the filter computations.
 	* It uses the **Window2D** class that provides an abstraction for getting a two-dimensional pixel window, then performs a simple convolution of the pixels in this window with a programmable filter.
 	* Note the ```#pragma HLS PIPELINE II=1``` statement on line 26. This pragma tells the compiler that a new iteration of the for loop should be started exactly one clock cycle after the previous one.  As a result, the SDAccel compiler builds an accelerator with 15*15=225 multipliers. Where the 225 multiply-add operations of the 2D convolution would be executed sequentially on a conventional CPU architecture, they are executed in parallel in the purpose-built FPGA accelerator. This results in a significant performance improvement.  
 	
 ### Overview of the host application code
 	
-1. Open file **host.cpp** from the **src/host** folder of the **Project Explorer** view.  
+1. Open file **host.cpp** from the **src/host** folder using a test editor.  
 	* This C++ program initializes the test vectors, sets-up OpenCL, runs the reference model, runs the hardware accelerator, releases the OpenCL resources, and compares the results of the reference Filter2D model with the accelerator implementation.
 	
-1. Go to line 215 of the **host.cpp** file by pressing **Ctrl+L** and entering **215**. The **load_xclbin_file** function is where the OpenCL environment is setup in the host application. 
+1. Go to line 215 of the **host.cpp** file. The **load_xclbin_file** function is where the OpenCL environment is setup in the host application. 
 
-1. Using the right mouse button, click on the **load_xclbin_file** function and chose **Open Declaration** to jump to the declaration of the function located in the **xclbin_helper.cpp** file.
+1.  Declaration of the function **load_xclbin_file** located in the **xclbin_helper.cpp** file.
 	* This function takes care of retrieving the OpenCL platform, device ID, creating the OpenCL context and create the OpenCL program. These four steps are typical of all SDAccel application.
 	* The functions implementing these four steps (also located in the **xclbin_helper.cpp** file) will look very familiar to developers with prior OpenCL experience. This code can often be reused as-is from project to project. 
-	* Of particular note is the call to **clCreateProgramWithBinary** (line 87). This function loads contents of the specified FPGA binary file (.xclbin or .awsxclbin file) into the FPGA device of the AWS EC2 F1 instance. 
+	* Of particular note is the call to **clCreateProgramWithBinary** (line 87 of xclbin_helper.cpp file). This function loads contents of the specified FPGA binary file (.xclbin or .awsxclbin file) into the FPGA device of the AWS EC2 F1 instance. 
 	* All objects accessed through a **clCreate...** function call are to be released before terminating the program by calling **clRelease...**. This avoids memory leakage and clears the lock on the device.
 
 1. Now go back to the **host.cpp** file and go to line 309. This where the image is processed using a conventional software implementation.
@@ -112,7 +109,7 @@ The kernel code is comprised of the following files:
 	* Line 279-281, the **Filter()** operator is used to issue independent requests to process the Y, U and V color planes using the FPGA accelerator.
 	* **Filter** is declared line 269 as an object of type **Filter2DDispatcher**. The **Filter2DDispatcher** class encapsulates the necessary OpenCL API calls used to send requests to the hardware accelerated Filter2DKernel.
 
-1. Click on **Filter2DDispatcher** and press **F3** to go to the declaration of the class.
+1.  **Filter2DDispatcher** class declaration is at line 81 in the current file ( ./src/host.cpp).
 
 	The class constructor (line 85) creates the OpenCL objects required to communicate with the FPGA accelerator: 
 	* **clCreateKernel** is used to create the kernel object.
@@ -140,7 +137,7 @@ SDAccel provides two emulation flows which allow testing the application before 
 	* The more detailed hardware simulation allows more accurate reporting of kernel and system performance.
 	* This flow is also useful for testing the functionality of the logic that will go in the FPGA.
 
-Host and Kernel code can be optimized by running emulation flows and analyzing the reports.
+Host and Kernel code can be profiles & optimized by running emulation flows and analyzing the reports.
 
 ### Building the FPGA binary to execute on F1 
 
@@ -155,11 +152,11 @@ The **create_sdaccel_afi.sh** script does the following:
 * Generates a \<timestamp\>_afi_id.txt which contains the FPGA Image Identifier (or AFI ID) and Global FPGA Image Identifier (or AGFI ID) of the generated AFI
 * Creates the *.awsxclbin AWS FPGA binary file which is read by the host application to determine which AFI should be loaded in the FPGA.
 
-These steps would take too long (~6 to 8 hours for all kernels) to complete during this tutorial, therefore precompiled FPGA binaries are used to continue this lab and execute on F1.
+These steps would take too long (~6 to 8 hours for all kernels) to complete during this tutorial, therefore pre-compiled FPGA binaries are used to continue this lab and execute on F1.
 
 ### Executing on F1 
 
-1. Quit the SDAccel GUI and return to the terminal from which you started the tool.
+1. Return to the terminal where you started this lab.
 
 1. Make sure you are in the correct directory
 	```bash
