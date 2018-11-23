@@ -281,7 +281,10 @@ When the application profile looks good, you can compile it to run on the hardwa
 
 * If you skipped directly to this section without building the Kernel AFIs copy the pregenerated  kernel afi files  to the target directory.
   ```bash
-  cp ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/kernel_afi_files/vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin  ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/workspace/Test/System/.
+  cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c
+  make TARGETS=hw DEVICES=$AWS_PLATFOTM exe
+  cp Test ./workspace/Test/System/.
+  cp ./kernel_afi_files/vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin  ./workspace/Test/System/.
   ```
 
 * Execute the following commands in the instance terminal:
