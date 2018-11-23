@@ -192,7 +192,7 @@ These steps would take too long (~6 to 8 hours for all kernels) to complete duri
 	- It processes this image 10 times (```-n``` argument)
 	- It uses a FPGA binary with 1 kernel (```-x``` argument)
 
-1. Note the performance difference between the FPGA-accelerated and CPU-only executions of the 2D image filtering function. With a single kernel, the accelerated version is more than 19x faster than the multi-threaded CPU version.
+1. Note the performance difference between the FPGA-accelerated and CPU-only executions of the 2D image filtering function. With a single kernel, the accelerated version is more than 30x faster than the multi-threaded CPU version.
 
 ### Optimization   
 
@@ -205,7 +205,7 @@ The first hardware run helped establish a performance baseline. The next step is
 	```sh 
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga3k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
-1. Compare the new performance numbers: the version with 3 kernels is nearly 3x faster than the version with a single kernel.
+1. Compare the new performance numbers: the FPGA version with 3 kernels is nearly 3x faster than the version with a single kernel and 90X when compared to Software version.
 
 1. Now perform the same run using the FPGA binary with 6 kernel instances.
 	```sh 
@@ -297,7 +297,7 @@ By paying careful attention to how the code submits requests and waits for their
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga6k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
 
-1. This version is more than 145x faster than the multi-threaded CPU version (!).
+1. This final version with 6 kernels and optmized synchronization is more than 130x faster than the multi-threaded CPU version (!).
 	
 1. Close your terminal to conclude this module.
 
