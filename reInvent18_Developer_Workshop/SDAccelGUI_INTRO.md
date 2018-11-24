@@ -232,56 +232,49 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
 
 *  Building FPGA Binaries & AFI images takes a few hours (3 to 4 hours for this Lab). For the purpose of this workshop kernel binaries & AFIs  have been pre-built for you and placed in **kernel_afi_files** directory within this lab's directory. You can directly skip to **[Executing the Application on F1](SDAccelGUI_INTRO.md#executing-the-application-on-f1)**.
 
-	>This section describes the steps of running through through hardware build flow.
+	> This section describes the steps of running through through hardware build flow.
 	> * Go to **Application Project Settings** and set **Active build configuration** to **System**.
-	>
 	> * Click the **Build** button to initiate the hardware build process.
-    > IMPORTANT: It generally takes a few hours to complete the hardware build. 
+        > IMPORTANT: It generally takes a few hours to complete the hardware build. 
 	> * Once the build process completes, you will find the host executable (```Test.exe```) and the FPGA binary (```binary_container_1.xclbin```) in the ```/home/centos/helloworld_c/workspace/Test/System``` directory.
 	> * Exit the SDAccel GUI.
-	>
 	> * Create the AFI from the FPGA binary using the AWS **create_sdaccel_afi.sh** script:
 	>
-  ```bash
-  cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/workspace/Test/System
-  $SDACCEL_DIR/tools/create_sdaccel_afi.sh
-      -xclbin=binary_container_1.xclbin
-	  -o=vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0
-      -s3_bucket=<bucket-name>
-      -s3_dcp_key=<dcp-folder-name>
-      -s3_logs_key=<logs-folder-name>
-  ```
+  	>   ```bash
+  	>     cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/workspace/Test/System
+  	>     $SDACCEL_DIR/tools/create_sdaccel_afi.sh -xclbin=binary_container_1.xclbin -o=vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0 -s3_bucket=<bucket-name> -s3_dcp_key=<dcp-folder-name> -s3_logs_key=<logs-folder-name>
+  	>   ```
 	>
 	> * The **create_sdaccel_afi.sh script** does the following:
-    > * Starts a background process to create the AFI
-    > * Generates a \<timestamp\>_afi_id.txt which contains the FPGA Image Identifier (or AFI ID) and Global FPGA Image Identifier (or AGFI ID) of the generated AFI
-    > * Creates the \*.awsxclbin AWS FPGA binary file which will need to be read by the host application to determine which AFI should be loaded in the FPGA.
+	> 	* Starts a background process to create the AFI
+	> 	* Generates a \<timestamp\>_afi_id.txt which contains the FPGA Image Identifier (or AFI ID) and Global FPGA Image Identifier (or AGFI ID) of the generated AFI
+	> 	* Creates the \*.awsxclbin AWS FPGA binary file which will need to be read by the host application to determine which AFI should be loaded in the FPGA.
 	>
 	> * Note the values of the AFI IDs by opening the \<timestamp\>_afi_id.txt  file
-  ```bash
-  cat *.afi_id.txt
-  ```
+  	>    ```bash
+  	>    cat *.afi_id.txt
+  	>    ```
 	>
 	> * Use the **describe-fpga-images** API to check the status AFI generation process
-  ```bash
-  aws ec2 describe-fpga-images --fpga-image-ids <AFI ID>
-  ```
+  	>   ```bash
+  	>   aws ec2 describe-fpga-images --fpga-image-ids <AFI ID>
+  	>   ```
 	>
 	> * The AFI creation process started in the background is not instantaneous. You need to make sure that the process completes successfully before being able to run on the F1 instance. When AFI creation completes successfully, the output should contain:
-  ```json
-  ...
-  "State": {
-      "Code": "available"
-  },
-  ...
-  ```
+  	>   ```json
+  	>    ...
+  	> 	"State": {
+	> 	"Code": "available"
+	> 	},
+  	>    ...
+  	>   ```
 	> * Wait until the AFI becomes available before proceeding to execute the application on the F1 instance.
 	> * Once AFI is available copy over the awsxclbin & exe file to the Lab directory as below.
-  
-  ```bash
-    cp vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin  ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/
-	cp Test.exe ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/Test
-  ```	
+  	>
+  	>   ```bash
+    	> 	cp vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin  ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/
+	> 	cp Test.exe ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/Test
+  	>   ```
   
 #### Executing the Application on F1
 
