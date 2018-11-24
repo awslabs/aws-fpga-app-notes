@@ -271,10 +271,10 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
 	> * Wait until the AFI becomes available before proceeding to execute the application on the F1 instance.
 	> * Once AFI is available copy over the awsxclbin & exe file to the Lab directory as below.
   	>
-  	>   ```bash
-    	> 	cp vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin  ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/
-	> 	cp Test.exe ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/Test
-  	>   ```
+>   ```bash
+>   cp vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin  ~/aws-fpga-app-notes/reInvent18_Developer_Worksho/helloworld_c/
+> 	cp Test.exe ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/Test
+>   ```
   
 #### Executing the Application on F1
 
