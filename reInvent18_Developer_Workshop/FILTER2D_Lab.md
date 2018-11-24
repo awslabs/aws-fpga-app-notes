@@ -42,13 +42,13 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 
 ### Overview of source code files used in this example
 
-1. list contents in the  **src** directory in terminal.
+1. List contents of the **src** directory.
 
     ```bash
-    ls -lrt src/
+    ls -la src/
     ```
     
-The project is comprised of two directories:
+1. The project is comprised of two directories:
 	* **host** contains the code for the host application running on the CPU.
 	* **kernel** contains the code for the kernel (custom accelerator) running on the FPGA.
 
