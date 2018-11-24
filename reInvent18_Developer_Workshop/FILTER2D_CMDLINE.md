@@ -42,31 +42,31 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 
 ### Overview of source code files used in this example
 
-1. list contents in the  **src** directory in terminal.
+1. List contents of the **src** directory.
 
     ```bash
-    ls -lrt src/
+    ls -la src/
     ```
     
-The project is comprised of two directories:
-	* **host** contains the code for the host application running on the CPU.
-	* **kernel** contains the code for the kernel (custom accelerator) running on the FPGA.
+1. The project is comprised of two directories:
+	* **host** directory contains the code for the host application running on the CPU.
+	* **kernel** directory contains the code for the kernel (custom accelerator) running on the FPGA.
 
-1. The **host** directory has files used in host code. The host code is comprised of the following files:
+1. The **host code** is comprised of the following files:
 	* **host.cpp** - main application code.
 	* **filter2d.cpp**, **filter2d.h**, **coefficients.h** and **window2d.h** - code for the filter function running on the CPU.
 	* **xclbin_helper.cpp** and **xclbin_helper.h** - helper code for downloading accelerators to the FPGA.
 	* **cmdlineparser.cpp** and **cmdlineparser.h** - code for parsing command line arguments.
 	* **logger.cpp** and **logger.h** - code for logging information.
 
-1. The **kernel** directory has files used in fpga accelerator for this project. The kernel code is comprised of the following files:
+1. The **kernel code** is comprised of the following files:
 	* **filter2d.cpp** and **filter2d.h** - code for the filter function running on the FPGA.
 	* **axi2stream.cpp** and **axi2stream.h** - code for efficiently reading from and writing to memory.
 	* **window_2d.h** and **hls_video_mem.h** - code for handling video line buffers and pixel windows.
 
 ### Overview of the kernel code
 
-1. Now open the **filter2d.cpp** file in the **src/kernel** folder using a text file editor.
+1. Open the **filter2d.cpp** file in the **src/kernel** folder using a text file editor.
 
 1. search for **Filter2DKernel** to look-up this function in the filter2d.cpp file. 
 	* The **Filter2DKernel** function is the top-level of the filter kernel implemented in the custom hardware accelerator. Interface properties for the accelerator are specified in this function. This computationally heavy function can be highly parallelized on the FPGA, providing significant acceleration over a CPU-based implementation.
@@ -163,7 +163,7 @@ These steps would take too long (~6 to 8 hours for all kernels) to complete duri
 	cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D
 	```
 
-1. List the content of the xclbin directory:
+1. List the contents of the xclbin directory:
 	```bash
 	ls -la ./xclbin
 	```
@@ -196,7 +196,9 @@ These steps would take too long (~6 to 8 hours for all kernels) to complete duri
 
 ### Optimization   
 
-The first hardware run helped establish a performance baseline. The next step is to optimize the application to improve overall performance. This tutorial illustrates two optimization techniques: 1) improving throughput by executing multiple kernels in parallel and 2) improving latency by optimally scheduling execution of kernels within the host application.
+The first hardware run helped establish a performance baseline. The next step is to optimize the application to improve overall performance. This tutorial illustrates two optimization techniques:
+ 1) improving throughput by executing multiple kernels in parallel
+ 2) improving latency by optimally scheduling execution of kernels within the host application.
 
 
 #### Adding More Kernels  
@@ -212,7 +214,7 @@ The first hardware run helped establish a performance baseline. The next step is
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga6k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
 
-1. This version is more than 112x faster than the multi-threaded CPU version (!).
+1. This version is more than 110x faster than the multi-threaded CPU version (!).
 
 	Additional kernels can easily be added (either more 2D filter kernels or different types of kernels) until all FPGA resources are utilized or until the global memory bandwidth is saturated.
 
@@ -280,7 +282,7 @@ The first hardware run helped establish a performance baseline. The next step is
 
 By paying careful attention to how the code submits requests and waits for their completion, we can noticeably improve the performance of the application.
 
-1. Now repeat application execution using 1,3 & 6 kernels and observe the improvement in performance.
+1. Repeat application execution using 1,3 & 6 kernels and observe the improvement in performance.
 
 1. Execute on F1 using the FPGA binary with 1 kernel instance.    
 	```sh
@@ -290,14 +292,12 @@ By paying careful attention to how the code submits requests and waits for their
 	```sh 
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga3k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
-1. Compare the new performance numbers: the version with 3 kernels is nearly 3x faster than the version with a single kernel.
-
 1. Now perform the same run using the FPGA binary with 6 kernel instances.
 	```sh 
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga6k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
 
-1. This final version with 6 kernels and optmized synchronization is more than 130x faster than the multi-threaded CPU version (!).
+1. This final version with 6 kernels and optimized synchronization is more than 130x faster than the multi-threaded CPU version (!).
 	
 1. Close your terminal to conclude this module.
 

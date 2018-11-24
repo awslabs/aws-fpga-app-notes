@@ -1,12 +1,12 @@
 <table style="width:100%">
   <tr>
-    <th width="100%" colspan="5"><h2>re:Invent 2018 Developer Workshop</h2></th>
+    <th width="100%" colspan="6"><h2>re:Invent 2018 Developer Workshop</h2></th>
   </tr>
   <tr>
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
     <td width="20%" align="center"><a href="SETUP.md">1. Connecting to your F1 instance</a></td> 
-    <td width="20%" align="center"><b>2. Developing F1 applications</b></td>
-	<td width="20%" align="center"><a href="SDAccelGUI_INTRO.md">3. Introduction to SDAccel GUI</a></td>
+    <td width="20%" align="center"><a href="SDAccelGUI_INTRO.md">2. Developing an Application using SDAccel GUI</a></td>
+	<td width="20%" align="center"><b>3. Developing F1 applications</b></td>
     <td width="20%" align="center"><a href="HOSTCODE_OPT.md">4. Host Code Optimization</a></td>
     <td width="20%" align="center"><a href="WRAP_UP.md">5. Wrapping-up</td>
   </tr>
@@ -20,9 +20,7 @@ This tutorial is designed to teach the fundamentals of the SDAccel development e
 
 The kernel used in this tutorial is a 2D video filter, a function widely used in video processing algorithms such as noise reduction, and image sharpening. 
 
-To simplify this tutorial, a workspace preloaded with the initial project configuration is provided in the lab repository.
-
-Please also note that although the entire tutorial is performed on an F1 instance, only the final step of this tutorial really needs to be run on F1. All the interactive development, profiling and optimization steps would normally be performed on-premise or on a cost-effective AWS EC2 instance such as C4. However, to avoid switching from C4 to F1 instances during this tutorial, all the steps are performed on the F1 instance.
+Please also note that although the entire tutorial is performed on an F1 instance, only the final step of this tutorial really needs to be run on F1. All the interactive development, profiling and optimization steps can be performed on a cost-effective AWS EC2 instance such as T3 or any other instance supported by AWS FPGA Developer AMI. Alternately, Development can also be done using on-premise systems that has Xilinx VIVADO & SDx Tools installed. However, to avoid switching instances during this tutorial, all the steps are performed on the F1 instance.
 
 ### Starting SDAccel
 
@@ -68,18 +66,18 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 
 	![](./images/filter2d_lab/SDxProjectCreateTemplates.PNG)
 
-1. Most of the configured information will be displayed in the **SDX Project Settings** window which is prominently displayed in the center of the GUI. It indicates the project name (**Filter2D**), the selected platform (**AWS-VU9-F1**).
+1. Most of the configured information will be displayed in the **Application Project Settings** window which is prominently displayed in the center of the GUI. It indicates the project name (**Filter2D**), the selected platform (**AWS-VU9-F1**).
 
 	![](./images/filter2d_lab/SDxProjectDefault.PNG)
 
-You have now successfully created a new SDAccel project called **Filter2D** for the AWS F1 platform. This is prominently displayed in the SDx Project Settings window in the center of the GUI.
+You have now successfully created a new SDAccel project called **Filter2D** for the AWS F1 platform. This is prominently displayed in the **Application Project Settings** window in the center of the GUI.
 
 
 1. Familiarize yourself with the different sections of the GUI layout:
     * The **main menu** bar is located on the top. This menu bar allows direct access to all general project setup and GUI window management tasks. As most tasks are performed through the different setup windows, the main menu is mostly used to recover from accidently closed windows or to access the tool help.
     * Directly below the main menu bar is the **SDAccel toolbar**.  This provides access to the most common tasks in a project. From left to right, these are: File Management functions (new, save, save all), Configuration Management, Build, Build All, Start Debug, and Run. Most buttons have a default behavior as well as pulldowns.
     * The **Project Explorer** window occupies the top left hand side of the GUI. This window is used to manage and navigate through project files. In the expanded **src** folder you should be able to see the source files of the project. 
-    * In the middle is the **SDx Project Settings** window. This window is intended for project management and presents the key aspects of an SDx Project. 
+    * In the middle is the **Application Project Settings** window. This window is intended for project management and presents the key aspects of an SDx Project. 
     * The **Outline** viewer on the right hand side provides a high-level, or outline view, of the contents of a selected file. The content of the outline varies depending on the file currently selected in the main window.
     * In the bottom left section is the **Reports Assistant window**. This allows easy access to all reports generated by SDAccel. 
     * The remaining windows along the bottom of the main window accommodate the various consoles and terminals which contain output information relating to individual SDAccel executables. Typical output examples are compilation errors or the tool output when running.  
@@ -101,7 +99,7 @@ You have now successfully created a new SDAccel project called **Filter2D** for 
 
 Now that you have imported all the necessary source files, you need specify which function(s) should be mapped to hardware for FPGA acceleration.
 
-1. In the **Hardware Functions** section of the **SDx Project Settings** window, click the **Add Hardware** button 
+1. In the **Hardware Functions** section of the **Application Project Settings** window, click the **Add Hardware** button 
 	
 1. SDAccel analyzes the design for all possible kernels in the design, as well as the ability to filter the list if there are multiple kernels. Select the **Filter2DKernel** function and click **OK**. 
 
@@ -231,7 +229,7 @@ The kernel code is comprised of the following files:
 	* **clEnqueueMigrateMemObjects** calls are used to schedule the transfer of the input buffers to the FPGA device and then transfer the output buffer back to the host.
 	* **clSetKernelArg** calls are used to set the arguments of the kernel.
 	* **clEnqueueTask** is used to schedule the execution of the kernel.
-	* **clSetEventCallback** is used to registers a user callback function, which in this case, simply prints a message when transfer of the output buffer back to the host is complete.
+	* **clSetEventCallback** is used to register a user callback function, which in this case, simply prints a message when transfer of the output buffer back to the host is complete.
 
 	All of the above API functions are documented by the [Khronos Group](https://www.khronos.org), the maintainers of OpenCL, the open standard for parallel programming of heterogeneous systems
 
@@ -338,7 +336,9 @@ This section covers how to locate and read the various reports generated by the 
 
 ### Optimization   
 
-The first hardware emulation run helped establish a performance baseline. The next step is to optimize the application to improve overall performance. This tutorial illustrates two optimization techniques: 1) improving throughput by executing multiple kernels in parallel and 2) improving latency by optimally scheduling execution of kernels within the host application.
+The first hardware run helped establish a performance baseline. The next step is to optimize the application to improve overall performance. This tutorial illustrates two optimization techniques:
+ 1) improving throughput by executing multiple kernels in parallel
+ 2) improving latency by optimally scheduling execution of kernels within the host application.
 
 
 #### Adding More Kernels  
@@ -418,6 +418,7 @@ As can be seen line 177 of **host.cpp**, the application already supports a comm
 
 We can improve the latency of our application by removing the idle time between consecutive kernel invocations.
 
+	
 #### Host Code Optimization
 
 1. Go to line 274 of **host.cpp**.
@@ -549,7 +550,7 @@ These steps would take too long (~6 to 8 hours for all kernels) to complete duri
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga6k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
 
-1. This version is more than 112x faster than the multi-threaded CPU version (!).
+1. This version is more than 130x faster than the multi-threaded CPU version (!).
 
 	Additional kernels can easily be added (either more 2D filter kernels or different types of kernels) until all FPGA resources are utilized or until the global memory bandwidth is saturated.
 	
@@ -569,9 +570,9 @@ In this lab, you learned:
 * How to read the various reports generated by SDAccel
 * How to improve performance by adding more kernels to take advantage of task-level parallelism
 * How to improve performance by managing synchronization points in the host application.
- 
+
 ---------------------------------------
 
 <p align="center"><b>
-Start the next module: <a href="SDAccelGUI_INTRO.md">3. Introduction to SDAccel GUI</a>
-</b></p>  
+Start the next module: <a href="HOSTCODE_OPT.md">NEXT: 4. Host Code Optimization</a>
+</b></p>

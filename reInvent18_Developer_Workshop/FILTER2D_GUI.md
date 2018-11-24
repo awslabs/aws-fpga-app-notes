@@ -272,7 +272,7 @@ These steps would take too long (~6 to 8 hours for all kernels) to complete duri
 	cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D
 	```
 
-1. List the content of the xclbin directory:
+1. List the contents of the xclbin directory:
 	```bash
 	ls -la ./xclbin
 	```
@@ -305,7 +305,9 @@ These steps would take too long (~6 to 8 hours for all kernels) to complete duri
 
 ### Optimization   
 
-The first hardware run helped establish a performance baseline. The next step is to optimize the application to improve overall performance. This tutorial illustrates two optimization techniques: 1) improving throughput by executing multiple kernels in parallel and 2) improving latency by optimally scheduling execution of kernels within the host application.
+The first hardware run helped establish a performance baseline. The next step is to optimize the application to improve overall performance. This tutorial illustrates two optimization techniques:
+ 1) improving throughput by executing multiple kernels in parallel
+ 2) improving latency by optimally scheduling execution of kernels within the host application.
 
 
 #### Adding More Kernels  
@@ -321,7 +323,7 @@ The first hardware run helped establish a performance baseline. The next step is
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga6k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
 
-1. This version is more than 112x faster than the multi-threaded CPU version (!).
+1. This version is more than 110x faster than the multi-threaded CPU version (!).
 
 	Additional kernels can easily be added (either more 2D filter kernels or different types of kernels) until all FPGA resources are utilized or until the global memory bandwidth is saturated.
 
@@ -389,7 +391,7 @@ The first hardware run helped establish a performance baseline. The next step is
 
 By paying careful attention to how the code submits requests and waits for their completion, we can noticeably improve the performance of the application.
 
-1. Now repeat application execution using 1,3 & 6 kernels and observe the improvement in performance.
+1. Repeat application execution using 1,3 & 6 kernels and observe the improvement in performance.
 
 1. Execute on F1 using the FPGA binary with 1 kernel instance.    
 	```sh
@@ -399,14 +401,12 @@ By paying careful attention to how the code submits requests and waits for their
 	```sh 
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga3k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
-1. Compare the new performance numbers: the version with 3 kernels is nearly 3x faster than the version with a single kernel.
-
 1. Now perform the same run using the FPGA binary with 6 kernel instances.
 	```sh 
 	./Filter2D.exe -i img/picadilly_1080p.bmp -n 10 -x ./xclbin/fpga6k.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
 	```
 
-1. This final version with 6 kernels and optmized synchronization is more than 130x faster than the multi-threaded CPU version (!).
+1. This final version with 6 kernels and optimized synchronization is more than 130x faster than the multi-threaded CPU version (!).
 	
 1. Close your terminal to conclude this module.
 
