@@ -215,7 +215,7 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
 
     * The **Profile Summary** (under Emulation-HW > Test-Default) provides information related to kernel operation, data transfers, and OpenCL API calls, as well as profiling information related to the resource usage, and data transfer to/from the kernel/host.
 
-    * The **Application Timeline** (under Emulation-HW > Test-Default) shows a visual timeline of the OpenCL API calls, data transfers and kernel executions. Notice how the Hardware Emulation timelime looks different from the Software Emulation one. The sequence of API calls and kernel invocations is actually the same, but because the Hardware Emulation operates with more accurate performance estimates, the timeline shows more realistic durations for the kernel enqueues.
+    * The **Application Timeline** (under Emulation-HW > Test-Default) shows a visual timeline of the OpenCL API calls, data transfers and kernel executions. Notice how the Hardware Emulation timeline looks different from the Software Emulation one. The sequence of API calls and kernel invocations is actually the same, but because the Hardware Emulation operates with more accurate performance estimates, the timeline shows more realistic durations for the kernel enqueues.
 
 * In addition to these reports, SDAccel usually provides interpreted analysis in the **Guidance** window located next to the **Console**. For the simple applications such as the one you are running now you might not see any guidance report. 
 
@@ -232,7 +232,7 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
 
 *  Building FPGA Binaries & AFI images takes a few hours (3 to 4 hours for this Lab). For the purpose of this workshop kernel binaries & AFIs  have been pre-built for you and placed in **kernel_afi_files** directory within this lab's directory. You can directly skip to **[Executing the Application on F1](SDAccelGUI_INTRO.md#executing-the-application-on-f1)**.
 
-	> This section describes the steps of running through through hardware build flow.
+	> This section describes the steps of running through hardware build flow.
 	> * Go to **Application Project Settings** and set **Active build configuration** to **System**.
 	> * Click the **Build** button to initiate the hardware build process.
         > IMPORTANT: It generally takes a few hours to complete the hardware build. 

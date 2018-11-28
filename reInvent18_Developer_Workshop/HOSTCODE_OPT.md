@@ -42,7 +42,7 @@ The kernel is also designed to enable AXI burst transfers. Towards that end, the
 
 ### Building the Kernel
 
-Although some host code optimizations can be performed quite well with hardware emulation, accurate runtime information and running of large test vectors will require the kernel to be exected on the actual system. In general, during host code optimization the kernel is not expected to change, this is a one time hit and can easily be performed even before the hardware model is finalized.
+Although some host code optimizations can be performed quite well with hardware emulation, accurate runtime information and running of large test vectors will require the kernel to be executed on the actual system. In general, during host code optimization the kernel is not expected to change, this is a one time hit and can easily be performed even before the hardware model is finalized.
 
 For this tutorial, the example was setup to build the hardware bitstream one time by issuing the following commands:
 
@@ -52,7 +52,7 @@ make TARGET=hw DEVICE=$AWS_PLATFORM kernel
 
 *$AWS_PLATFORM* is F1 device Platform (.xpfm) in which the kernel runs.
 
-**NOTE:** This build process will take several hours and you will need to wait for completion of the kernel compilation before actually analysing the host code impact. For this workshop we have precompiled the kernel for you. precompiled kernels awsxclbin file can be found in *xclbin* directory.
+**NOTE:** This build process will take several hours and you will need to wait for completion of the kernel compilation before actually analyzing the host code impact. For this workshop we have precompiled the kernel for you. precompiled kernels awsxclbin file can be found in *xclbin* directory.
 
 ``` bash
   ./xclbin/pass.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
@@ -62,15 +62,15 @@ make TARGET=hw DEVICE=$AWS_PLATFORM kernel
 
 Before examining different implementation options for the host code, take a look at the structure of the code. The host code file is designed to let you focus on the key aspects of host code optimization. Towards that end, three classes are provided through header files in the common source directory (srcCommon):  
 
-   * [hostcode_opt/srcCommon/AlignedAllocator.h](hostcode_opt/srcCommon/AlignedAllocator.h): Strictly speaking the AlignedAllocator is a small struct with two methods. This struct is provided as a helper class to support aligned memory allocation for the test vectors. Memory aligned blocks of data can be transfered much more rapidly and the OpenCL library will create warnings if the data transmitted isn't memory aligned.
+   * [hostcode_opt/srcCommon/AlignedAllocator.h](hostcode_opt/srcCommon/AlignedAllocator.h): Strictly speaking the AlignedAllocator is a small struct with two methods. This struct is provided as a helper class to support aligned memory allocation for the test vectors. Memory aligned blocks of data can be transferred much more rapidly and the OpenCL library will create warnings if the data transmitted isn't memory aligned.
 
    * [hostcode_opt/srcCommon/ApiHandle.h](hostcode_opt/srcCommon/ApiHandle.h): This class encapsulates the main OpenCL objects, namely the context, the program, the device_id, the execution kernel, and the command_queue. These structures are populated by the constructor which basically steps through the default sequence of OpenCL function calls. There are only two configuration parameters to the constructor: the first is a string containing the name of the bitstream (xclbin) to be used to program the FPGA, the second is a boolean to determine if an out-of-order queue or a sequential execution queue should be created.
 
    The class provides accessor functions to the queue, context, and kernel required for the generation of buffers and the scheduling of tasks on the accelerator. The class also automatically releases the allocated OpenCL objects when the ApiHandle destructor is called.
 
-   * [hostcode_opt/srcCommon/Task.h](hostcode_opt/srcCommon/Task.h): An object of class "Task" represents a single instance of the workload to be executed on the accelerator. Whenever an object of this class is constructed, the input and output vectors are allocated and initialized, based on the buffer size to be transfered per task invocation. Similarly, the destructor will deallocate any object generated during the task execution. It should also be noted, this encapsulation of a single workload for the invocation of a module allows this class also to contain an output validator function (outputOk).
+   * [hostcode_opt/srcCommon/Task.h](hostcode_opt/srcCommon/Task.h): An object of class "Task" represents a single instance of the workload to be executed on the accelerator. Whenever an object of this class is constructed, the input and output vectors are allocated and initialized, based on the buffer size to be transferred per task invocation. Similarly, the destructor will deallocate any object generated during the task execution. It should also be noted, this encapsulation of a single workload for the invocation of a module allows this class also to contain an output validator function (outputOk).
 
-   The constructor of this class contains two parameters: the first, bufferSize, determines how many 512 bit values are transfered when this task is executed; the second, processDelay, simply provides the similary named kernel parameter and is also used during validation.
+   The constructor of this class contains two parameters: the first, bufferSize, determines how many 512 bit values are transfered when this task is executed; the second, processDelay, simply provides the similarly named kernel parameter and is also used during validation.
 
    The most important member function of this class is the "run"-function. This function fills the OpenCL queue with the three different steps for executing the algorithm. These steps are writing data to the FPGA accelerator, setting up the kernel and running the accelerator, and reading the data back from the DDR memory on the FPGA. To perform this task, buffers are allocated on the DDR for the communication. Also events are used to express the dependency between the different task (write before execute before read).
 
@@ -90,7 +90,7 @@ The main function contains the following sections and these are marked in the so
 1. Setup: To ensure that you are aware of the status of configuration variables, this section will print out the final configuration.
 1. Execution: In this section, you will be able to model several different host code performance issues. These are the lines you will focus on for this tutorial.
 1. Testing: Once execution has completed, this section performs a simple check on the output.
-1. Performance Statistics: If the model is run on an actual accelerator card (not emulated), the host code will calculate and print the performance statisics based on system time measurements.
+1. Performance Statistics: If the model is run on an actual accelerator card (not emulated), the host code will calculate and print the performance statistics based on system time measurements.
 
 **NOTE:** the setup as well as the other sections can print additional messages recording system status as well as overall PASS or FAIL of the run.
 
@@ -104,7 +104,7 @@ Start by compiling and running host code (srcPipeline/host.cpp):
 make TARGET=hw DEVICE=$AWS_PLATFORM pipeline
 ```
 
-Again, *$AWS_PLATFORM* is F1 device accelarator Platform (.xpfm) in which the kernel runs. Compared to the kernel compilation time, this will seem like an instantaneous action.
+Again, *$AWS_PLATFORM* is F1 device accelerator Platform (.xpfm) in which the kernel runs. Compared to the kernel compilation time, this will seem like an instantaneous action.
 
 Look at the execution loop in the host code:
 
@@ -256,11 +256,11 @@ Then if you zoom into the Application Timeline, a figure quite similar to the on
 
 The key elements in this figure are the red box named clFinish and the larger gap between the kernel enqueues every three invocations of the accelerator.  
 
-The call to clFinish creates synchronization point on the complete OpenCL command queue. This implies that all commands enqueued onto the given queue will have to be completed before clFinish returns control to the host program. As a result, all activities including the buffer communication will have to be completed before the next set of 3 accelerator invocations can resume. This is effectively a barrier synchonization.
+The call to clFinish creates synchronization point on the complete OpenCL command queue. This implies that all commands enqueued onto the given queue will have to be completed before clFinish returns control to the host program. As a result, all activities including the buffer communication will have to be completed before the next set of 3 accelerator invocations can resume. This is effectively a barrier synchronization.
 
 While this enables a synchronization point, where buffers can be released and all processes are guaranteed to have completed, it prevents overlap at the synchronization point.
 
-Now look at an alternative synchonization scheme, where the synchonization is performed based on the completion of a previous excecution of a call to the accelerator. Edit the host.cpp file to change the execution loop as follows:
+Now look at an alternative synchronization scheme, where the synchronization is performed based on the completion of a previous excecution of a call to the accelerator. Edit the host.cpp file to change the execution loop as follows:
 
 ``` bash
   // -- Execution -----------------------------------------------------------
@@ -324,9 +324,9 @@ which would allow for additional host code computation while the accelerator is 
 
 In this last section of this tutorial, you will investigate buffer size impact on total performance. Towards that end, you will focus on the host code in srcBuf/host.cpp. The execution loop is exactly the same as at the end of the previous section.
 
-However, in this host code file, the number of tasks to be processed has increased to 100. The goal of this change is to get 100 accelerator calls, transfering 100 buffers and reading 100 buffers. This enables the tool to get a more accurate average throughput estimate per transfer.
+However, in this host code file, the number of tasks to be processed has increased to 100. The goal of this change is to get 100 accelerator calls, transferring 100 buffers and reading 100 buffers. This enables the tool to get a more accurate average throughput estimate per transfer.
 
-In addition, a second command line option (SIZE=) has been added to specify the buffer size for a specific run. The actual buffer size to be transfered during a single write or read is determined by calculating 2 to the power of the specified argument (pow(2, argument)) multiplied by 512 bits.
+In addition, a second command line option (SIZE=) has been added to specify the buffer size for a specific run. The actual buffer size to be transferred during a single write or read is determined by calculating 2 to the power of the specified argument (pow(2, argument)) multiplied by 512 bits.
 
 You can compile the host code by calling:
 
@@ -372,7 +372,7 @@ Note, the sweeping script, [hostcode_opt/auxFiles/run.py](hostcode_opt/auxFiles/
 
 This image shows that the buffer size clearly impacts performance and starts to level out around 2 MBytes. Note, this image is created via gnuplot from the results.csv file and if found on your system will be displayed automatically after you run the sweep.
 
-From a host code performance point of view, this step function clearly identifies a relationship between buffer size and total execution speed. As shown in this example, it is easy to take an algorithm and alter the buffer size when the default implementation is based on small amount of input data. It doesn't have to be dynamic and runtime deterministic as performed here but the principle remains the same. Instead of transmitting a single value set for one invocation of the algorithm you simply transmit multiple input values and repreat the algorithm execution on a single invocation of the accelerator.
+From a host code performance point of view, this step function clearly identifies a relationship between buffer size and total execution speed. As shown in this example, it is easy to take an algorithm and alter the buffer size when the default implementation is based on small amount of input data. It doesn't have to be dynamic and runtime deterministic as performed here but the principle remains the same. Instead of transmitting a single value set for one invocation of the algorithm you simply transmit multiple input values and repeat the algorithm execution on a single invocation of the accelerator.
 
 ### Conclusion
 
