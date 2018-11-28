@@ -79,11 +79,11 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 		- This results in overlapping and pipelined execution of the read, execute and write functions instead of sequential execution.
 		- The FIFO channels between the different processes do not need to buffer the complete dataset anymore but can directly stream the data to the next block. 
 	* Note that the **Filter2D** kernel processes only a single color plane. At compile time, we can choose to have 1 or many kernels in the FPGA. 
-		- When there is only 1 kernel in the FPGA, a planar formatted YUV 4:4:4 image will have its luma and chroma planes procesed sequentially. 
+		- When there is only 1 kernel in the FPGA, a planar formatted YUV 4:4:4 image will have its luma and chroma planes processed sequentially. 
 		- When there are 3 kernels in the FPGA, the luma and both chroma planes can be processed in parallel, therefore having a higher performance, at the cost of more FPGA resources. We will get back to this later in the lab.
 
 1. Quickly look-up and inspect the other important functions of the accelerator in this file :
-	* The **Filter2D** function is the heart of the custom hardware accelerator that peforms the filter computations.
+	* The **Filter2D** function is the heart of the custom hardware accelerator that performs the filter computations.
 	* It uses the **Window2D** class that provides an abstraction for getting a two-dimensional pixel window, then performs a simple convolution of the pixels in this window with a programmable filter.
 	* Note the ```#pragma HLS PIPELINE II=1``` statement on line 26. This pragma tells the compiler that a new iteration of the for loop should be started exactly one clock cycle after the previous one.  As a result, the SDAccel compiler builds an accelerator with 15*15=225 multipliers. Where the 225 multiply-add operations of the 2D convolution would be executed sequentially on a conventional CPU architecture, they are executed in parallel in the purpose-built FPGA accelerator. This results in a significant performance improvement.  
 	
@@ -102,7 +102,7 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 
 1. Now go back to the **host.cpp** file and go to line 309. This where the image is processed using a conventional software implementation.
 	* Line 322-324, the **Filter2D** function is called 3 times to process the Y, U and V color planes of the image, respectively.
-	* Line 318, the OpenMP ```#pragma omp parallel for``` pragma is used to multi-thread the calls to the **Filter2D** function. This ensures a fair benchmark comparison betweem the CPU and FPGA executions.
+	* Line 318, the OpenMP ```#pragma omp parallel for``` pragma is used to multi-thread the calls to the **Filter2D** function. This ensures a fair benchmark comparison between the CPU and FPGA executions.
 
 1. Scroll upwards to line 263. This is where the image is processed using the FPGA accelerator.
 	* Notice how this code looks very similar to the software implementation you just inspected. 
