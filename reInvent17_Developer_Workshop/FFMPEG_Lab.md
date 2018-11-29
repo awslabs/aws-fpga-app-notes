@@ -16,7 +16,7 @@
 
 ### Experiencing F1 Acceleration
 
-In this module you will experience the acceleration potential of AWS F1 instances by using ```ffmpeg``` to encode 20 seconds of raw YUV 1920x1080 video, first using the libx265 codec and then a HEVC encoder optimized for F1 FPGAs. 
+In this module you will experience the acceleration potential of AWS F1 instances by using ```ffmpeg``` to encode 20 seconds of raw YUV 1920x1080 video, first using the libx265 encoder and then a HEVC encoder optimized for F1 FPGAs. 
 
 ![](images/ffmpeg_lab/ffmpeg_lab.png)
 
