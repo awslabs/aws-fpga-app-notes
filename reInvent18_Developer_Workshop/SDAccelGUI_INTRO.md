@@ -36,6 +36,7 @@ In this step, you will launch SDAccel, create a new workspace, load the custom A
     > Note that the first invocation of the SDx GUI on a given AWS instance will not be instantaneous but subsequent invocations will be much faster.
 
 * You will be greeted with welcome screen. In the welcome screen click on **Create Application Project**
+![](images/SDAccelGUI_INTRO/CreateApplicationProject.PNG)
 
 * In the **Create a New SDx Application Project** window in the **Project name** field, type **Test** and click **Next**.
 
@@ -69,7 +70,7 @@ The default GUI perspective includes the following sections:
 * You can now expand the **src** directory in the **Project Explorer** to see that all the files are now populated in the project.
     * **host.cpp** - source code for the host program
     * **vadd.cpp** - source code for the C++ kernel implementing a vector-add function
-    * **xcl2.cpp** and xcl2.hpp - helper functions facilitating the use of FPGA binary files
+    * **xcl2.cpp** and **xcl2.hpp** - helper functions facilitating the use of FPGA binary files
 
 * Double-click on **host.cpp** to open it. This simple example is compact and contains many comments to help understand how the code operates and how the host application interacts with the kernel in the FPGA device.
 
@@ -147,7 +148,7 @@ SDAccel features a built-in debugger which you can use to step through the appli
 
 * Zoom-in in the far right section of the timeline. Here you will find the sequence where the host application transfers data to the device, programs the kernel, executes it and migrates the results back. It should look similar to the image below:
 
-![](images/SDAccelGUI_INTRO/TimelineSW.png)
+![](images/SDAccelGUI_INTRO/ApplicationTimeline_helloworld_c.PNG)
 
 * Notice how the timeline provides a visual representation of the API call sequence that you just stepped through during the debug step. Let's do a simple experiment to confirm this.
 
@@ -185,7 +186,7 @@ SDAccel features a built-in debugger which you can use to step through the appli
 
 * Click one of the blue **vadd** boxes in the **Kernel Enqueues** section of the timeline. Notice how the read/execute/write dependencies are highlights and how you now have 4 consecutive invocations of the **vadd** kernel
 
-![](images/SDAccelGUI_INTRO/TimelineSW_4.png)
+![](images/SDAccelGUI_INTRO/ApplicationTimeline_loop4.PNG)
 
 #### Running Hardware Emulation
 
@@ -207,14 +208,18 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
 * In the **Assistant** window (located in the lower left section of the GUI), expand **Emulation-HW** and all the items underneath.
 
     * The **HLS Report** (under Emulation-HW > binary_container_1 > vadd) provides detailed information about the SDAccel compiler implemented the kernel in hardware, including timing, performance and resource utilization.
+      ![](images/SDAccelGUI_INTRO/HLSReport_Helloworld_c_HWEMU.PNG)
 
     * The **Profile Summary** (under Emulation-HW > Test-Default) provides information related to kernel operation, data transfers, and OpenCL API calls, as well as profiling information related to the resource usage, and data transfer to/from the kernel/host.
+      ![](images/SDAccelGUI_INTRO/ProfileSummary_helloworld_c_HWEMU.PNG)
 
     * The **Application Timeline** (under Emulation-HW > Test-Default) shows a visual timeline of the OpenCL API calls, data transfers and kernel executions. Notice how the Hardware Emulation timeline looks different from the Software Emulation one. The sequence of API calls and kernel invocations is actually the same, but because the Hardware Emulation operates with more accurate performance estimates, the timeline shows more realistic durations for the kernel enqueues.
+      ![](images/SDAccelGUI_INTRO/Application_timeline_helloworld_c_HWEMU.PNG)
 
-* In addition to these reports, SDAccel usually provides interpreted analysis in the **Guidance** window located next to the **Console**. For the simple applications such as the one you are running now you might not see any guidance report. 
+* In addition to these reports, SDAccel provides interpreted analysis in the **Guidance** window located next to the **Console**. 
+      ![](images/SDAccelGUI_INTRO/Guidance_helloworld_c_HWEMU.PNG)
 
-   > When optimizing complex application **Guidance** report can be quite useful. Click on the **Guidance** tab and then click the **Maximize** icon to visualize the full report. 
+   > When optimizing application **Guidance** report can be quite useful. Click on the **Guidance** tab and then click the **Maximize** icon to visualize the full report. 
    > * SDAccel mines the compilation and run logs for key performance criteria, reports whether these criteria are met or not and suggests ways to improve the application when necessary.
    > * At the top of the report, in the **Host Data Transfer** section, you can see if the application is effective at reading and writing data between host and device.
    > * you can see in the **Kernel Data Transfer** section if the application is not taking advantage of all the DDR banks and if the kernel port data width is suboptimal (recommended 512 bits).
@@ -234,6 +239,7 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
 	> * Once the build process completes, you will find the host executable (```Test.exe```) and the FPGA binary (```binary_container_1.xclbin```) in the ```/home/centos/helloworld_c/workspace/Test/System``` directory.
 	> * Exit the SDAccel GUI.
 	> * Create the AFI from the FPGA binary using the AWS **create_sdaccel_afi.sh** script:
+	> IMPORTANT: you will need to create a bucket in S3 and inside the bucket you will need to create a folder to store dcp and another folder to store the logs during AFI creation.
 	>
   	>   ```bash
   	>     cd ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/workspace/Test/System
@@ -268,7 +274,7 @@ You will now learn how to run in Hardware Emulation mode and how to use some of 
   	>
 	>   ```bash
 	>   cp vadd.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin  ~/aws-fpga-app-notes/reInvent18_Developer_Worksho/helloworld_c/
-	> 	cp Test.exe ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/Test
+	>   cp Test.exe ~/aws-fpga-app-notes/reInvent18_Developer_Workshop/helloworld_c/Test
 	>   ```
   
 #### Executing the Application on F1
