@@ -34,19 +34,19 @@ For this event, each registered participant will be required to start an EC2 F1 
 1. Launch an F1 Instance (f1.2xlarge) using the Latest 1.6.0 version of the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.
      
     - Click on "Continue to Subscribe" button on upper right panel
-    ![Remote](./images/setup_lab/manual_launch.png?raw=true)
+    ![Remote](./images/setup_lab/Continue_to_Subscribe.png?raw=true)
 
     - Click on "Continue to Configuration" button after reviewing the "Terms and Conditions"
-    ![Remote](./images/setup_lab/manual_launch.png?raw=true)
+    ![Remote](./images/setup_lab/Continue_to_configuration.png?raw=true)
     
     - Click on "Continue to Launch" after selecting Software Version 1.6.0. and US East(N. Virginia) as Region
-    ![Remote](./images/setup_lab/manual_launch.png?raw=true)
+    ![Remote](./images/setup_lab/Continue_to_Launch.png?raw=true)
 
     - Select "Launch through EC2" in "Choose Action" dropdown menu and click on "Launch" button
-    ![Remote](./images/setup_lab/manual_launch.png?raw=true)
+    ![Remote](./images/setup_lab/Launch.png?raw=true)
     
     - Select "f1.2xlarge" as Instance type and Click "Configure Instance Details" button at bottom right corner of the page.
-    ![Remote](./images/setup_lab/manual_launch.png?raw=true)
+    ![Remote](./images/setup_lab/Instance_type.png?raw=true)
     
     - Click on "Add Storage" button and bottom right corner of the "configure Instance" page and Configure the root volume(/dev/sda1) to be 160GB
     ![Remote](./images/setup_lab/root_volume_storage.png?raw=true)
