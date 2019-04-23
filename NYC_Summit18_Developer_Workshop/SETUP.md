@@ -4,7 +4,7 @@
   </tr>
   <tr>
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
-    <td width="20%" align="center"><b>1. Connecting to your F1 instance</b></td> 
+    <td width="20%" align="center"><b>1. Connecting to your F1 instance</b></td>
     <td width="20%" align="center"><a href="BLACK_SCHOLES_Lab.md">2. Experiencing F1 acceleration</a></td>
     <td width="20%" align="center"><a href="IDCT_Lab.md">3. Developing F1 applications</a></td>
     <td width="20%" align="center"><a href="WRAP_UP.md">4. Wrapping-up</td>
@@ -26,16 +26,16 @@ For this event, each registered participant will be required to start an EC2 F1 
 
 #### Start a EC2 F1 instance based FPGA developer AMI
 
-1. Sign into your AWS account and go to EC2 
+1. Sign into your AWS account and go to EC2
 
 1. Select Region **US-East (N. Virginia)**.  The pull down is located in the upper right corner of the console.
 
-1. Launch an F1 Instance (f1.2xlarge) using the 1.3.5 version of the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.   
+1. Launch an F1 Instance (f1.2xlarge) using the 1.6.0 version of the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.
 
-    - Use Manual launch 
+    - Use Manual launch
     ![Remote](./images/setup_lab/manual_launch.png?raw=true)
     
-    - Select launch with EC2 console 
+    - Select launch with EC2 console
     ![Remote](./images/setup_lab/launch_with_console.png?raw=true)
 
     - Configure the root volume(/dev/sda1) to be 100GB
@@ -48,33 +48,33 @@ For this event, each registered participant will be required to start an EC2 F1 
     - You will be using this IP address to connect to your instance.
     - The **IPv4 Public IP** address is displayed in EC2 Console next to the instance status.
     
-**Some AWS accounts may have a F1 instance limit equal to 0.  If your F1 instance fails to launch due to your account has an instance limit equal to 0:  During the workshop, raise your hand for assistance so we can manually raise the limit on your account.  After the workshop, use [AWS support to submit for a F1 instance limit increase](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html).**    
+**Some AWS accounts may have a F1 instance limit equal to 0.  If your F1 instance fails to launch due to your account has an instance limit equal to 0:  During the workshop, raise your hand for assistance so we can manually raise the limit on your account.  After the workshop, use [AWS support to submit for a F1 instance limit increase](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html).**
     
 #### Connect to your instance using SSH
 
 **[Windows Users - Connecting to Your Linux Instance from Windows Using PuTTY](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/putty.html)**
 
-1. In the SSH client, use the **IPv4 Public IP** of your instance: 
+1. In the SSH client, use the **IPv4 Public IP** of your instance:
 
-   ```bash  
+   ```bash
     ssh -i <.pem file> centos@<IPv4 Public IP>
     ```
-    
+
 1. Run a setup script to configure GUI and download workshop files.
 
     ```bash
     source <(curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/setup_script/setup_nycsummit18.sh)
     ```
-    
+
     This setup script performs the following tasks:
     - Download and setup the aws-fpga repository in (/home/centos).
     - Download and setup the aws-fpga-app-notes repository in (/home/centos).
     - Install packages to setup a GUI Desktop on the FPGA Developer AMI.
     - Set a user password for the 'centos' user.
     - Download and setup the FinancialModels_AmazonF1 repository in (/home/centos)
-    - **IMPORTANT: Please take a note of the password it generates at the end. You will need to use it to connect using RDP.** 
+    - **IMPORTANT: Please take a note of the password it generates at the end. You will need to use it to connect using RDP.**
     - The setup script is a one time setup and completes in 8-15 mins.  Feel free to use this time to read the workshop.
-    
+
 #### Connect to your instance using a remote desktop client
 
 The instance you just started should now be configured with remote desktop protocol (RDP) services.
@@ -91,7 +91,7 @@ The instance you just started should now be configured with remote desktop proto
 1. **IMPORTANT**: Before connecting, set your remote desktop client to use **24-bit or less for color depth**
     - On Windows: In the bottom-left corner of connection prompt, click Options, then select the Display tab and set Colors to True Colors (24 bit)
 
-1. Click **Connect**. This should bring up a message about connection certificates. 
+1. Click **Connect**. This should bring up a message about connection certificates.
 
 1. Click **Yes** to dismiss the message. The Remote Desktop Connection window opens with a login prompt.
 
@@ -105,9 +105,9 @@ The instance you just started should now be configured with remote desktop proto
         INFO: *** PASSWORD : reinvent2017_123   ****
         INFO: **************************************
         ```
-   
+
     ![Remote](./images/setup_lab/remote1.png?raw=true)
-   
+
 1. Click **Ok**.
 
 You should now be connected to the remote F1 instance running Centos 7.
@@ -116,7 +116,7 @@ You should now be connected to the remote F1 instance running Centos 7.
 
 1. In the remote instance, double click on the **Chromium Web Browser** icon.
     - It opens the browser and loads the workshop instructions.
-    
+
     _Note: if a "keyring" popup comes up, click Cancel._
     
 
@@ -139,7 +139,7 @@ You should now be connected to the remote F1 instance running Centos 7.
     ```bash
     cd ~/aws-fpga
     source sdaccel_setup.sh
-    source $XILINX_SDX/settings64.sh 
+    source $XILINX_SDX/settings64.sh
     export COMMON_REPO=$SDACCEL_DIR/examples/xilinx/
     ```
 
