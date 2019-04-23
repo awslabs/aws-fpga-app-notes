@@ -26,46 +26,55 @@ For this event, each registered participant will be required to start an EC2 F1 
 
 #### Start a EC2 F1 instance based FPGA developer AMI
 
-1. Sign into your AWS account and go to EC2
+1. Sign into your AWS account and go to EC2 
 
 1. Select Region **US-East (N. Virginia)**.  The pull down is located in the upper right corner of the console.
 
-1. Launch an F1 Instance (f1.2xlarge) using the 1.6.0 version of the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.
+1. Launch an F1 Instance (f1.2xlarge) using the Latest 1.6.0 version of the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.
+     
+    - Click on **Continue to Subscribe** button on upper right panel
+    ![Remote](./images/setup_lab/Continue_to_Subscribe.png?raw=true)
 
-    - Use Manual launch
-    ![Remote](./images/setup_lab/manual_launch.png?raw=true)
+    - Click on **Continue to Configuration** button after reviewing the **Terms and Conditions**
+    ![Remote](./images/setup_lab/Continue_to_configuration.png?raw=true)
     
-    - Select launch with EC2 console
-    ![Remote](./images/setup_lab/launch_with_console.png?raw=true)
+    - Click on **Continue to Launch** after selecting Software Version 1.6.0. and US East(N. Virginia) as Region
+    ![Remote](./images/setup_lab/Continue_to_Launch.png?raw=true)
 
-    - Configure the root volume(/dev/sda1) to be 100GB
+    - Select **Launch through EC2** in **Choose Action** dropdown menu and click on **Launch** button
+    ![Remote](./images/setup_lab/Launch.png?raw=true)
+    
+    - Select **f1.2xlarge** as Instance type and Click **Configure Instance Details** button at bottom right corner of the page.
+    ![Remote](./images/setup_lab/Instance_type.png?raw=true)
+    
+    - Click on **Add Storage** button at bottom right corner of the **configure Instance** page and Configure the root volume(/dev/sda1) to be 160GB
     ![Remote](./images/setup_lab/root_volume_storage.png?raw=true)
     
-    - Setup your security groups to allow RDP and SSH ingress from your IP or from anywhere depending on your security preferences.
+    - Add Tags and then Setup your security groups to allow RDP and SSH ingress from your IP or from anywhere depending on your security preferences.
     ![Remote](./images/setup_lab/create_security_group.png?raw=true)
     
 1. Once the instance is running, find and note the **IPv4 Public IP** address of your instance.
     - You will be using this IP address to connect to your instance.
     - The **IPv4 Public IP** address is displayed in EC2 Console next to the instance status.
     
-**Some AWS accounts may have a F1 instance limit equal to 0.  If your F1 instance fails to launch due to your account has an instance limit equal to 0:  During the workshop, raise your hand for assistance so we can manually raise the limit on your account.  After the workshop, use [AWS support to submit for a F1 instance limit increase](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html).**
+**Some AWS accounts may have a F1 instance limit equal to 0.  If your F1 instance fails to launch due to your account has an instance limit equal to 0:  During the workshop, raise your hand for assistance so we can manaully raise the limit on your account.  After the workshop, use [AWS support to submit for a F1 instance limit increase](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html).**    
     
 #### Connect to your instance using SSH
 
 **[Windows Users - Connecting to Your Linux Instance from Windows Using PuTTY](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/putty.html)**
 
-1. In the SSH client, use the **IPv4 Public IP** of your instance:
+1. In the SSH client, use the **IPv4 Public IP** of your instance: 
 
-   ```bash
+   ```bash  
     ssh -i <.pem file> centos@<IPv4 Public IP>
     ```
-
+    
 1. Run a setup script to configure GUI and download workshop files.
 
     ```bash
     source <(curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/setup_script/setup_nycsummit18.sh)
     ```
-
+    
     This setup script performs the following tasks:
     - Download and setup the aws-fpga repository in (/home/centos).
     - Download and setup the aws-fpga-app-notes repository in (/home/centos).
@@ -74,7 +83,7 @@ For this event, each registered participant will be required to start an EC2 F1 
     - Download and setup the FinancialModels_AmazonF1 repository in (/home/centos)
     - **IMPORTANT: Please take a note of the password it generates at the end. You will need to use it to connect using RDP.**
     - The setup script is a one time setup and completes in 8-15 mins.  Feel free to use this time to read the workshop.
-
+    
 #### Connect to your instance using a remote desktop client
 
 The instance you just started should now be configured with remote desktop protocol (RDP) services.
@@ -91,7 +100,7 @@ The instance you just started should now be configured with remote desktop proto
 1. **IMPORTANT**: Before connecting, set your remote desktop client to use **24-bit or less for color depth**
     - On Windows: In the bottom-left corner of connection prompt, click Options, then select the Display tab and set Colors to True Colors (24 bit)
 
-1. Click **Connect**. This should bring up a message about connection certificates.
+1. Click **Connect**. This should bring up a message about connection certificates. 
 
 1. Click **Yes** to dismiss the message. The Remote Desktop Connection window opens with a login prompt.
 
@@ -105,9 +114,9 @@ The instance you just started should now be configured with remote desktop proto
         INFO: *** PASSWORD : reinvent2017_123   ****
         INFO: **************************************
         ```
-
+   
     ![Remote](./images/setup_lab/remote1.png?raw=true)
-
+   
 1. Click **Ok**.
 
 You should now be connected to the remote F1 instance running Centos 7.
@@ -116,7 +125,7 @@ You should now be connected to the remote F1 instance running Centos 7.
 
 1. In the remote instance, double click on the **Chromium Web Browser** icon.
     - It opens the browser and loads the workshop instructions.
-
+    
     _Note: if a "keyring" popup comes up, click Cancel._
     
 
@@ -127,7 +136,7 @@ You should now be connected to the remote F1 instance running Centos 7.
 
 1. Open a new terminal by right-clicking anywhere in the Desktop area and selecting **Open Terminal**.
 
-1. In the terminal, verify that the reInvent17_Developer_Workshop within the aws-fpga-apps-notes repository exists and that the aws-fpga repository exists.
+1. In the terminal, verify that the NYC_Summit18_Developer_Workshop within the aws-fpga-apps-notes repository exists and that the aws-fpga repository exists.
 
     ```bash
     ls -lrtha ~/aws-fpga-app-notes
@@ -139,8 +148,7 @@ You should now be connected to the remote F1 instance running Centos 7.
     ```bash
     cd ~/aws-fpga
     source sdaccel_setup.sh
-    source $XILINX_SDX/settings64.sh
-    export COMMON_REPO=$SDACCEL_DIR/examples/xilinx/
+
     ```
 
     *Note: the sdaccel_setup.sh script might generate warning messages, but these can be safely ignored.*
@@ -163,48 +171,48 @@ The hello world example is an OpenCL application with a simple vector-addition a
 1. Confirm the presence of the precompiled FPGA binary.
 
     ```bash
-    ls -la ./xclbin/vector_addition.hw.xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.awsxclbin
+    ls -la ./xclbin/vector_addition.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
     ```
 
 1. Execute the host application with the precompiled FPGA binary on the F1 instance.
 
     ```bash
     sudo sh
-    source /opt/Xilinx/SDx/2017.1.rte/setup.sh
+    source /opt/xilinx/xrt/setup.sh
     ./helloworld
     ```
 
 1. The host application executes using the vector_addition kernel running in the FPGA and produces the following results:
 
     ```shell
-    Device/Slot[0] (/dev/xdma0, 0:0:1d.0)
-    xclProbe found 1 FPGA slots with XDMA driver running
-    platform Name: Xilinx
-    Vendor Name : Xilinx
+    xclProbe found 1 FPGA slots with xocl driver running
     Found Platform
-    Found Device=xilinx:aws-vu9p-f1:4ddr-xpr-2pr:4.0
+    Platform Name: Xilinx
+    Found Device=xilinx_aws-vu9p-f1-04261818_dynamic_5_0
     XCLBIN File Name: vector_addition
-    INFO: Importing ./vector_addition.hw.xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.awsxclbin
-    Loading: './vector_addition.hw.xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0.awsxclbin'
-    Result =
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
-    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
+    INFO: Importing xclbin/vector_addition.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin
+    Loading: 'xclbin/vector_addition.hw.xilinx_aws-vu9p-f1-04261818_dynamic_5_0.awsxclbin'
+    INFO: Could not load AFI for data retention, code: 18 - Loading in classic mode.
+    AFI load complete.
+    Result = 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
+    42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 
     TEST PASSED
-    sh-4.2#
+    sh-4.2# 
     ```
 
 1. You compiled a host application and successfully executed it on F1 using a pre-compiled Amazon FPGA Image (AFI).
