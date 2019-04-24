@@ -1,6 +1,6 @@
 <table style="width:100%">
   <tr>
-    <th width="100%" colspan="5"><h2>re:Invent 2017 Developer Workshop</h2></th>
+    <th width="100%" colspan="5"><h2>AWS Summit NYC 2018 Developer Workshop</h2></th>
   </tr>
   <tr>
     <td width="20%" align="center"><a href="README.md">Introduction</a></td>
@@ -27,7 +27,7 @@ It is now time to wrap-up this workshop. Please follow these steps to close your
 * Click the **Actions** button, select **Instance State** and then click **Terminate**.
 
 ### Congratulations!
-You have successfully completed all the modules of re:Invent 2017 Developer Workshop. 
+You have successfully completed all the modules of AWS Summit NYC 2018 Developer Workshop. 
 1. You started a pre-configured EC2 F1 instance and connected to it using a remote desktop client. 
 1. You experienced the acceleration potential of F1 by using a black-scholes simulation to do financial risk analysis. 
 1. You used SDAccel to create, profile and optimize an F1 accelerator. 
