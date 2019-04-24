@@ -22,17 +22,22 @@ Every memory location in an operating system (OS) has at least two addresses: a 
 
 The operating system typically handles memory allocation and virtualization in 4KB chunks called pages. Of course an application can allocate memory buffers that are many times larger than 4KB, and from an application’s perspective, the addresses used by the application to access the memory are contiguous. In reality, the physical locations of the pages may be scattered throughout physical memory.
 
-The F1 SH contains hardware to enforce isolation between guess OSes, so that a CL cannot read or write data from another OS. In order for data to move between the application’s user space and the F1 card, software is required to request the physical address of server (host) memory. The physical address may be used by logic in the CL to read/write memory via the PCIM port.
+The F1 SH contains hardware to enforce isolation between guest OSes, so that a CL cannot read or write data from another OS. In order for data to move between the application’s user space and the F1 card, software is required to request the physical address of server (host) memory. The physical address may be used by logic in the CL to read/write memory via the PCIM port.
 
-One of the simplest methods is to call ```virt_to_phys()``` to obtain the physical address of a memory buffer. This kernel function takes the address of a 4KB page and uses the MMU page table entries to locate the physical address of the page. The number of calls to ```virt_to_phys()``` should be minimized to improvement driver performance.
+One of the simplest methods is to call ```virt_to_phys()``` to obtain the physical address of a memory buffer. This kernel function takes the address of a 4KB page and uses the MMU page table entries to locate the physical address of the page. The number of calls to ```virt_to_phys()``` should be minimized to improve driver performance.
 
 When the ATG device driver is opened a 4KB region is allocated. Reading and writing the device file will read and write this memory buffer.
  
-For simplicity, the device driver is contained in a single file and assumes the CL_DRAM_DMA is loaded in the FPGA. The code provided is for demonstration purposes only. Take a moment to study the [code](./f3fbb176cfa44bf73b4c201260f52f25#file-atg_driver-c). A production device driver will require additional error checking and device management code.
+For simplicity, the device driver is contained in a single file and assumes the CL_DRAM_DMA is loaded in the FPGA. The code provided is for demonstration purposes only. Take a moment to study the [code](./atg_driver.c). A production device driver will require additional error checking and device management code.
 
 ### PCIM AXI Restrictions
 
-Three reasons exist the PCIM AXI restrictions. First, multiple operating systems are present on a single host. Second, communication between the host and card is over a PCIe interface. And third, the AMBA protocol is used. The following transaction restrictions are placed on the PCIM AXI port:
+Three reasons for the restrictions on PCIM AXI port transactions. 
+-	First, multiple operating systems are present on a single host.
+-	Second, communication between the host and card is over a PCIe interface.
+-	Third, the AMBA protocol is used.
+
+The following transaction restrictions are placed on the PCIM AXI port:
 -	All transactions must use a size of 64 bytes per beat (AxSIZE = 6).
 -	All transactions larger than 64 bits must have contiguous byte enables.
 -	A transaction must not cross a 4KB address boundary.
@@ -43,9 +48,9 @@ Three reasons exist the PCIM AXI restrictions. First, multiple operating systems
 If any of these restrictions are violated, monitoring logic located in the SH will terminate the transaction, and error counters are incremented to log the violation.
 Examining each of the restrictions in detail is beyond the scope of this application note; therefore, only the timeout and address restrictions are described.
 
-A timeout error is logged when a transaction fails (or takes too long) to complete. The timeout threshold is set at 8us. A PCIM transaction must complete before the timer expires. If it does not, the PCIe transaction will be forcibly completed by SH logic. The values read or written to host memory must be considered undefined, and depending of the CL, the developer may need to reset/re-initialize their CL after a timeout error. 
+A timeout error is logged when a transaction fails (or takes too long) to complete. The timeout threshold is set at 8us. A PCIM transaction must complete before the timer expires. If it does not, the PCIe transaction will be forcibly completed by SH logic. The values read from or written to host memory must be considered undefined, and depending on the CL, the developer may need to reset/re-initialize their CL after a timeout error. 
 
-An address error is logged if a PCIM transaction points to an address which is not contained within the OS memory space, or the Bus Mater Enable bit is disabled in the device's configuration space.
+An address error is logged if a PCIM transaction points to an address which is not contained within the OS memory space, or the Bus Master Enable bit is disabled in the device's configuration space.
 
 ### Accessing CL Registers from Software
 
@@ -71,9 +76,23 @@ The intended purpose of the OCL port is to connect a CL's control/status registe
 All OCL addresses are relative to the starting address of the BAR.
 
 ### Compiling and Running the ATG Device Driver
-To run this example, launch an F1 instance, clone the aws-fpga Github repository, and download the latest [app note files](./f3fbb176cfa44bf73b4c201260f52f25).
+To run this example, launch an F1 instance, clone the [aws-fpga Github repository](https://github.com/aws/aws-fpga/blob/master/README.md), and download the latest app note files in [aws-fpga-app-notes Github repository](https://github.com/awslabs/aws-fpga-app-notes/blob/master/README.md).
+The FPGA Management tools are required to load an AFI onto an FPGA. FPGA Managment tools can be installed by sourcing sdk_setup.sh script in aws-fpga repository. Then change directory to the app note directory
 
-Use the ```fpga-load-local-image``` command to load the FPGA with the CL_DRAM_DMA AFI. *(If you are running on a 16xL, load the AFI into slot 0.)*
+```
+    $ git clone https://github.com/aws/aws-fpga.git
+    $ git clone https://github.com/awslabs/aws-fpga-app-notes.git
+    $ cd aws-fpga
+    $ source sdk_setup.sh
+    $ cd ../aws-fpga-app-notes/Using-PCIM-Port/
+```
+
+
+Use the ```fpga-load-local-image``` command to load the FPGA with the pregenerated [CL_DRAM_DMA AFI](https://github.com/aws/aws-fpga/blob/master/hdk/cl/examples/cl_dram_dma/README.md#metadata). *(If you are running on a 16xL, load the AFI into slot 0.)*
+
+```
+    $ sudo fpga-load-local-image -S 0 -I agfi-0d132ece5c8010bf7
+```
 
 Based on your instance size, type one of the following commands:
 ```
@@ -85,6 +104,8 @@ $ sudo lspci -vv -s 0000:00:1d.0  # 2xL
 ```
 The command will produce output similar to the following:
 ```
+#16xL
+
 00:0f.0 Memory controller: Device 1d0f:f001
         Subsystem: Device fedc:1d51
         Physical Slot: 15
@@ -96,10 +117,35 @@ The command will produce output similar to the following:
         Region 2: Memory at 5e000410000 (64-bit, prefetchable) [size=64K]
         Region 4: Memory at 5c000000000 (64-bit, prefetchable) [size=128G]
 ```
+Or
+
+```
+# 2xL
+00:1d.0 Memory controller: Amazon.com, Inc. Device f001
+	Subsystem: Device fedc:1d51
+	Physical Slot: 29
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0
+	Region 0: Memory at 82000000 (32-bit, non-prefetchable) [size=32M]
+	Region 1: Memory at 85400000 (32-bit, non-prefetchable) [size=2M]
+	Region 2: Memory at 85600000 (64-bit, prefetchable) [size=64K]
+	Region 4: Memory at 2000000000 (64-bit, prefetchable) [size=128G]
+
+```
 
 Check to make sure the output displays ```BusMaster+```. This indicates that the device is allowed to perform bus mastering operations. It is not unusual to have the Bus Master Enable turned off, ```BusMaster-```, by the OS when loading or unload a device driver or after an error. If the Bus Master Enable is disabled, it can be enabled again by typing:
+
 ```
-$ sudo setpci -v -s 0000:00:0f.0 COMMAND=06
+$ sudo setpci -v -s 0000:00:0f.0 COMMAND=06 #16xL
+
+```
+Or
+
+```
+
+sudo setpci -v -s 0000:00:1d.0 COMMAND=06 #2xL
+
 ```
 The OCL interface is mapped to Region 0. Accesses to this region will produce AXI transactions at the OCL port of the CL. The ATG registers are located in this region.
 
@@ -108,7 +154,7 @@ Next, compile the ATG device driver and test program.
 $ make            # compiles the device driver
 $ make test       # compiles the test program
 ```
-Now we are ready to install the device driver. Type the following command:
+If the driver compiled succesfully you should find ```atg_driver.ko``` file in the current directory. Now we are ready to install the device driver. Type the following command:
 ```
 $ sudo insmod atg_driver.ko slot=0x0f           # 16xl
 ```
@@ -157,13 +203,13 @@ With normal file I/O, the ```pwrite/pread``` offset argument is used to move the
 
 During development of your device driver and CL, it is a good idea to periodically check the FPGA metrics to look for errors. Simply, type:
 ```
-$ sudo fpga-describe-local-image -S 0 –M
+$ sudo fpga-describe-local-image -S 0 -M
 ```
 Figure 2 shows an example where the PCIM generated a Bus Master Enable error caused when the CL accessed an invalid address. The ```pcim-axi-protocol-bus-master-enable-error``` field is set along with the error address and count.
 
 To clear the counters, type:
 ```
-$ sudo fpga-describe-local-image -S 0 –C
+$ sudo fpga-describe-local-image -S 0 -C
 ```
 
 ```
@@ -216,7 +262,7 @@ DDR3
 ```
 *Figure 2. fpga-describe-local-image Metrics Dump*
 
-To understand how to access CL registers mapped on the OCL interface, take a look at the poke_ocl and peek_ocl functions in the [atg_driver.c](./f3fbb176cfa44bf73b4c201260f52f25#file-atg_driver-c) file.
+To understand how to access CL registers mapped on the OCL interface, take a look at the poke_ocl and peek_ocl functions in the [atg_driver.c](./atg_driver.c) file.
 ```
 static void poke_ocl(unsigned int offset, unsigned int data) {
   unsigned int *phy_addr = (unsigned int *)(ocl_base + offset);
@@ -244,4 +290,4 @@ The ocl_base variable holds the starting address of the OCL BAR and is found by 
 |     Date      | Version |     Revision    |   Shell    |   Developer   |
 | ------------- |  :---:  | --------------- |   :---:    |     :---:     |
 | Aug. 21, 2017 |   1.0   | Initial Release | 0x071417d3 | W. Washington |
-
+| Apr. 24, 2019 |   2.0   | Shell V1.4 update | 0x04261818 |   |
