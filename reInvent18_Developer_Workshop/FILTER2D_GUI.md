@@ -44,11 +44,7 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 
 	![](./images/filter2d_lab/SDxWelcome.PNG)
 
-1. The SDAccel GUI comes up and displays the Welcome screen. Click **Create SDx Project**, then select **Application** as the new project type and click **Next**.
-
-	![](./images/filter2d_lab/SDxProjectCreateApplication.PNG)
-
-1. Name your project **Filter2D** and click **Next**.
+1. The SDAccel GUI comes up and displays the Welcome screen. Click **Create SDx Project**, Name your project **Filter2D** and click **Next**.
 
 	![](./images/filter2d_lab/SDxProjectCreateName.PNG)
 
@@ -58,9 +54,6 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 
 1. Back in the **Platform** window choose the newly added AWS VU9P F1 custom platform and click **Next**.
 
-1. In the **System configuration** window, keep the default settings and click **Next**.
-
-	![](./images/filter2d_lab/SDxProjectCreateSystemConfiguration.PNG)
 
 1. The **Templates** window has a list of possible templates that you can use to get started in building an SDAccel project. For this tutorial, select **Empty Application** and click **Finish**.
 
@@ -84,7 +77,7 @@ You have now successfully created a new SDAccel project called **Filter2D** for 
 
 ### Importing Design Files
 
-1. In the **Project Explorer** window, click the **Import Sources** button
+1. In the **Project Explorer** window, click the **Import Sources** button![](images/filter2d_lab/ImportSourcesButton.PNG)
 	
 
 1. In the **Import Sources** dialog box, click **Browse** and navigate to the ```~/aws-fpga-app-notes/reInvent18_Developer_Workshop/filter2D/src``` directory. Click **OK**.
@@ -99,7 +92,7 @@ You have now successfully created a new SDAccel project called **Filter2D** for 
 
 Now that you have imported all the necessary source files, you need specify which function(s) should be mapped to hardware for FPGA acceleration.
 
-1. In the **Hardware Functions** section of the **Application Project Settings** window, click the **Add Hardware** button 
+1. In the **Hardware Functions** section of the **Application Project Settings** window, click the **Add Hardware** button ![](images/filter2d_lab/AddHW.png).
 	
 1. SDAccel analyzes the design for all possible kernels in the design, as well as the ability to filter the list if there are multiple kernels. Select the **Filter2DKernel** function and click **OK**. 
 
@@ -129,7 +122,7 @@ The host application created in this project leverages OpenCV and OpenMP. Theref
 
 	![](images/filter2d_lab/SDxProjectCreateGccHostLinkerExpertSettings.PNG).
      
-1. Click **OK** to save and close the custom GCC options.
+1. Click **Apply and Close** to save and close the custom GCC options.
 
 ### Defining Run Configuration options
 
