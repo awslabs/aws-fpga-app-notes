@@ -19,9 +19,24 @@ Using a region marked with the WC attribute can improve performance. Writes to a
 ## Accessing the AppPF Bar 4 Region
 The F1 Developer’s Kit includes a FPGA library that can be used to access a F1 card. The library contains functions that simplify accessing a F1 card. This app note uses a small subset. 
 
-To run this example, launch an F1 instance, clone the aws-fpga Github repository, and download the latest [app note files].
+To run this example, launch an F1 instance, clone the [aws-fpga Github repository](https://github.com/aws/aws-fpga/blob/master/README.md),and download the latest app note files in [aws-fpga-app-notes Github repository](https://github.com/awslabs/aws-fpga-app-notes/blob/master/README.md).
+The FPGA Management tools are required to load an AFI onto an FPGA. FPGA Managment tools can be installed by sourcing sdk_setup.sh script in aws-fpga repository. Then change directory to this app note directory
 
-After sourcing the ./sdk_setup.sh file, use the fpga-load-local-image command to program the FPGA with the CL_DRAM_DMA AFI. (If you are running on a 16xL, program the FPGA in slot 0.)
+```
+    $ git clone https://github.com/aws/aws-fpga.git
+    $ git clone https://github.com/awslabs/aws-fpga-app-notes.git
+    $ cd aws-fpga
+    $ source sdk_setup.sh
+    $ cd ../aws-fpga-app-notes/Using-PCIe-Write-Combining/
+
+```
+
+Use the ```fpga-load-local-image``` command to load the FPGA with the pregenerated [CL_DRAM_DMA AFI](https://github.com/aws/aws-fpga/blob/master/hdk/cl/examples/cl_dram_dma/README.md#metadata). *(If you are running on a 16xL, load the AFI into slot 0.)*
+
+
+```
+    $ sudo fpga-load-local-image -S 0 -I agfi-0d132ece5c8010bf7
+```
 
 Based on your instance size, type one of the following commands:
 ```
@@ -33,6 +48,8 @@ $ sudo lspci -vv -s 0000:00:1d.0  # 2xL
 ```
 The command will produce output similar to the following:
 ```
+#16xL
+
 00:0f.0 Memory controller: Device 1d0f:f001
         Subsystem: Device fedc:1d51
         Physical Slot: 15
@@ -45,6 +62,24 @@ The command will produce output similar to the following:
         Region 4: Memory at 5c000000000 (64-bit, prefetchable) [size=128G]
 ```
 
+or 
+
+```
+#2xL
+
+00:1d.0 Memory controller: Amazon.com, Inc. Device f001
+	Subsystem: Device fedc:1d51
+	Physical Slot: 29
+	Control: I/O- Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr- Stepping- SERR- FastB2B- DisINTx-
+	Status: Cap+ 66MHz- UDF- FastB2B- ParErr- DEVSEL=fast >TAbort- <TAbort- <MAbort- >SERR- <PERR- INTx-
+	Latency: 0
+	Region 0: Memory at 82000000 (32-bit, non-prefetchable) [size=32M]
+	Region 1: Memory at 85400000 (32-bit, non-prefetchable) [size=2M]
+	Region 2: Memory at 85600000 (64-bit, prefetchable) [size=64K]
+	Region 4: Memory at 2000000000 (64-bit, prefetchable) [size=128G]
+
+```
+
 Region 4 is where the card’s 64 GB of DDR memory is located. To gain access to this region, the memory must be mapped into the user address space of the application. The FPGA library's function, fpga_pci_attach, performs this operation and stores the information in a structure.
 ```
 rc = fpga_pci_attach(slot_id, pf_id, bar_id, write_combine, &pci_bar_handle);
@@ -53,7 +88,7 @@ Four input arguments are necessary: (1) the slot number, (2) the physical functi
 ```
 rc = fpga_pci_attach(0, 0, 4, BURST_CAPABLE, &pci_bar_handle);
 ```
-opens the sysfs file: ```/sys/bus/pci/devices/0000:00:0f.0/resource4_wc``` and uses ```mmap``` to create a user space pointer to Region 4 with a WC attribute. The ```BURST_CAPABLE``` enum is part of the F1 FPGA library. To omit the WC attribute, set the ```write_combine``` argument to ```0```. The returned pci_bar_handle structure is used by other FPGA library calls to read and write the F1 card.
+opens the sysfs file: ```/sys/bus/pci/devices/0000:00:0f.0/resource4_wc``` in 16xL or ```/sys/bus/pci/devices/0000:00:0f.0/resource4_wc``` in a 2xL instance and uses ```mmap``` to create a user space pointer to Region 4 with a WC attribute. The ```BURST_CAPABLE``` enum is part of the F1 FPGA library. To omit the WC attribute, set the ```write_combine``` argument to ```0```. The returned pci_bar_handle structure is used by other FPGA library calls to read and write the F1 card.
 
 The FPGA library call used to write a buffer of UINT32_t data is ```fpga_pci_write_burst```, but writing a custom function is possible.
 
@@ -99,7 +134,7 @@ This app note includes a program called wc_perf. Run ```make``` in the app note 
 $ sudo ./wc_perf -h
 SYNOPSIS
         wc_perf [options] [-h]
-Example: wc_perf -i 1024 -w
+Example: sudo ./wc_perf -i 1024 -w
 DESCRIPTION
         Writes bytes to AppPF BAR4 and reports the bandwidth in GB/s
 OPTIONS
@@ -150,8 +185,8 @@ To understand why that is not a good idea, a closer look is needed. The ```fpga-
 ```
 $ sudo fpga-describe-local-image -S 0 -C
 
-AFI          0       agfi-02948a33d1a0e9665  loaded            0        ok               0       0x071417d3
-AFIDEVICE    0       0x1d0f      0xf001      0000:00:0f.0
+AFI          0       agfi-0d132ece5c8010bf7  loaded            0        ok               0       0x04261818
+AFIDEVICE    0       0x1d0f      0xf001      0000:00:1d.0
 
 ...
 
@@ -197,7 +232,7 @@ A simular issue exists if a FIFO is mapped into a WC region. The FIFO should dec
 
 Finally, data being held in the WC buffer prior to being written is not guaranteed to be coherent. If a read is performed before the WC buffer is flushed, it may contain stale data.
 
-When BIU data are stored is not deterministic. Depending on the CPU version, it only contains a small number of BIU buffers (<=6). If another process accesses a different WC region, then a partially filled buffer may be flushed to make room. If an application must make sure that all writes are stored from the BIU, then it is the software's responsiblity to use a x86 SFENCE instruction or similar mechanism to force the writes.
+When BIU data is stored it's not deterministic. Depending on the CPU version, it only contains a small number of BIU buffers (<=6). If another process accesses a different WC region, then a partially filled buffer may be flushed to make room. If an application must make sure that all writes are stored from the BIU, then it is the software's responsiblity to use a x86 SFENCE instruction or similar mechanism to force the writes.
 
 ## For Further Reading:
 The sysfs Filesystem
@@ -218,3 +253,4 @@ Intel Write Combining Info
 | -------------- |  :---:  | --------------- |   :---:    |     :---:     |
 | Oct.  5, 2017  |   1.0   | Initial Release | 0x071417d3 | W. Washington |
 | Nov. 28, 2017  |   1.1   | new '-p' option and performance data | 0x071417d3 | W. Washington |
+| Apr. 25, 2019  |   1.2   | update AFI to shell v1.4 | 0x04261818 | A. Alluri | 
