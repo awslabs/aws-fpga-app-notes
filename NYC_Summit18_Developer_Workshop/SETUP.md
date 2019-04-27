@@ -72,7 +72,7 @@ For this event, each registered participant will be required to start an EC2 F1 
 1. Run a setup script to configure GUI and download workshop files.
 
     ```bash
-    source <(curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/setup_script/setup_nycsummit18.sh)
+    source <(curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-18/setup_script/setup_nycsummit18.sh)
     ```
     
     This setup script performs the following tasks:
@@ -111,7 +111,7 @@ The instance you just started should now be configured with remote desktop proto
         ```bash
         INFO: Setting password for user 'centos'
         INFO: **************************************
-        INFO: *** PASSWORD : reinvent2017_123   ****
+        INFO: *** PASSWORD : reinvent2018_123   ****
         INFO: **************************************
         ```
    

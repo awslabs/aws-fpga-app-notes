@@ -32,7 +32,6 @@ Please also note that although the entire tutorial is performed on an F1 instanc
     ```bash
     cd ~/aws-fpga
     source sdaccel_setup.sh
-    source $XILINX_SDX/settings64.sh 
     cd ~
     ```
 	*Note: the sdaccel_setup.sh script might generate warning messages, but these can be safely ignored.*
@@ -40,7 +39,7 @@ Please also note that although the entire tutorial is performed on an F1 instanc
 
 1. Launch the SDAccel GUI and open the predefined workspace containing the IDCT project: 
     ```bash
-    sdx -workspace /home/centos/aws-fpga-app-notes/reInvent17_Developer_Workshop/workspace
+    sdx -workspace /home/centos/aws-fpga-app-notes/NYC_Summit18_Developer_Workshop/workspace
     ```
 	*Note: a warning message may appear if loading Eclipse takes longer than expected. Click **Wait** to dismiss it.*
 
