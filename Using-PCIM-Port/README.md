@@ -20,7 +20,7 @@ Before accessing host memory, software must obtain its physical address and prog
 
 Every memory location in an operating system (OS) has at least two addresses: a virtual address and a physical address. Applications running in user space reference memory using virtual addresses, which enables to the OS to host multiple applications. 
 
-The operating system typically handles memory allocation and virtualization in 4KB chunks called pages. Of course an application can allocate memory buffers that are many times larger than 4KB, and from an application’s perspective, the addresses used by the application to access the memory are contiguous. In reality, the physical locations of the pages may be scattered throughout physical memory.
+The operating system typically handles memory allocation and virtualization in 4KB chunks called pages. An application can allocate memory buffers that are many times larger than 4KB. While from an application’s perspective, the addresses used by the application to access the memory are contiguous, In reality the physical locations of the pages may be scattered throughout physical memory.
 
 The F1 SH contains hardware to enforce isolation between guest OSes, so that a CL cannot read or write data from another OS. In order for data to move between the application’s user space and the F1 card, software is required to request the physical address of server (host) memory. The physical address may be used by logic in the CL to read/write memory via the PCIM port.
 
@@ -33,9 +33,9 @@ For simplicity, the device driver is contained in a single file and assumes the 
 ### PCIM AXI Restrictions
 
 Three reasons for the restrictions on PCIM AXI port transactions. 
--	First, multiple operating systems are present on a single host.
--	Second, communication between the host and card is over a PCIe interface.
--	Third, the AMBA protocol is used.
+-	Multiple operating systems are present on a single host.
+-	Communication between the host and card is over a PCIe interface.
+-	We use the AMBA protocol.
 
 The following transaction restrictions are placed on the PCIM AXI port:
 -	All transactions must use a size of 64 bytes per beat (AxSIZE = 6).
@@ -48,7 +48,7 @@ The following transaction restrictions are placed on the PCIM AXI port:
 If any of these restrictions are violated, monitoring logic located in the SH will terminate the transaction, and error counters are incremented to log the violation.
 Examining each of the restrictions in detail is beyond the scope of this application note; therefore, only the timeout and address restrictions are described.
 
-A timeout error is logged when a transaction fails (or takes too long) to complete. The timeout threshold is set at 8us. A PCIM transaction must complete before the timer expires. If it does not, the PCIe transaction will be forcibly completed by SH logic. The values read from or written to host memory must be considered undefined, and depending on the CL, the developer may need to reset/re-initialize their CL after a timeout error. 
+A timeout error is logged when a transaction fails (or takes too long) to complete. The timeout threshold is set at `8us`. A PCIM transaction must complete before the timer expires. If it does not, the PCIe transaction will be forcibly completed by SH logic. The values read from or written to host memory must be considered undefined, and depending on the CL, the developer may need to reset/re-initialize their CL after a timeout error. 
 
 An address error is logged if a PCIM transaction points to an address which is not contained within the OS memory space, or the Bus Master Enable bit is disabled in the device's configuration space.
 
@@ -290,4 +290,4 @@ The ocl_base variable holds the starting address of the OCL BAR and is found by 
 |     Date      | Version |     Revision    |   Shell    |   Developer   |
 | ------------- |  :---:  | --------------- |   :---:    |     :---:     |
 | Aug. 21, 2017 |   1.0   | Initial Release | 0x071417d3 | W. Washington |
-| Apr. 24, 2019 |   2.0   | Shell V1.4 update | 0x04261818 |   |
+| Apr. 24, 2019 |   2.0   | Shell V1.4 update | 0x04261818 | A. Alluri   |
