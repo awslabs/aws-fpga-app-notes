@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CENTOS_HOME=/home/centos
-CENTOS_PWD=reinvent2017_
+CENTOS_PWD=reinvent2018_
 CENTOS_PWD+=$((RANDOM%1000))
 
 pushd $CENTOS_HOME
@@ -25,7 +25,15 @@ function setup_app_notes_repo {
         rm -rf ${CENTOS_HOME}/aws-fpga-app-notes
     fi
 
+    pushd ${CENTOS_HOME}
     git clone https://github.com/awslabs/aws-fpga-app-notes.git
+    
+    #curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-18/github_repo/aws-fpga-app-notes.tar.gz -o aws-fpga-app-notes.tar.gz
+    #tar -xzf aws-fpga-app-notes.tar.gz
+    #rm aws-fpga-app-notes.tar.gz
+
+    popd
+
 
 }
 
@@ -40,23 +48,28 @@ function setup_aws_fpga_repo {
 
     pushd ${CENTOS_HOME}
 
-    curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/github_repo/aws-fpga.tar.gz -o aws-fpga.tar.gz
-    tar -xzf aws-fpga.tar.gz
-    rm aws-fpga.tar.gz
+    git clone https://github.com/aws/aws-fpga.git -b v1.4.8a
+   
+    #curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-18/github_repo/aws-fpga.tar.gz -o aws-fpga.tar.gz
+    #tar -xzf aws-fpga.tar.gz
+    #rm aws-fpga.tar.gz
 
     popd
 }
 
 function setup_gui {
     info_msg "Setting up the GUI packages"
-
-    sudo yum install -y kernel-devel # Needed to re-build ENA driver
+    ker_ver=kernel-devel-
+    ker_ver+=$(uname -r)
+    echo $ker_ver
+    sudo yum install -y $ker_ver # Needed to re-build ENA driver
+    #sudo yum install -y kernel-devel # Needed to re-build ENA driver
     sudo yum groupinstall -y "Server with GUI"
     sudo systemctl set-default graphical.target
 
     sudo yum -y install epel-release
     sudo rpm -Uvh http://li.nux.ro/download/nux/dextop/el7/x86_64/nux-dextop-release-0-5.el7.nux.noarch.rpm
-    sudo yum install -y xrdp tigervnc-server
+    sudo yum install -y xrdp tigervnc-server --enablerepo=cr
     sudo yum install -y chromium
     sudo systemctl start xrdp
     sudo systemctl enable xrdp
@@ -72,7 +85,7 @@ function setup_chromium {
     fi
 
     pushd ${CENTOS_HOME}/Desktop
-    curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/setup_script/chromium-browser.desktop -o chromium-browser.desktop
+    curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-18/setup_script/chromium-browser.desktop -o chromium-browser.desktop
     chmod +x chromium-browser.desktop
     popd
 
@@ -82,31 +95,19 @@ function setup_chromium {
         rm master_preferences
     fi
 
-    sudo curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/setup_script/developer_workshop_setup.json -o master_preferences
+    sudo curl -s https://s3.amazonaws.com/aws-ec2-f1-reinvent-18/setup_script/developer_workshop_setup.json -o master_preferences
     sudo chown root:root master_preferences
 
     popd
 }
 
-function fetch_vectors {
-    info_msg "Fetching example vectors"
-
-    VECTOR_DIR=$CENTOS_HOME/vectors
-    if [ ! -e $VECTOR_DIR ]; then
-        mkdir -p $VECTOR_DIR
-    fi
-
-    pushd $VECTOR_DIR
-    wget -N https://s3.amazonaws.com/aws-ec2-f1-reinvent-17/data_files/vectors/crowd8_420_1920x1080_50.yuv
-    popd
-}
 
 function check_available_space {
     info_msg "Checking available free space"
 
     FREE=`df -k --output=avail "${CENTOS_HOME}" | tail -n1`
     if [[ ${FREE} -lt 5242880 ]]; then
-        err_msg "Less than 5GB space available on root volume. Please start another instance with > 75GB as root volume and re-run"
+        err_msg "Less than 5GB space available on root volume. Please start another instance with > 160GB as root volume and re-run"
         return 1
     else
         info_msg "More than 5GB space available. Processing next steps"
@@ -126,7 +127,6 @@ setup_gui
 setup_chromium
 setup_aws_fpga_repo
 setup_app_notes_repo
-fetch_vectors
 setup_password
 
 popd
