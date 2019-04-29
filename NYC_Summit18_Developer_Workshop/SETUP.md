@@ -30,7 +30,7 @@ For this event, each registered participant will be required to start an EC2 F1 
 
 1. Select Region **US-East (N. Virginia)**.  The pull down is located in the upper right corner of the console.
 
-1. Launch an F1 Instance (f1.2xlarge) using the Latest 1.6.0 version of the [FPGA developer AMI](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.
+1. Launch an F1 Instance (f1.2xlarge) using the Latest version of the [FPGA developer AMI 1.6.0](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ) from the EC2 Console.
      
     - Click on **Continue to Subscribe** button on upper right panel
     ![Remote](./images/setup_lab/Continue_to_Subscribe.png?raw=true)
@@ -57,7 +57,7 @@ For this event, each registered participant will be required to start an EC2 F1 
     - You will be using this IP address to connect to your instance.
     - The **IPv4 Public IP** address is displayed in EC2 Console next to the instance status.
     
-**Some AWS accounts may have a F1 instance limit equal to 0.  If your F1 instance fails to launch due to your account has an instance limit equal to 0:  During the workshop, raise your hand for assistance so we can manaully raise the limit on your account.  After the workshop, use [AWS support to submit for a F1 instance limit increase](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html).**    
+**Some AWS accounts may have a default F1 instance limit set to 0.  If your F1 instance fails to launch with a error message like `You have requested more instances (1) than your current instance limit of 0`:  During the workshop, raise your hand for assistance so we can manaully raise the limit on your account.  After the workshop, use [AWS support to submit for a F1 instance limit increase](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-resource-limits.html).**    
     
 #### Connect to your instance using SSH
 
@@ -151,7 +151,7 @@ You should now be connected to the remote F1 instance running Centos 7.
 
     ```
 
-    *Note: the sdaccel_setup.sh script might generate warning messages, but these can be safely ignored.*
+    *Note: The sdaccel_setup.sh script might generate warning messages, but these can be safely ignored.*
 
 
 #### Run the hello_world example to validate the setup of your F1 instance
