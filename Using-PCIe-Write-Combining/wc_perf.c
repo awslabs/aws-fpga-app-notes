@@ -181,14 +181,16 @@ int wc_perf(int slot_id, int pf_id, int bar_id) {
     fail_on(rc, out, "Unable to attach to the AFI on slot id %d", slot_id);
 
     buffer = (uint32_t *)calloc(num_of_uints, sizeof(uint32_t));
+    int j ;
 
-    for(int j=16; j <= num_of_uints; j *= 2) {
+    for(j=16; j <= num_of_uints; j *= 2) {
       
       /* grab start time */
       rc = clock_gettime(CLOCK_MONOTONIC, &ts_start);
 
       // perform multiple passes to minimize the affects introduced by clock_gettime
-      for(int pass=0; pass < num_of_passes; pass++) {
+      int pass ;
+      for(pass=0; pass < num_of_passes; pass++) {
 	if (use_custom)
 	  custom_move(pci_bar_handle, 0, buffer, j);
 	else
