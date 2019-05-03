@@ -1,34 +1,32 @@
 /**********
-Copyright (c) 2017, Xilinx, Inc.
+Copyright (c) 2018, Xilinx, Inc.
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-1. Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-3. Neither the name of the copyright holder nor the names of its
-contributors may be used to endorse or promote products derived from
-this software without specific prior written permission.
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **********/
+
 #include "CL/opencl.h"
 #include <vector>
 #include <math.h>
@@ -132,65 +130,6 @@ static int load_file_to_memory(const char *filename, char **result) {
   return size;
 }
 
-/* *************************************************************************** 
-
-getBinaryName 
-
-The example makefile is designed to support many platforms and
-different modes of execution. This results in different naming of the
-final kernel executable code. 
-
-This function generates the name based on the environment setup and
-the provided platform name. The name is returned in the binaryName
-argument.
-
-*************************************************************************** */
-void getBinaryName(std::string &binaryName, char* device_name) {
-  char *xcl_mode = getenv("XCL_EMULATION_MODE");
-  bool isHwFlow = false;
-  bool isAwsFlow = !strcmp(device_name, "xilinx:aws-vu9p-f1:4ddr-xpr-2pr:4.0");
-  binaryName = "xclbin/krnl_idct";
-  
-  if(xcl_mode && !(strcmp(xcl_mode, "sw_emu"))) {
-    std::cout << "Running Software Emulation" << std::endl;
-    binaryName += ".sw_emu";
-  } else if(xcl_mode && !(strcmp(xcl_mode, "hw_emu"))) {
-    std::cout << "Running Hardware Emulation" << std::endl;
-    binaryName += ".hw_emu";
-  } else {
-    isHwFlow = true;
-    std::cout << "Running Hardware" << std::endl;
-    binaryName += ".hw";
-  }
-
-  std::string target = device_name;
-  std::replace(target.begin(), target.end(), ':', '_');
-  std::replace(target.begin(), target.end(), '.', '_');
-  if(!isAwsFlow) {
-    // remove platform version
-    int _count = 0;
-    int count = 0;
-    for (char & c : target) {
-      if(c == '_') {
-	_count++;
-      }
-      if(_count == 3) {
-	break;
-      }
-      count++;
-    }
-    target = target.substr(0,count);
-  }
-  binaryName += "." + target;
-
-  if((isHwFlow==true) && (isAwsFlow==true)) {
-    binaryName += ".awsxclbin";
-  } else {
-    binaryName += ".xclbin";
-  }
-}
-
-
 
 /* *************************************************************************** 
 
@@ -210,7 +149,7 @@ class.
 *************************************************************************** */
 class oclDct {
 
-#define NUM_SCHED 1
+#define NUM_SCHED 6
 
 public:
   oclDct();
@@ -300,6 +239,9 @@ void oclDct::init(cl_context   context,
   mDevice  = device;
   mKernel  = krnl;
   mQ       = q;
+  mBlockExt={0};
+  mQExt    ={0};
+  mOutExt  ={0};
   
   mNumBlocks64 = numBlocks64;
   
@@ -521,14 +463,14 @@ int main(int argc, char* argv[]) {
 
   char *xcl_mode = getenv("XCL_EMULATION_MODE");
 
-  int xclbin_argc = -1;
-  for(int i=0; i<argc; i++) {
-    std::string arg = argv[i];
-    std::string xclbinStr = "xclbin";
-    if(arg.find(xclbinStr) != std::string::npos) {
-      xclbin_argc = i;
-    }
+  if (argc != 2) {
+    printf("Usage: %s "
+	   "./xclbin/krnl_idct.<emulation_mode>.<dsa>.xclbin\n",
+	   argv[0]);
+    return EXIT_FAILURE;
   }
+
+  char* binaryName = argv[1];
 
 
   // *********** Allocate and initialize test vectors **********
@@ -564,7 +506,7 @@ int main(int argc, char* argv[]) {
   int banks = 1;
   const size_t cus = banks;
   const size_t threads = cus;
-  size_t numBlocks64 = 512; // 2^16
+  size_t numBlocks64 = 512; 
 
   if (xcl_mode != NULL) {
     numBlocks64 = 256;
@@ -628,17 +570,10 @@ int main(int argc, char* argv[]) {
 
   std::cout << "DEVICE: " << cl_device_name << std::endl;
 
-  std::string binaryName;
-  if(xclbin_argc != -1) {
-    binaryName = argv[xclbin_argc];
-  } else {
-    getBinaryName(binaryName, cl_device_name);
-  }
-
   std::cout << "Loading Bitstream: " << binaryName << std::endl; 
   char *krnl_bin;
   size_t krnl_size;
-  krnl_size = load_file_to_memory(binaryName.c_str(), &krnl_bin);
+  krnl_size = load_file_to_memory(binaryName, &krnl_bin);
 
   printf("INFO: Loaded file\n");
 

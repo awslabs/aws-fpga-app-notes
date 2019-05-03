@@ -1,33 +1,30 @@
 /**********
-Copyright (c) 2017, Xilinx, Inc.
+Copyright (c) 2018, Xilinx, Inc.
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are
-met:
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
 
-1. Redistributions of source code must retain the above copyright
-notice, this list of conditions and the following disclaimer.
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
 
-2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
+2. Redistributions in binary form must reproduce the above copyright notice,
+this list of conditions and the following disclaimer in the documentation
+and/or other materials provided with the distribution.
 
-3. Neither the name of the copyright holder nor the names of its
-contributors may be used to endorse or promote products derived from
-this software without specific prior written permission.
+3. Neither the name of the copyright holder nor the names of its contributors
+may be used to endorse or promote products derived from this software
+without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
-HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
+EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **********/
 
 #include <string.h>
@@ -252,9 +249,9 @@ void execute(hls::stream<int512_t> &iblock,
     #pragma HLS loop_tripcount min=1024 max=1024
     #pragma HLS PIPELINE II=2
     
-    int16_t iiblock[64];
+    int16_t  iiblock[64];
     uint16_t iiq[64];
-    int16_t iivoutp[64];
+    int16_t  iivoutp[64];
 
     for(short j = 0; j < 64/32; j++) {
       if(i==0) {
@@ -319,14 +316,14 @@ void krnl_idct_dataflow(const ap_int<512> *block,
 			ap_int<512> *voutp, 
 			int ignore_dc, 
 			unsigned int blocks) {
-  // #pragma HLS DATAFLOW
+  #pragma HLS DATAFLOW
 
-  hls::stream<int512_t> iblock;
-  hls::stream<uint512_t> iq;
-  hls::stream<int512_t> ivoutp;
-  #pragma  HLS stream variable=iblock depth=512
-  #pragma  HLS stream variable=iq     depth=2
-  #pragma  HLS stream variable=ivoutp depth=512
+  hls::stream<int512_t> iblock("input_stream1");
+  hls::stream<uint512_t> iq("input_stream2");
+  hls::stream<int512_t> ivoutp("output_stream");
+  // #pragma  HLS stream variable=iblock depth=512
+  // #pragma  HLS stream variable=iq     depth=2
+  // #pragma  HLS stream variable=ivoutp depth=512
 
 
   read_blocks<uint512_t>(q, iq, 1);
@@ -350,7 +347,7 @@ void krnl_idct(const ap_int<512> *block,
 	       ap_int<512> *voutp, 
 	       int ignore_dc, 
 	       unsigned int blocks) {
-  #pragma HLS INTERFACE m_axi     port=block     offset=slave bundle=gmem
+  #pragma HLS INTERFACE m_axi     port=block     offset=slave bundle=gmem0
   #pragma HLS INTERFACE s_axilite port=block                  bundle=control
   #pragma HLS INTERFACE m_axi     port=q         offset=slave bundle=gmem1
   #pragma HLS INTERFACE s_axilite port=q                      bundle=control

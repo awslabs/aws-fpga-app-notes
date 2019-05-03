@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="com.xilinx.sdx.core.ui.editor.FilteredAcceleratorSelectionDialog">
+		<item value="false" key="options.expanded"/>
+		<item value="false" key="showAcceleratedFunctions"/>
+		<item value="true" key="ShowStatusLine"/>
+		<item value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#x0A;&lt;History/&gt;" key="History"/>
+		<item value="false" key="showNonQualifiedFunctions"/>
+		<section name="DialogBoundsSettings">
+			<item value="800" key="DIALOG_WIDTH"/>
+			<item value="1|Sans|10.0|0|GTK|1|" key="DIALOG_FONT_NAME"/>
+			<item value="800" key="DIALOG_HEIGHT"/>
+			<item value="715" key="DIALOG_X_ORIGIN"/>
+			<item value="0" key="DIALOG_Y_ORIGIN"/>
+		</section>
+	</section>
+</section>

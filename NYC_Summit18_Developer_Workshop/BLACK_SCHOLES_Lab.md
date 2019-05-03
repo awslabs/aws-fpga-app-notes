@@ -71,7 +71,7 @@ strikeprice       |  strike price for the option
     ```bash
     cd ~/FinancialModels_AmazonF1/blackScholes_model/europeanOption/
     sudo sh
-    source /opt/Xilinx/SDx/2017.1.rte/setup.sh
+    source /opt/xilinx/xrt/setup.sh
     ```
 
 1. Run the simulation model on the F1 FPGA.

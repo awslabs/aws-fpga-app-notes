@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="ASCII"?>
-<openclProject:OpenCLProject xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:openclProject="http://www.xilinx.com/openclproject" name="IDCT" location="/home/centos/workspace/IDCT" platform="xilinx:aws-vu9p-f1:4ddr-xpr-2pr:4.0" sysConfig="linux_x86" cpu="" os="linux">
-  <configuration name="Emulation-CPU" id="com.xilinx.sdx.opencl.config.sw_emu.725308908">
+<openclProject:OpenCLProject xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:openclProject="http://www.xilinx.com/openclproject" name="IDCT" location="/home/centos/src/project_data/workshop_20183/nycsummit/aws-fpga-app-notes/NYC_Summit18_Developer_Workshop/workspace/IDCT" platform="/home/centos/src/project_data/workshop_20183/nycsummit/aws-fpga/SDAccel/aws_platform/xilinx_aws-vu9p-f1-04261818_dynamic_5_0/xilinx_aws-vu9p-f1-04261818_dynamic_5_0.xpfm" platformUID="xilinx:aws-vu9p-f1-04261818:dynamic:5.0(custom)" systemProject="IDCT_system" cpu="" cpuInstance="" os="linux">
+  <configuration name="Emulation-SW" id="com.xilinx.sdx.opencl.config.sw_emu.966403294" dirty="true">
     <configBuildOptions xsi:type="openclProject:OpenCLOptions" kernelDebug="true">
       <binaryContainers name="binary_container_1">
         <kernels name="krnl_idct" sourceFile="src/krnl_idct.cpp"/>
       </binaryContainers>
     </configBuildOptions>
   </configuration>
-  <configuration name="Emulation-HW" id="com.xilinx.sdx.opencl.config.hw_emu.1067158218">
+  <configuration name="Emulation-HW" id="com.xilinx.sdx.opencl.config.hw_emu.1654865433" dirty="true">
     <configBuildOptions xsi:type="openclProject:OpenCLOptions" kernelDebug="true" target="hw_emu">
       <binaryContainers name="binary_container_1">
-        <kernels name="krnl_idct" sourceFile="src/krnl_idct.cpp"/>
+        <kernels name="krnl_idct" sourceFile="src/krnl_idct.cpp">
+          <computeUnits name="krnl_idct_1" slr=""/>
+        </kernels>
       </binaryContainers>
     </configBuildOptions>
   </configuration>
-  <configuration name="System" id="com.xilinx.sdx.opencl.config.hw.931833945">
+  <configuration name="System" id="com.xilinx.sdx.opencl.config.hw.752556835" dirty="true">
     <configBuildOptions xsi:type="openclProject:OpenCLOptions" target="hw">
       <binaryContainers name="binary_container_1">
-        <kernels name="krnl_idct" sourceFile="src/krnl_idct.cpp"/>
+        <kernels name="krnl_idct" sourceFile="src/krnl_idct.cpp">
+          <computeUnits name="krnl_idct_1" slr=""/>
+        </kernels>
       </binaryContainers>
     </configBuildOptions>
   </configuration>
