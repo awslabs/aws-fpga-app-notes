@@ -23,11 +23,12 @@ This developer workshop is divided in 4 modules.
 1. **Developing and optimizing F1 applications with SDAccel**
 1. **Wrap-up and next steps**
 
-#### [re:Invent 2017 Developer Workshop](/reInvent17_Developer_Workshop)
+#### [re:Invent 2018 Developer Workshop](/reInvent18_Developer_Workshop)
 
-This developer workshop is divided in 4 modules.
+This developer workshop is divided in 5 modules.
 
 1. **Connecting to your F1 instance**
-1. **Experiencing F1 acceleration**
+1. **Developing an Application using SDAccel GUI**
 1. **Developing and optimizing F1 applications with SDAccel**
+1. **Optimizing host code**
 1. **Wrap-up and next steps**
