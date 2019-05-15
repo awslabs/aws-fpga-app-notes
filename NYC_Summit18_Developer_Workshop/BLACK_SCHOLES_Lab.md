@@ -46,7 +46,7 @@ strikeprice       |  strike price for the option
 
 1. Run simulation models on the CPU.
     ```bash
-    make TARGETS=hw DEVICES=$AWS_PLATFORM PLATFORM=xilinx_aws-vu9p-f1_4ddr-xpr-2pr-4_0 pure_c
+    make TARGETS=hw DEVICES=$AWS_PLATFORM PLATFORM=xilinx_aws-vu9p-f1-04261818_dynamic_5_0 pure_c
     ./blackeuro_c
     ```
 
