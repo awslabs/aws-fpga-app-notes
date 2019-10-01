@@ -7,16 +7,16 @@ F1 FPGA Application Note
  ## Table of Contents
 <a name="introduction"></a>
  ## Introduction
- The purpose of this application note is to provide an F1 developer with information regarding PCIe Peer-2-Peer connectivity on F1.16xl instances. This app note utilizes the PCIM interface for PCIe Peer-2-Peer transfers. See the Using-PCIM-Port Application note (https://github.com/awslabs/aws-fpga-app-notes/tree/master/Using-PCIM-Port) for more information on the PCIM AXI Interface.
+ The purpose of this application note is to provide an F1 developer with information regarding PCIe Peer-2-Peer connectivity on f1.16xlarge instances. This app note utilizes the PCIM interface for PCIe Peer-2-Peer transfers. See the [Using-PCIM-Port Application note](https://github.com/awslabs/aws-fpga-app-notes/tree/master/Using-PCIM-Port) for more information on the PCIM AXI Interface.
 
 <a name="concepts"></a>
  ## Concepts
- The PCIe Peer-2-Peer feature enables a developer to direclty communicate between FPGAs in a F1.16xl instance.  This enhances solutions such as creating an accelerator that is composed of multiple FPGAs.  Any FPGA on a F1.16xl instance can directly access data located on another FPGA (peer-to-peer) on the instance. Data transfers between the F1 FPGAs must target the ApplicationDevice/Bar4 (128G BAR). On F1.16xl instances, an FPGA  can directly transfer data to another FPGA. 
+ The PCIe Peer-2-Peer feature enables a developer to direclty communicate between FPGAs on a f1.16xlarge instance.  This enhances solutions such as creating an accelerator that is composed of multiple FPGAs.  Any FPGA on a f1.16xlarge instance can directly access data located on another FPGA (peer-to-peer) on the instance. Data transfers between the F1 FPGAs must target the ApplicationDevice/Bar4 (128G BAR). On f1.16xlarge instances, an FPGA  can directly transfer data to another FPGA. 
 
- The F1.16xl instance has 8 FPGAs, and these FPGAs are classified into two groups, each group consists of 4 FPGAs. 
+ The f1.16xlarge instance has 8 FPGAs, and these FPGAs are classified into two groups, each group consisting of 4 FPGAs. 
  1. Group1: 
       1. Slot0 (0000:00:0f.0)
-      2. Slot0 (0000:00:11.0)
+      2. Slot1 (0000:00:11.0)
       3. Slot2 (0000:00:13.0)
       4. Slot3 (0000:00:15.0) 
       
@@ -26,9 +26,11 @@ F1 FPGA Application Note
       3. Slot6 (0000:00:1b.0)
       4. Slot7 (0000:00:1d.0)
 
-FPGAs within a group can directly access other FPGAs within the same group and can yield high performance.  Access between groups is not direct and not optimal.
+FPGAs within a group can directly access other FPGAs within the same group and can yield high performance.  Accesses between groups is not direct and not optimal (higher latency, lower bandwidth).
 
- This application note uses the CL_DRAM_DMA (https://github.com/aws/aws-fpga/blob/master/hdk/cl/examples/cl_dram_dma/README.md) example design to demonstrate the Peer-2-Peer transfers. The example design contains an Automatic Test Pattern Generator (ATG) that is connected to the PCIM port. The ATG is an AXI-4 master exerciser that is able to issue write requests, read requests, and compare written vs. read data.  To access another F1 FPGA on the same F1.16xl instance, software must obtain the physical address for the target F1 FPGA, ApplicationDevice/Bar4 (128G Bar) and program this address into the ATG.
+![](p2p.png)
+
+ This application note uses the [CL_DRAM_DMA example design](https://github.com/aws/aws-fpga/blob/master/hdk/cl/examples/cl_dram_dma/README.md) to demonstrate the Peer-2-Peer transfers. The example design contains an Automatic Test Pattern Generator (ATG) that is connected to the PCIM port. The ATG is an AXI-4 master exerciser that is able to issue write requests, read requests, and compare written vs. read data.  To access another F1 FPGA on the same f1.16xlarge instance, software must obtain the physical address of the target F1 FPGA, ApplicationDevice/Bar4 (128G Bar) and program this address into the ATG.
 
 <a name="restrictions"></a>
  ### Peer-2-Peer Restrictions
@@ -37,19 +39,19 @@ FPGAs within a group can directly access other FPGAs within the same group and c
 
 <a name="recommendations"></a>
  ### Peer-2-Peer Recommendations
- 1. Peer-2-Peer is recommended on F1.16xl instances only.
+ 1. Peer-2-Peer is recommended on f1.16xlarge instances only.
  2. For performance reasons, it is recommended to only use Peer-2-Peer among FPGAs in the same Group (i.e. either among F1 FPGAs in Group1 or among F1 FPGAs in Group2). Peer-2-Peer transfers among F1 FPGAs of different groups is not recommended.
  3. For transfers between F1 FPGAs on different groups, transfer data from the source FPGA to host memory, and then from host memory to the target F1 FPGA.
 
 <a name="physical"></a>
  ### Finding the Physical Address for ApplicationDevice/Bar4 Region (128G BAR)
 
- To perform Peer-2-Peer transfers from an initiating F1 FPGA to a target F1 FPGA (ApplicationDevice/Bar4 (128G Bar)) on a F1.16xl instance, the source FPGA needs to know the physical address of the target FPGA, ApplicationDevice/Bar4. Using the lspci command in verbose mode for the ApplicationDevice of the target F1 FPGA will list all the bars with their physical addresses. Only the 128G user bar is available for Peer-2-Peer transfers, all the other Bars are disabled for Peer-2-Peer transfers.
+ To perform Peer-2-Peer transfers from an initiating F1 FPGA to a target F1 FPGA (ApplicationDevice/Bar4 (128G Bar)) on a f1.16xlarge instance, the source FPGA needs to know the physical address of the target FPGA, ApplicationDevice/Bar4. Using the lspci command in verbose mode for the ApplicationDevice of the target F1 FPGA will list all the bars with their physical addresses. Only the 128G user bar is available for Peer-2-Peer transfers, all the other Bars are disabled for Peer-2-Peer transfers.
 
  ```
  $ sudo lspci -vv -s 0000:00:0f.0  # 16xL, Slot 0 
  ```
- The command will produce output similar to the following (note RegionX is the same as BarX, so Bar4 is what is labeled Region 4):
+ The command will produce output similar to the following (note RegionX is the same as BarX, so Bar4 is what is labeled as Region 4):
  ```
  #16xL
 
@@ -64,7 +66,7 @@ FPGAs within a group can directly access other FPGAs within the same group and c
         Region 2: Memory at 5e000410000 (64-bit, prefetchable) [size=64K]
         Region 4: Memory at 5c000000000 (64-bit, prefetchable) [size=128G]
  ```
- Region 4, Bar Address 5c000000000 can be used as the target address by any other FPGA on the F1.16xl instace, to access the FPGA 00:0f.0 for Peer-2-Peer accesses. An FPGA cannot access itself i.e. FPGA 00:0f.0 cannot access Address 5c000000000.
+ Region 4, Bar Address 5c000000000 can be used as the target address by any other FPGA on the f1.16xlarge instace, to access the FPGA 00:0f.0 for Peer-2-Peer accesses. An FPGA cannot access itself i.e. FPGA 00:0f.0 cannot access Address 5c000000000.
 Software can access the various Region's (BAR), physical Address using the PCIe Device resource file.
 ```
   char [256] sysfs_name;
@@ -101,7 +103,7 @@ The OCL Region does not support write combining and so this argument is 0. The f
 <a name="details"></a>
  ### Peer-2-Peer example details
 
- The F1 Peer-2-Peer example demonstrates Peer-2-Peer transfers between all 8 slots of the F1.16xl instance.  The example performs writes and read/compares to verify the data.
+ The F1 Peer-2-Peer example demonstrates Peer-2-Peer transfers between all 8 slots of the f1.16xlarge instance.  The example performs writes and read/compares to verify the data.
 
  In the example there are two loops of Peer-2-Peer transfers (one loop per FPGA group):
 ```
@@ -131,7 +133,7 @@ The OCL Region does not support write combining and so this argument is 0. The f
     }
  ```
 
- The OCL(Region0) Bar for all 8 FPGAs of the 16xl instance are made acessible using the fpga management library function `fpga_pci_attach`.
+ The OCL(Region0) Bar for all 8 FPGAs of the f1.16xlarge instance are made acessible using the fpga management library function `fpga_pci_attach`.
 
  ```
     /* pci_bar_handle_t is a handler for an address space exposed by one PCI BAR on one of the PCI PFs of the FPGA */
@@ -210,11 +212,11 @@ The OCL Region does not support write combining and so this argument is 0. The f
 
  To run this example: 
 
- launch a F1.16xl instance 
+ launch a f1.16xlarge instance 
 
- clone the aws-FPGA Github repository (https://github.com/aws/aws-FPGA/blob/master/README.md)
+ clone the [aws-FPGA Github repository](https://github.com/aws/aws-FPGA/blob/master/README.md)
 
- download the latest app note files in aws-FPGA-app-notes Github repository (https://github.com/awslabs/aws-FPGA-app-notes/blob/master/README.md)
+ download the latest app note files in [aws-FPGA-app-notes Github repository](https://github.com/awslabs/aws-FPGA-app-notes/blob/master/README.md)
 
  install the FPGA Management tools by sourcing the sdk_setup.sh script in the aws-FPGA repository.
 
@@ -229,7 +231,7 @@ The OCL Region does not support write combining and so this argument is 0. The f
  ```
 
 
- Use the `FPGA-load-local-image` command to load the FPGA with the pre-generated CL_DRAM_DMA AFI (https://github.com/aws/aws-FPGA/blob/master/hdk/cl/examples/cl_dram_dma/README.md#metadata). (load the AFI on All the slots)*
+ Use the `FPGA-load-local-image` command to load the FPGA with the pre-generated [CL_DRAM_DMA AFI](https://github.com/aws/aws-FPGA/blob/master/hdk/cl/examples/cl_dram_dma/README.md).  Load the AFI on All the slots.
 
  ```
  $ for i in {0..7}; do sudo fpga-load-local-image -S $i -I agfi-0d132ece5c8010bf7; done 
