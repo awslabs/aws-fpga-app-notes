@@ -77,7 +77,7 @@ Software can access the various Region's (BAR), physical Address using the PCIe 
     ret = fscanf(fp, "0x%lx 0x%lx 0x%lx\n", &addr_begin, &addr_end, &flags);
   }
 ```
-The 0000:00:0f.0 is the PCIe Domain:bus:device:function of the F1 FPGA Slot 0.
+The 0000:00:0f.0 is the PCIe ```Domain:bus:device:function``` of the F1 FPGA Slot 0.
 
 <a name="ocl"></a>
  ### Accessing the AppPF Bar 0 Region (OCL BAR)
