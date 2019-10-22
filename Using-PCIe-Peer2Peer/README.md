@@ -39,7 +39,7 @@ FPGAs within a group can directly access other FPGAs within the same group and c
 
 <a name="recommendations"></a>
  ### Peer-2-Peer Recommendations
- 1. Peer-2-Peer is recommended on f1.16xlarge instances only.
+ 1. Direct Peer-2-Peer is recommended on f1.16xlarge instances only. Trying to use Peer-2-Peer on f1.4xlarge instances will not result in an error message but will result in poor performance and therefore is not recommended.
  2. For performance reasons, it is recommended to only use Peer-2-Peer among FPGAs in the same Group (i.e. either among F1 FPGAs in Group1 or among F1 FPGAs in Group2). Peer-2-Peer transfers among F1 FPGAs of different groups is not recommended.
  3. For transfers between F1 FPGAs on different groups, transfer data from the source FPGA to host memory, and then from host memory to the target F1 FPGA.
 
