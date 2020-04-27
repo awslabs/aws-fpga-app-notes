@@ -36,6 +36,7 @@
 #include <linux/stat.h>
 #include <linux/uaccess.h>
 #include <linux/pci.h>
+#include <linux/version.h>
 
 #include <linux/slab.h>
 #include <linux/interrupt.h>
@@ -152,7 +153,12 @@ static int __init f1_init(void) {
   *(unsigned int *)ddr_base = 0x0;
   
   // allocate MSIX resources
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,8,0)
+  result = pci_enable_msix_exact(f1_dev, f1_ints, NUM_OF_USER_INTS);
+#else
   result = pci_enable_msix(f1_dev, f1_ints, NUM_OF_USER_INTS);
+#endif
 
   // initialize user interrupts with interrupt specific data
   for(i=0; i<NUM_OF_USER_INTS; i++) {
