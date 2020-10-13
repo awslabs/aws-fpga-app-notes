@@ -1,0 +1,59 @@
+{
+  "variables": {
+    "aws_access_key": "{{env `AWS_ACCESS_KEY_ID`}}",
+    "aws_secret_key": "{{env `AWS_SECRET_ACCESS_KEY`}}",
+    "aws_session_token": "{{env `AWS_SESSION_TOKEN`}}",
+    "region": "us-east-1",
+    "instance-type": "m5.2xlarge",
+    "ami_name": "f1-xilinx-ami-{{timestamp}}"
+  },
+  "builders": [
+    {
+      "access_key": "{{user `aws_access_key`}}",
+      "ami_name": "{{user `ami_name`}}",
+      "aws_polling": {
+        "delay_seconds": 60,
+        "max_attempts": 120
+      },
+      "instance_type": "{{user `instance-type`}}",
+      "region": "{{user `region`}}",
+      "secret_key": "{{user `aws_secret_key`}}",
+      "source_ami_filter": {
+        "filters": {
+          "virtualization-type": "hvm",
+          "name": "amzn2-ami-hvm-2.0.*-x86_64-gp2",
+          "root-device-type": "ebs"
+        },
+        "owners": "amazon",
+        "most_recent": true
+      },
+      "ssh_username": "ec2-user",
+      "type": "amazon-ebs",
+      "token": "{{user `aws_session_token`}}",
+      "launch_block_device_mappings": [
+        {
+        "device_name": "/dev/xvda",
+          "volume_size": "150",
+          "volume_type": "gp2",
+          "delete_on_termination": true
+        }
+      ]
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "file",
+      "source": "./files/",
+      "destination": "/tmp/"
+    },
+    {
+      "type": "shell",
+      "inline": ["sudo amazon-linux-extras install -y ansible2"]
+    },
+    {
+      "type": "ansible-local",
+      "playbook_file": "./ansible/xilinx_playbook.yaml",
+      "clean_staging_directory": "true"
+    }
+  ]
+}

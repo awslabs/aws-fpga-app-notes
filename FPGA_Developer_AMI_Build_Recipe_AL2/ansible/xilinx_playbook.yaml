@@ -1,0 +1,317 @@
+---
+- name: Install Xilinx
+  gather_facts: false
+  become: true
+  hosts: localhost
+  vars:
+    # Modify these variables for your environment
+    xilinx_username: 'user@example.com'
+    xilinx_password: 'mypassword'
+    xilinx_installer: 'Xilinx_Unified_2020.1_0602_1208_Lin64.bin'
+    xilinx_version: 2020.1
+    # Set these to "false" if you only want one
+    install_rdp: true
+    install_dcv: true
+
+    # do not modify these variables unless needed.
+    xilinx_install_dir: /opt/Xilinx
+    xilinx_version: "{{ xilinx_installer | regex_replace('^.*_([0-9]*\\.[0-9]*)_.*$', '\\1') }}"
+    dcv_rdp_key: https://s3-eu-west-1.amazonaws.com/nice-dcv-publish/NICE-GPG-KEY
+    dcv_installer_location: https://d1uj6qtbmh3dt5.cloudfront.net/2019.0/Servers/nice-dcv-2019.0-7318-el7.tgz
+    dcv_installer_file: nice-dcv-2019.0-7318-el7.tgz
+    dcv_installer_dir: nice-dcv-2019.0-7318-el7
+
+  tasks:
+
+  - name: enable Amazon Linux Extras for Mate
+    shell: 'amazon-linux-extras enable mate-desktop1.x'
+
+  - name: install mate
+    package:
+      name:
+        - mate-session-manager
+        - mate-control-center
+        - mate-panel
+        - mate-menus
+        - mate-desktop-libs
+        - mate-settings-daemon
+        - mate-panel-libs
+        - mate-polkit
+        - mate-terminal
+        - mate-control-center-filesystem
+        - mate-menus-libs
+        - libmateweather
+        - libmatekbd
+        - libmatemixer
+        - libmateweather-data
+      state: latest
+
+  - name: Install rdp
+    block:
+      - name: enable Amazon Linux Extras epel
+        shell: "amazon-linux-extras enable {{item}}"
+        with_items:
+          - epel
+
+      - name: Install epel
+        package:
+          name:
+            - epel-release
+
+      - name: Install epel packages
+        package:
+          name: xrdp
+          state: latest
+
+      - name: enable xrdp
+        service:
+          name: xrdp
+          state: started
+          enabled: true
+
+      - name: Setup Xclients file
+        copy:
+          dest: '/home/ec2-user/.Xclients'
+          content: 'mate-session'
+          mode: 0644
+
+      - name: set graphical target
+        command: 'systemctl set-default graphical.target'
+    when: install_rdp
+
+  - name: Install dcv prerequisites
+    package:
+      name:
+        - kernel-devel
+        - gdm
+        - gnome-session
+        - gnome-classic-session
+        - gnome-session-xsession
+        - xorg-x11-server-Xorg
+        - xorg-x11-fonts-Type1
+        - xorg-x11-drivers
+        - gnome-terminal
+        - gnu-free-fonts-common
+        - gnu-free-mono-fonts
+        - gnu-free-sans-fonts
+        - gnu-free-serif-fonts
+      state: latest
+
+  - block:
+
+      - name: Install DCV RPM key
+        rpm_key:
+          state: present
+          key: "{{dcv_rdp_key}}"
+
+      - name: Copy DCV installer files
+        get_url:
+          url: "{{dcv_installer_location}}"
+          dest: /tmp/{{dcv_installer_file}}
+          mode: 0644
+
+      - name: Untar the DCV installer
+        unarchive:
+          src: /tmp/{{dcv_installer_file}}
+          dest: /tmp/
+
+
+      - name: Install DCV packages
+        package:
+          name:
+            - /tmp/{{dcv_installer_dir}}/nice-dcv-server-2019.0.7318-1.el7.x86_64.rpm
+            - /tmp/{{dcv_installer_dir}}/nice-xdcv-2019.0.224-1.el7.x86_64.rpm
+
+      - name: enable and start DCV
+        service:
+          name: dcvserver
+          state: started
+          enabled: true
+    when: install_dcv
+
+  - name: install additional packages
+    package:
+      name:
+        - git
+        - gedit
+        - kernel-devel
+        - chromium
+        - gcc-c++
+        - cmake3
+        - ocl-icd
+        - ocl-icd-devel
+        - opencl-headers
+      state: latest
+
+  - name: copy password change script
+    copy:
+      dest: /var/lib/cloud/scripts/per-instance/password.sh
+      mode: 0755
+      content: |
+        #!/bin/bash
+        NAME=`curl http://169.254.169.254/latest/meta-data/instance-id`
+        HASH=`python -c "import crypt, getpass, pwd, random, string; print(crypt.crypt('$NAME', '\\$6\\$'+(''.join(random.choice(string.ascii_letters) for i in range(6)))+'\\$'))"`
+        usermod -p $HASH ec2-user
+
+  - name: install expect
+    package:
+      name:
+        - expect
+      state: latest
+
+  - name: set symlink to fix Xilinx install bug in 2020.1 tools
+    file:
+      src: '/lib64/libtinfo.so.6'
+      dest: '/lib64/libtinfo.so.5'
+      state: link
+
+  - name: ensure that Xilinx file is execuctable
+    file:
+      path: /tmp/{{xilinx_installer}}
+      mode: 0755
+
+  - name: Generate Xilinx auth token
+    shell: |
+      spawn /tmp/{{xilinx_installer}} xsetup -b AuthTokenGen
+
+      set timeout -1
+
+      expect "User ID:"
+      send "{{xilinx_username}}\r"
+
+      expect "Password:"
+      send "{{xilinx_password}}\r"
+      expect eof
+    args:
+      chdir: "/tmp"
+      creates: "/root/.Xilinx/wi_authentication_key"
+      executable: /usr/bin/expect
+    register: __authtoken
+
+  - debug:
+      var: __authtoken
+
+  - name: Generate installation config file
+    shell: |
+      spawn /tmp/{{xilinx_installer}} xsetup -b ConfigGen
+
+      set timeout -1
+
+      expect "Please choose:"
+      send "3\r"
+
+      expect "Please choose:"
+      send "1\r"
+      expect eof
+    args:
+      chdir: "/tmp"
+      creates: "/root/.Xilinx/install_config.txt"
+      executable: /usr/bin/expect
+    register: __configfile
+
+  - debug:
+      var: __configfile
+
+  - name:
+    lineinfile:
+      path: /root/.Xilinx/install_config.txt
+      regexp: "^Destination="
+      line: Destination={{xilinx_install_dir}}
+
+  - name: Install Xilinx
+    shell: '/tmp/{{xilinx_installer}} xsetup -a 3rdPartyEULA,WebTalkTerms,XilinxEULA -b Install -c /root/.Xilinx/install_config.txt'
+
+  - name: Create /etc/profile.d./f1.sh file
+    blockinfile:
+      path: /etc/profile.d/f1.sh
+      create: yes
+      mode: 0755
+      block: |
+        export XILINX_VIVADO={{xilinx_install_dir}}/Vivado/{{xilinx_version}}
+        export XILINX_VITIS={{xilinx_install_dir}}/Vitis/{{xilinx_version}}
+        export PATH=$PATH:{{xilinx_install_dir}}/Vivado/{{xilinx_version}}/bin:/opt/Xilinx/Vitis/{{xilinx_version}}/bin
+
+  - name: copy license file
+    copy:
+      src: /tmp/{{xilinx_license_file}}
+      dest: "{{xilinx_install_dir}}/license"
+      mode: 0644
+    when: xilinx_license_file is defined
+
+  - name: configure license file directory
+    lineinfile:
+      path: /etc/profile.d/f1.sh
+      line: export XILINXD_LICENSE_FILE={{xilinx_install_dir}}/license
+      create: yes
+
+  - name: download aws-fpga git repository
+    git:
+      repo: https://github.com/aws/aws-fpga.git
+      dest: /home/ec2-user/aws-fpga
+    become: true
+    become_user: ec2-user
+
+  - name: clone xrt repository
+    git:
+      repo: https://github.com/Xilinx/XRT
+      version: "{{xilinx_version}}"
+      dest: /tmp/XRT
+
+  - name: fix xrtdeps.sh script to not require user input
+    lineinfile:
+      path: /tmp/XRT/src/runtime_src/tools/scripts/xrtdeps.sh
+      regexp: "^    yum install cmake3"
+      line: "^    yum install -y cmake3"
+
+  - name: fix xrtdeps.sh script to not require user input
+    lineinfile:
+      path: /tmp/XRT/src/runtime_src/tools/scripts/xrtdeps.sh
+      regexp: "^    yum install ocl-icd ocl-icd-devel opencl-headers"
+      line: "^    yum install -y ocl-icd ocl-icd-devel opencl-headers"
+
+
+  - name: run build
+    shell: |
+      /tmp/XRT/src/runtime_src/tools/scripts/xrtdeps.sh
+      source /home/ec2-user/aws-fpga/sdk_setup.sh
+      ./build.sh
+    args:
+      chdir: /tmp/XRT/build/
+
+  - name: reset ownership of /home/ec2-user/aws-fpga
+    file:
+      path: /home/ec2-user/aws-fpga
+      owner: ec2-user
+      group: ec2-user
+      recurse: yes
+
+  - name: install packages
+    package:
+      name: "{{item}}"
+      state: latest
+    loop:
+      - /tmp/XRT/build/Release/xrt_202010.2.6.0_2-x86_64-xrt.rpm
+      - /tmp/XRT/build/Release/xrt_202010.2.6.0_2-x86_64-aws.rpm
+
+  - name: setup .bashrc file
+    blockinfile:
+      path: /home/ec2-user/.bashrc
+      create: yes
+      mode: 0744
+      block: |
+        export LD_LIBRARY_PATH=/opt/xilinx/xrt/lib:/opt/Xilinx/Vitis/2020.1/lib/lnx64.o
+    become: yes
+    become_user: ec2-user
+
+  - name: change permissions on vitis_setup files
+    file:
+      mode: 0755
+      path: "{{item}}"
+    loop:
+      - /home/ec2-user/aws-fpga/vitis_setup.sh
+      - /home/ec2-user/aws-fpga/vitis_runtime_setup.sh
+
+  - name: delete xilinx installer
+    file:
+      name: /tmp/{{xilinx_installer}}
+      state: absent
