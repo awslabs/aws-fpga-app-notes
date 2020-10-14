@@ -32,3 +32,6 @@ This developer workshop is divided in 5 modules.
 1. **Developing and optimizing F1 applications with SDAccel**
 1. **Optimizing host code**
 1. **Wrap-up and next steps**
+
+#### [FPGA Developer AMI Build Recipe (AL2)](/FPGA_Developer_AMI_Build_Recipe_AL2)
+Instructions to build a FPGA Developer AMI using Ansible and Packer
