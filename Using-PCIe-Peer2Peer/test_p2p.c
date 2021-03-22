@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <poll.h>
 #include <sys/mman.h>
+#include <getopt.h>
 
 #include "fpga_pci.h"
 #include "fpga_mgmt.h"
@@ -64,11 +65,8 @@
 /* use the standard out logger */
 static const struct logger *logger = &logger_stdout;
 
-/* static pci resources */
-static char *resource_name[] = {"0000:00:0f.0", "0000:00:11.0", "0000:00:13.0", "0000:00:15.0", "0000:00:17.0", "0000:00:19.0", "0000:00:1b.0", "0000:00:1d.0"};
-
 void usage(const char* program_name);
-int p2p_example();
+int p2p_example(int num_slot, int GROUP);
 int p2p_write(pci_bar_handle_t pci_bar_handle, uint64_t address, uint32_t test_pattern);
 int p2p_read_compare(pci_bar_handle_t pci_bar_handle, uint64_t address, uint32_t test_pattern);
 void write_instruction(int inst, uint64_t address, uint32_t data, int length);
@@ -78,13 +76,29 @@ uint64_t get_128GBar_address(char *dir_name);
 
 int main(int argc, char **argv) {
     int rc;
-    switch (argc) {
-    case 1:
+    int num_slot;
+    int GROUP;
+    char *inst_type = "";
+
+    static struct option long_options[] = {
+        {"inst_type",         required_argument,  0, 'I' },
+        {0, 0, 0, 0},
+    };
+
+    int opt;
+    int long_index = 0;
+    while ((opt = getopt_long(argc, argv, "I:",
+                long_options, &long_index)) != -1) {
+      switch (opt) {
+      case 'I':
+        inst_type = optarg;
         break;
-    default:
-        usage(argv[0]);
-        return 1;
+      default:
+       printf("unrecognized option: %s", argv[optind-1]);
+       return -1;
+      }
     }
+   
 
     /* setup logging to print to stdout */
     rc = log_init("test_p2p");
@@ -96,15 +110,32 @@ int main(int argc, char **argv) {
     rc = fpga_mgmt_init();
     fail_on(rc, out, "Unable to initialize the fpga_mgmt library");
 
-    /* check that the AFI is loaded */
-    log_info("Checking to see if the right AFI is loaded...");
-    for (int slot_id=0; slot_id < MAX_SLOTS; slot_id++) {
-       rc = check_slot_config(slot_id);
-       fail_on(rc, out, "slot config is not correct");
-    }
 
     /* run the p2p test example */
-    rc = p2p_example();
+    if (strcmp(inst_type,"4xl") == 0) {
+       log_info("Instance type selected: 4xl, number of slots: 2, Group: 1 \n"); 		    
+       num_slot = 2;
+       GROUP = 1;
+
+       /* check that the AFI is loaded */
+       log_info("Checking to see if the right AFI is loaded...");
+       for (int slot_id=0; slot_id < num_slot; slot_id++) {
+          rc = check_slot_config(slot_id);
+          fail_on(rc, out, "slot config is not correct");
+       }
+    } else if (strcmp(inst_type, "16xl") == 0) {
+       log_info("Instance type selected: 16xl, number of slots: 8, Group: 2 \n"); 		    
+       num_slot = 8;
+       GROUP = 2;
+
+       /* check that the AFI is loaded */
+       log_info("Checking to see if the right AFI is loaded...");
+       for (int slot_id=0; slot_id < num_slot; slot_id++) {
+          rc = check_slot_config(slot_id);
+          fail_on(rc, out, "slot config is not correct");
+       }
+    }   
+    rc = p2p_example(num_slot, GROUP);
     fail_on(rc, out, "p2p example failed");
 out:
     log_info("TEST %s", (rc == 0) ? "PASSED" : "FAILED");
@@ -112,14 +143,14 @@ out:
 }
 
 void usage(const char* program_name) {
-    printf("usage: %s [--init-slot <init_slot> --tgt-slot <tgt_slot>]\n", program_name);
+    printf("usage: %s -I <instance_type> \n", program_name);
 }
 
 
 /**
  * This example demonstrates PCIe P2P write and read transfers
  */
-int p2p_example() {
+int p2p_example(int num_slot, int GROUP) {
    
     int rc;
 
@@ -128,11 +159,26 @@ int p2p_example() {
     int tgt_slot_id;
     int slot_id;
     uint32_t test_pattern = 0xf1f1f1f1;
-    uint64_t address[8];
-    pci_bar_handle_t pci_bar_handle[8];
+    uint64_t address[num_slot];
+    char *resource_name[8] = {};
+    pci_bar_handle_t pci_bar_handle[num_slot];
     
     /* pci_bar_handle_t is a handler for an address space exposed by one PCI BAR on one of the PCI PFs of the FPGA */
-    for (int slot_id=0; slot_id < MAX_SLOTS; slot_id++) {
+    if (num_slot == 2) {
+       resource_name[0] = "0000:00:1b.0";
+       resource_name[1] = "0000:00:1d.0";
+    } else if (num_slot == 8) {
+       resource_name[0] = "0000:00:0f.0";
+       resource_name[1] = "0000:00:11.0";
+       resource_name[2] = "0000:00:13.0";
+       resource_name[3] = "0000:00:15.0";
+       resource_name[4] = "0000:00:17.0";
+       resource_name[5] = "0000:00:19.0";
+       resource_name[6] = "0000:00:1b.0";
+       resource_name[7] = "0000:00:1d.0";
+    }   
+
+    for (int slot_id=0; slot_id < num_slot; slot_id++) {
        pci_bar_handle[slot_id] = PCI_BAR_HANDLE_INIT;
 
        bar_id =0;
@@ -140,20 +186,21 @@ int p2p_example() {
        rc = fpga_pci_attach(slot_id, pf_id, bar_id, 0, &pci_bar_handle[slot_id]);
        fail_on(rc, out, "Unable to attach to the OCL Bar AFI on slot id %d", slot_id);
 
+       printf ("Getting 128G Bar address for slot %d", slot_id);
        address[slot_id] = get_128GBar_address(resource_name[slot_id]);
     }
 
     log_info ("INFO: Starting the P2P test ");
     // Looping on Group0 slots (0,1,2,3)
-    for (int Group_id=0; Group_id <=1; Group_id++) {
+    for (int Group_id=0; Group_id < GROUP; Group_id++) {
        log_info("INFO: Starting the Peer-2-Peer transfers in between Group%d", Group_id);
-       for (int slot=0; slot <= 3; slot++) {
+       for (int slot=0; slot < (num_slot/GROUP); slot++) {
           slot_id = Group_id*4 + slot;
           tgt_slot_id = Group_id*4 + (slot+1);
-          if ((slot_id == 3) | (slot_id == 7)) {
+          if (((num_slot == 8) & ((slot_id == 3) | (slot_id == 7))) | ((num_slot == 2) & (slot_id == 1))) {
              tgt_slot_id = Group_id*4 + (0);
           }
-             log_info("INFO: Starting P2P transfer from slot %d to slot%d", slot_id, tgt_slot_id);
+             log_info("INFO: Starting P2P transfer from slot %d to slot%d Address %lx", slot_id, tgt_slot_id, address[tgt_slot_id]);
              rc = p2p_write(pci_bar_handle[slot_id], address[tgt_slot_id], test_pattern);
              sleep(1);
              rc = p2p_read_compare(pci_bar_handle[slot_id], address[tgt_slot_id], test_pattern);
@@ -229,7 +276,7 @@ int p2p_read_compare(pci_bar_handle_t pci_bar_handle, uint64_t address, uint32_t
         addr_low  = inst_start_addr & 0xffffffff;
 
         log_info("INFO: Read Instruction: index %d Address %"PRIx64" Data %x length %d ", inst, inst_start_addr, test_pattern, length);
-        fpga_pci_poke(pci_bar_handle, WR_INST_OFFSET + 0x0, inst);
+        fpga_pci_poke(pci_bar_handle, RD_INST_OFFSET + 0x0, inst);
         fpga_pci_poke(pci_bar_handle, RD_INST_OFFSET + 0x4, addr_low);
         fpga_pci_poke(pci_bar_handle, RD_INST_OFFSET + 0x8, addr_high);
         fpga_pci_poke(pci_bar_handle, RD_INST_OFFSET + 0xC, test_pattern);
@@ -254,6 +301,7 @@ int p2p_read_compare(pci_bar_handle_t pci_bar_handle, uint64_t address, uint32_t
     rc = fpga_pci_poke(pci_bar_handle, WR_RD_GO, 0x2);
 
     sleep(1);
+    rc = fpga_pci_poke(pci_bar_handle, WR_RD_GO, 0x0);
 
     /* Checking Error Status Register */
     log_info ("INFO: Checking Read Error Status Register ");
