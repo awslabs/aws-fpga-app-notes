@@ -7,11 +7,11 @@ F1 FPGA Application Note
  ## Table of Contents
 <a name="introduction"></a>
  ## Introduction
- The purpose of this application note is to provide an F1 developer with information regarding PCIe Peer-2-Peer connectivity on f1.16xlarge instances. This app note utilizes the PCIM interface for PCIe Peer-2-Peer transfers. See the [Using-PCIM-Port Application note](https://github.com/awslabs/aws-fpga-app-notes/tree/master/Using-PCIM-Port) for more information on the PCIM AXI Interface.
-
+ The purpose of this application note is to provide an F1 developer with information regarding PCIe Peer-2-Peer connectivity on f1.16xlarge and f1.4xlarge instances. This app note utilizes the PCIM interface for PCIe Peer-2-Peer transfers. See the [Using-PCIM-Port Application note](https://github.com/awslabs/aws-fpga-app-notes/tree/master/Using-PCIM-Port) for more information on the PCIM AXI Interface.
+	
 <a name="concepts"></a>
  ## Concepts
- The PCIe Peer-2-Peer feature enables a developer to direclty communicate between FPGAs on a f1.16xlarge instance.  This enhances solutions such as creating an accelerator that is composed of multiple FPGAs.  Any FPGA on a f1.16xlarge instance can directly access data located on another FPGA (peer-to-peer) on the instance. Data transfers between the F1 FPGAs must target the ApplicationDevice/Bar4 (128G BAR). On f1.16xlarge instances, an FPGA  can directly transfer data to another FPGA. 
+ The f1.16xlarge and f1.4xlarge instances have multiple FPGAs in a single instance, f1.16xl instance has 8 FPGAs and f1.4xl instance has 2 FPGAs per instance. The PCIe Peer-2-Peer feature enables a developer to directly access data between the FPGAs available on the same instance (f1.16xlarge and f1.4xlarge) without routing the requests through the host. This enhances solutions such as creating an accelerator that is composed of multiple FPGAs. Any FPGA on a f1.16xlarge or a f1.4xlarge instance can directly access data located on another FPGA (peer-to-peer) on the same instance. Data transfers between the F1 FPGAs must target the ApplicationDevice/Bar4 (128G BAR). On f1.16xlarge or f1.4xlarge instances, a FPGA can directly transfer data to another FPGA on the same instance. 
 
  The f1.16xlarge instance has 8 FPGAs, and these FPGAs are classified into two groups, each group consisting of 4 FPGAs. 
  1. Group1: 
@@ -30,7 +30,11 @@ FPGAs within a group can directly access other FPGAs within the same group and c
 
 ![](p2p.png)
 
- This application note uses the [CL_DRAM_DMA example design](https://github.com/aws/aws-fpga/blob/master/hdk/cl/examples/cl_dram_dma/README.md) to demonstrate the Peer-2-Peer transfers. The example design contains an Automatic Test Pattern Generator (ATG) that is connected to the PCIM port. The ATG is an AXI-4 master exerciser that is able to issue write requests, read requests, and compare written vs. read data.  To access another F1 FPGA on the same f1.16xlarge instance, software must obtain the physical address of the target F1 FPGA, ApplicationDevice/Bar4 (128G Bar) and program this address into the ATG.
+The f1.4xlarge instance has 2 FPGAs in a single instance, both the FPGAs are in the same group. 
+1. Slot0 (0000:00:1b.0)
+2. Slot1 (0000:00:1d.0)
+
+ This application note uses the CL_DRAM_DMA example design to demonstrate the Peer-2-Peer transfers on a f1.16xlarge/f1.4xlarge instance. The example design contains an Automatic Test Pattern Generator (ATG) that is connected to the PCIM port. The ATG represents an accelerator that can produce or consume data. The ATG is an AXI-4 master exerciser that is able to issue write requests, read requests, and compare written vs. read data. To access another F1 FPGA on the same f1.16xlarge/f1.4xlarge instance, software must obtain the physical address of the target F1 FPGA, ApplicationDevice/Bar4 (128G Bar) and program this address into the ATG.
 
 <a name="restrictions"></a>
  ### Peer-2-Peer Restrictions
@@ -39,14 +43,13 @@ FPGAs within a group can directly access other FPGAs within the same group and c
 
 <a name="recommendations"></a>
  ### Peer-2-Peer Recommendations
- 1. Direct Peer-2-Peer is currently enabled on f1.16xlarge instances only. Trying to use Peer-2-Peer on f1.4xlarge instances will not result in an error message but will result in poor performance and therefore is not recommended.
- 2. For performance reasons, it is recommended to only use Peer-2-Peer among FPGAs in the same Group (i.e. either among F1 FPGAs in Group1 or among F1 FPGAs in Group2). Peer-2-Peer transfers among F1 FPGAs of different groups is not recommended.
- 3. For transfers between F1 FPGAs on different groups, transfer data from the source FPGA to host memory, and then from host memory to the target F1 FPGA.
+1. For performance reasons on f1.16xlarge instances, it is recommended to only use Peer-2-Peer among FPGAs in the same Group (i.e. either among F1 FPGAs in Group1 or among F1 FPGAs in Group2). Peer-2-Peer transfers among F1 FPGAs of different groups is not recommended.
+2. For transfers between F1 FPGAs on different groups of a f1.16xlarge instance, transfer data from the source FPGA to host memory, and then from host memory to the target F1 FPGA.
 
 <a name="physical"></a>
  ### Finding the Physical Address for ApplicationDevice/Bar4 Region (128G BAR)
 
- To perform Peer-2-Peer transfers from an initiating F1 FPGA to a target F1 FPGA (ApplicationDevice/Bar4 (128G Bar)) on a f1.16xlarge instance, the source FPGA needs to know the physical address of the target FPGA, ApplicationDevice/Bar4. Using the lspci command in verbose mode for the ApplicationDevice of the target F1 FPGA will list all the bars with their physical addresses. Only the 128G user bar is available for Peer-2-Peer transfers, all the other Bars are disabled for Peer-2-Peer transfers.
+ To perform Peer-2-Peer transfers from an initiating F1 FPGA to a target F1 FPGA (ApplicationDevice/Bar4 (128G Bar)) on a f1.16xlarge/ f1.4xlarge instances, the source FPGA needs to know the physical address of the target FPGA, ApplicationDevice/Bar4. Using the lspci command in verbose mode for the ApplicationDevice of the target F1 FPGA will list all the bars with their physical addresses. Only the 128G user bar is available for Peer-2-Peer transfers, all the other Bars are disabled for Peer-2-Peer transfers.
 
  ```
  $ sudo lspci -vv -s 0000:00:0f.0  # 16xL, Slot 0 
@@ -66,18 +69,18 @@ FPGAs within a group can directly access other FPGAs within the same group and c
         Region 2: Memory at 5e000410000 (64-bit, prefetchable) [size=64K]
         Region 4: Memory at 5c000000000 (64-bit, prefetchable) [size=128G]
  ```
- Region 4, Bar Address 5c000000000 can be used as the target address by any other FPGA on the f1.16xlarge instace, to access the FPGA 00:0f.0 for Peer-2-Peer accesses. An FPGA cannot access itself i.e. FPGA 00:0f.0 cannot access Address 5c000000000.
+ Region 4, Bar Address 5c000000000 can be used as the target address by any other FPGA on the f1.16xlarge instance, to access the FPGA 00:0f.0 for Peer-2-Peer accesses. An FPGA cannot access itself i.e. FPGA 00:0f.0 cannot access Address 5c000000000.
 Software can access the various Region's (BAR), physical Address using the PCIe Device resource file.
 ```
   char [256] sysfs_name;
-  sysfs_name = “/sys/bus/pci/devices/0000:00:0f:0/resource”;
-  FILE *fp = fopen(sysfs_name, “r”);
+  sysfs_name = ?/sys/bus/pci/devices/0000:00:0f:0/resource?;
+  FILE *fp = fopen(sysfs_name, ?r?);
   for (size_t i = 0; i < FPGA_BAR_PER_PF_MAX; ++i) {
     uint64_t addr_begin = 0, addr_end = 0, flags = 0;
     ret = fscanf(fp, "0x%lx 0x%lx 0x%lx\n", &addr_begin, &addr_end, &flags);
   }
 ```
-The 0000:00:0f.0 is the PCIe ```Domain:bus:device:function``` of the F1 FPGA Slot 0.
+The 0000:00:0f.0 is the PCIe ```Domain:bus:device:function``` of the F1.16xlarge FPGA Slot 0.
 
 <a name="ocl"></a>
  ### Accessing the AppPF Bar 0 Region (OCL BAR)
@@ -88,10 +91,10 @@ The 0000:00:0f.0 is the PCIe ```Domain:bus:device:function``` of the F1 FPGA Slo
 
  ```
  Four input arguments are necessary: 
- 1. the slot number
- 2. the physical function
- 3. the bar/region 
- 4. the write combining flag 
+ 1. The slot number
+ 2. The physical function
+ 3. The bar/region 
+ 4. The write combining flag 
 
 The OCL Region does not support write combining and so this argument is 0. The function uses these arguments to open the appropriate sysfs file. For example, calling the function with following arguments:
 
@@ -103,9 +106,9 @@ The OCL Region does not support write combining and so this argument is 0. The f
 <a name="details"></a>
  ### Peer-2-Peer example details
 
- The F1 Peer-2-Peer example demonstrates Peer-2-Peer transfers between all 8 slots of the f1.16xlarge instance.  The example performs writes and read/compares to verify the data.
+ The F1 Peer-2-Peer example demonstrates Peer-2-Peer transfers between all the FPGAs of the f1.16xlarge (8 FPGAs) or f1.4xlarge (2 FPGAs) instance.  The example performs writes and read/compares to verify the data. The example takes an argument ?instance_type(-I), based on the instance type the test will be performing data transfers between different FPGAs.
 
- In the example there are two loops of Peer-2-Peer transfers (one loop per FPGA group):
+ In the example for a f1.16xlarge instance there are two loops of Peer-2-Peer transfers (one loop per FPGA group):
 ```
  Loop1:
     1. FPGA Slot0 performs a Peer-2-Peer write transfer of 64 bytes to FPGA Slot1
@@ -120,6 +123,14 @@ The OCL Region does not support write combining and so this argument is 0. The f
     4. FPGA Slot7 performs a Peer-2-Peer write transfer of 64 bytes to FPGA Slot4
 ```
  
+In the example for a f1.4xlarge instance there is a single loop of Peer-2-Peer transfers (there is only a single group on f1.4xlarge):
+
+```
+  Loop1:
+    1. FPGA Slot0 performs a Peer-2-Peer write transfer of 64 bytes to FPGA Slot1
+    2. FPGA Slot1 performs a Peer-2-Peer write transfer of 64 bytes to FPGA Slot0
+``` 
+
  After each write, a Peer-2-Peer read is performed to verify the data.  This example simulates a pipeline design where FPGA passes information to the next FPGA via writes.  The reads simulate some status read of the next FPGA.
 
  
@@ -133,11 +144,11 @@ The OCL Region does not support write combining and so this argument is 0. The f
     }
  ```
 
- The OCL(Region0) Bar for all 8 FPGAs of the f1.16xlarge instance are made acessible using the fpga management library function `fpga_pci_attach`.
+ The OCL(Region0) Bar for all FPGAs of the f1.16xlarge or f1.4xlarge instance are made acessible using the fpga management library function `fpga_pci_attach`.
 
  ```
     /* pci_bar_handle_t is a handler for an address space exposed by one PCI BAR on one of the PCI PFs of the FPGA */
-    for (int slot_id=0; slot_id < MAX_SLOTS; slot_id++) {
+    for (int slot_id=0; slot_id < num_slots; slot_id++) {
        pci_bar_handle[slot_id] = PCI_BAR_HANDLE_INIT;
 
        bar_id =0;
@@ -149,7 +160,7 @@ The OCL Region does not support write combining and so this argument is 0. The f
     }
  ```
 
- The function `get_128GBar_address` is used to get the physical address of the F1 Application Device, BAR4 (128G Bar).
+ The function `get_128GBar_address` is used to get the physical address of the F1 Application Device, BAR4 (128G Bar). `num_slot` is 2 for f1.4xlarge and 8 for f1.16xlarge.
 
  ```
  uint64_t get_128GBar_address(char *dir_name)
@@ -190,21 +201,22 @@ The OCL Region does not support write combining and so this argument is 0. The f
  And then the Peer-2-Peer transfers are performed for each group.
 
  ```
- for (int Group_id=0; Group_id <=1; Group_id++) {
-    log_info("INFO: Starting the Peer-2-Peer transfers in between Group%d", Group_id);
-    for (int slot=0; slot <= 3; slot++) {
-         slot_id = Group_id*4 + slot;
-         tgt_slot_id = Group_id*4 + (slot+1);
-         if ((slot_id == 3) | (slot_id == 7)) {
+    for (int Group_id=0; Group_id < GROUP; Group_id++) {
+       log_info("INFO: Starting the Peer-2-Peer transfers in between Group%d", Group_id);
+       for (int slot=0; slot < (num_slot/group); slot++) {
+          slot_id = Group_id*4 + slot;
+          tgt_slot_id = Group_id*4 + (slot+1);
+          if (((num_slot == 8) & ((slot_id == 3) | (slot_id == 7))) | ((num_slot == 2) & (slot_id == 1))) {
              tgt_slot_id = Group_id*4 + (0);
-         }
-         log_info("INFO: Starting P2P transfer from slot %d to slot%d", slot_id, tgt_slot_id);
-         rc = p2p_write(pci_bar_handle[slot_id], address[tgt_slot_id], test_pattern);
-         sleep(1);
-         rc = p2p_read_compare(pci_bar_handle[slot_id], address[tgt_slot_id], test_pattern);
-          fail_on(rc, out, "Read Compare failed for the ATG");
-     }
- }
+          }
+             log_info("INFO: Starting P2P transfer from slot %d to slot%d Address %lx", slot_id, tgt_slot_id, address[tgt_slot_id]);
+             rc = p2p_write(pci_bar_handle[slot_id], address[tgt_slot_id], test_pattern);
+             sleep(1);
+             rc = p2p_read_compare(pci_bar_handle[slot_id], address[tgt_slot_id], test_pattern);
+             fail_on(rc, out, "Read Compare failed for the ATG");
+       }
+    } 
+ 
  ```
 
 <a name="compiling"></a>
@@ -212,7 +224,7 @@ The OCL Region does not support write combining and so this argument is 0. The f
 
  To run this example: 
 
- launch a f1.16xlarge instance 
+ launch a f1.16xlarge/f1.4xlarge instance 
 
  clone the [aws-FPGA Github repository](https://github.com/aws/aws-FPGA/blob/master/README.md)
 
@@ -234,31 +246,43 @@ The OCL Region does not support write combining and so this argument is 0. The f
  Use the `FPGA-load-local-image` command to load the FPGA with the pre-generated [CL_DRAM_DMA AFI](https://github.com/aws/aws-FPGA/blob/master/hdk/cl/examples/cl_dram_dma/README.md).  Load the AFI on All the slots.
 
  ```
- $ for i in {0..7}; do sudo fpga-load-local-image -S $i -I agfi-0d132ece5c8010bf7; done 
+ $ for i in {0..7}; do sudo fpga-load-local-image -S $i -I agfi-0d132ece5c8010bf7; done #16xL
  ```
+```
+ $ for i in {0..1}; do sudo fpga-load-local-image -S $i -I agfi-0d132ece5c8010bf7; done #4xL
+```
+
 
  Verify the Bus Master Enable is set on all the FPGAs.  This enables the devices to perform bus mastering operations:
 
 ```
- $ for f1 in 0f 11 13 15 17 19 1b 1d; do sudo lspci -vv -s 0000:00:$f1.0 | grep BusMaster; done 
+ $ for f1 in 0f 11 13 15 17 19 1b 1d; do sudo lspci -vv -s 0000:00:$f1.0 | grep BusMaster; done #16xL
 ```
+```
+ $ for f1 in 1b 1d; do sudo lspci -vv -s 0000:00:$f1.0 | grep BusMaster; done #4xL
+```
+
 
  Check to make sure the output displays ``BusMaster+`` on all FPGAs.  If the Bus Master Enable is disabled, it can be enabled by:
 
  ```
  $ for f1 in 0f 11 13 15 17 19 1b 1d; do sudo setpci -v -s 0000:00:$f1.0 COMMAND=06; done #16xL
  ```
+```
+ $ for f1 in 1b 1d; do sudo setpci -v -s 0000:00:$f1.0 COMMAND=06; done #4xL
+ ```
+
  Compile the test program.
  ```
  $ make       # compiles the test program
  ```
  Run the compiled test program.
  ```
- $ sudo ./test_p2p 
+ $ sudo ./test_p2p -I $(curl http://169.254.169.254/latest/meta-data/instance-type)
+```
  ```
+$ sudo ./test_p2p -I $(curl http://169.254.169.254/latest/meta-data/instance-type)
 
- ```
- $ sudo ./test_p2p
  2019-09-30T14:49:01.431362Z, test_p2p, INFO, test_p2p.c +100: main(): Checking to see if the right AFI is loaded...
  2019-09-30T14:49:01.446610Z, test_p2p, INFO, test_p2p_common.c +134: check_slot_config(): Operating on slot 0 with id: 0000:00:0f.0
  2019-09-30T14:49:01.472292Z, test_p2p, INFO, test_p2p_common.c +134: check_slot_config(): Operating on slot 1 with id: 0000:00:11.0
@@ -297,7 +321,7 @@ The OCL Region does not support write combining and so this argument is 0. The f
  2019-09-30T14:49:05.601744Z, test_p2p, INFO, test_p2p.c +271: p2p_read_compare(): INFO: Read Bresp Error Register Value is 0
  2019-09-30T14:49:05.601747Z, test_p2p, INFO, test_p2p.c +272: p2p_read_compare(): INFO: Read Rresp Error Register Value is 0
  ```
- Figure 1. Snippet of Peer-2-Peer Test Program Output
+ Figure 1. Snippet of Peer-2-Peer Test Program Output for a f1.16xl instance.
 
 
 <a name="further"></a>
@@ -315,5 +339,7 @@ The OCL Region does not support write combining and so this argument is 0. The f
  |     Date      | Version |     Revision    |   Shell    |   Developer   |
  | ------------- |  :---:  | --------------- |   :---:    |     :---:     |
  | Sep. 30, 2019 |   1.0   | Initial Release | 0x04261818 | K. Shah | 
+ | Jul. 14, 2020 |   1.1   | P2P 4xl update  | 0x04261818 | K. Shah |
+|
 
 
