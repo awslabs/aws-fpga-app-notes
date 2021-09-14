@@ -112,8 +112,8 @@ int main(int argc, char **argv) {
 
 
     /* run the p2p test example */
-    if (strcmp(inst_type,"4xl") == 0) {
-       log_info("Instance type selected: 4xl, number of slots: 2, Group: 1 \n"); 		    
+    if (strcmp(inst_type,"f1.4xlarge") == 0) {
+       log_info("Instance type selected: f1.4xlarge, number of slots: 2, Group: 1 \n"); 		    
        num_slot = 2;
        GROUP = 1;
 
@@ -123,8 +123,8 @@ int main(int argc, char **argv) {
           rc = check_slot_config(slot_id);
           fail_on(rc, out, "slot config is not correct");
        }
-    } else if (strcmp(inst_type, "16xl") == 0) {
-       log_info("Instance type selected: 16xl, number of slots: 8, Group: 2 \n"); 		    
+    } else if (strcmp(inst_type, "f1.16xlarge") == 0) {
+       log_info("Instance type selected: f1.16xlarge, number of slots: 8, Group: 2 \n"); 		    
        num_slot = 8;
        GROUP = 2;
 
